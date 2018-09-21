@@ -60,7 +60,7 @@ def update_counts_table_data(selected_start, selected_end, selected_jobtype, sel
     return df_counts
 
 layout = html.Div(children=[
-                html.H1(children='Trade Licenses'),
+                html.H1(children='Trade License Volumes Over Time'),
                 html.Div(children='Please Select Date Range (Job Issue Date)'),
                 html.Div([
                     dcc.DatePickerRange(
@@ -103,7 +103,7 @@ layout = html.Div(children=[
                 ),
                 html.Div([
                     html.A(
-                        'Download Counts Data',
+                        'Download Data',
                         id='slide1-TL-count-table-download-link',
                         download='slide1_TL_license_volumes_counts.csv',
                         href='',
@@ -172,6 +172,3 @@ def update_count_table_download_link(start_date, end_date, jobtype, licensetype)
     csv_string = df.to_csv(index=False, encoding='utf-8')
     csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
     return csv_string
-
-if __name__ == '__main__':
-    app.run_server(host='127.0.0.1', port=5001)

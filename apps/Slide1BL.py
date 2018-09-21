@@ -64,7 +64,7 @@ def update_counts_table_data(selected_start, selected_end, selected_jobtype, sel
     return df_counts
 
 layout = html.Div(children=[
-                html.H1(children='Business Licenses'),
+                html.H1(children='Business License Volumes Over Time'),
                 html.Div(children='Please Select Date Range (Job Issue Date)'),
                 html.Div([
                     dcc.DatePickerRange(
@@ -107,7 +107,7 @@ layout = html.Div(children=[
                 ),
                 html.Div([
                     html.A(
-                        'Download Counts Data',
+                        'Download Data',
                         id='slide1-BL-count-table-download-link',
                         download='slide1_BL_license_volumes_counts.csv',
                         href='',

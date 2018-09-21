@@ -8,12 +8,12 @@ from app import app, server
 from apps import Slide1BL, Slide1TL
 
 
-app.layout = html.Div([
+app.layout = html.Div(className='ten columns offset-by-one', children=[
     dcc.Location(id='url', refresh=False),
     html.Div(id='page-content'),
     html.Div(dt.DataTable(rows=[{}]), style={'display': 'none'})
-], className='ten columns offset-by-one')
-
+])
+    
 index_page = html.Div([
     html.H2('Licenses & Inspections'),
     html.Br(),

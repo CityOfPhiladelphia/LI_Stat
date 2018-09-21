@@ -63,15 +63,6 @@ def update_counts_table_data(selected_start, selected_end, selected_jobtype, sel
     df_counts = df_counts.rename(index=str, columns={"JOBTYPE": "JOBTYPE", "LICENSETYPE": "LICENSETYPE", "JOBISSUEYEAR": "JOBISSUEYEAR", "JOBISSUEMONTH": "JOBISSUEMONTH", 0: "Count"})
     return df_counts
 
-def update_ind_records_data(selected_start, selected_end, selected_jobtype, selected_licensetype):
-    df_selected = df_ind_records[(df_ind_records['ISSUEDATE']>=selected_start)&(df_ind_records['ISSUEDATE']<=selected_end)]
-    if selected_jobtype != "All":
-        df_selected = df_selected[(df_selected['JOBTYPE']==selected_jobtype)]
-    if selected_licensetype != "All":
-        df_selected = df_selected[(df_selected['LICENSETYPE'] == selected_licensetype)]
-    df_selected['ISSUEDATE'] = df_selected['ISSUEDATE'].dt.strftime('%m/%d/%Y')  #change date format to make it consistent with other dates
-    return df_selected
-
 layout = html.Div(children=[
                 html.H1(children='Business Licenses'),
                 html.Div(children='Please Select Date Range (Job Issue Date)'),
@@ -114,12 +105,11 @@ layout = html.Div(children=[
                         ],
                     ),
                 ),
-                html.Div(children='Table of Business Licenses'),
                 html.Div([
                     html.A(
-                        'Download Business License Data',
-                        id='slide1-BL-ind-records-table-download-link',
-                        download='slide1_BL_license_volumes.csv',
+                        'Download Counts Data',
+                        id='slide1-BL-count-table-download-link',
+                        download='slide1_BL_license_volumes_counts.csv',
                         href='',
                         target='_blank',
                     )
@@ -127,11 +117,13 @@ layout = html.Div(children=[
                 table.DataTable(
                     # Initialise the rows
                     rows=[{}],
+                    columns=["JOBTYPE", "LICENSETYPE", "JOBISSUEYEAR","JOBISSUEMONTH", "Count"],
                     row_selectable=True,
                     filterable=True,
                     sortable=True,
                     selected_row_indices=[],
-                    id='slide1-BL-table')
+                    id='slide1-BL-count-table'
+                ),
                 ])
 
 @app.callback(
@@ -164,25 +156,23 @@ def update_graph(start_date, end_date, jobtype, licensetype):
     }
 
 @app.callback(
-    Output('slide1-BL-table', 'rows'),
+    Output('slide1-BL-count-table', 'rows'),
     [Input('slide1-BL-my-date-picker-range', 'start_date'),
      Input('slide1-BL-my-date-picker-range', 'end_date'),
      Input('slide1-BL-jobtype-dropdown', 'value'),
      Input('slide1-BL-licensetype-dropdown', 'value')])
-def update_table(start_date, end_date, jobtype, licensetype):
-    df_inv = update_ind_records_data(start_date, end_date, jobtype, licensetype)
-    return df_inv.to_dict('records')
+def update_count_table(start_date, end_date, jobtype, licensetype):
+    df_counts = update_counts_table_data(start_date, end_date, jobtype, licensetype)
+    return df_counts.to_dict('records')
 
 @app.callback(
-    Output('slide1-BL-ind-records-table-download-link', 'href'),
+    Output('slide1-BL-count-table-download-link', 'href'),
     [Input('slide1-BL-my-date-picker-range', 'start_date'),
      Input('slide1-BL-my-date-picker-range', 'end_date'),
      Input('slide1-BL-jobtype-dropdown', 'value'),
      Input('slide1-BL-licensetype-dropdown', 'value')])
-def update_ind_records_table_download_link(start_date, end_date, jobtype, licensetype):
-    df = update_ind_records_data(start_date, end_date, jobtype, licensetype)
-    csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(df.to_csv(index=False, encoding='utf-8'))
+def update_count_table_download_link(start_date, end_date, jobtype, licensetype):
+    df = update_counts_table_data(start_date, end_date, jobtype, licensetype)
+    csv_string = df.to_csv(index=False, encoding='utf-8')
+    csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
     return csv_string
-
-if __name__ == '__main__':
-    app.run_server(host='127.0.0.1', port=5001)

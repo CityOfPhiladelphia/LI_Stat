@@ -11,11 +11,11 @@ import urllib.parse
 from app import app, con
 
 testing_mode = True
-print('slide1_license_volumes_TL.py')
+print('slide2.py')
 print('Testing mode: ' + str(testing_mode))
 
 if testing_mode:
-    df_counts = pd.read_csv('Slide1_TL_counts.csv')
+    df_counts = pd.read_csv('Slide2.csv')
     df_ind_records = pd.read_csv('Slide1_TL_ind_records.csv')
 
 else:
@@ -49,15 +49,24 @@ def update_counts_graph_data(selected_start, selected_end, selected_jobtype, sel
     df_counts['JOBISSUEMONTHYEAR'] = df_counts.index.strftime('%B %Y') # Replace the values in the JOBISSUEMONTHYEAR field with the (formatted) values from the index. The JOBISSUEMONTHYEAR field values are the ones that are going to display on the x-axis of the graph
     return df_counts
 
-def update_counts_table_data(selected_start, selected_end, selected_jobtype, selected_licensetype):
-    df_countselected = df_ind_records[(df_ind_records['ISSUEDATE']>=selected_start)&(df_ind_records['ISSUEDATE']<=selected_end)]
+# def update_counts_table_data(selected_start, selected_end, selected_jobtype, selected_licensetype):
+#     df_countselected = df_ind_records[(df_ind_records['ISSUEDATE']>=selected_start)&(df_ind_records['ISSUEDATE']<=selected_end)]
+#     if selected_jobtype != "All":
+#         df_countselected = df_countselected[(df_countselected['JOBTYPE']==selected_jobtype)]
+#     if selected_licensetype != "All":
+#         df_countselected = df_countselected[(df_countselected['LICENSETYPE'] == selected_licensetype)]
+#     df_counts = df_countselected.groupby(by=['JOBTYPE','LICENSETYPE','JOBISSUEYEAR','JOBISSUEMONTH'], as_index=False).size().reset_index()
+#     df_counts = df_counts.rename(index=str, columns={"JOBTYPE": "JOBTYPE", "LICENSETYPE": "LICENSETYPE", "JOBISSUEYEAR": "JOBISSUEYEAR", "JOBISSUEMONTH": "JOBISSUEMONTH", 0: "Count"})
+#     return df_counts
+
+def update_ind_records_data(selected_start, selected_end, selected_jobtype, selected_licensetype):
+    df_selected = df_ind_records[(df_ind_records['ISSUEDATE']>=selected_start)&(df_ind_records['ISSUEDATE']<=selected_end)]
     if selected_jobtype != "All":
-        df_countselected = df_countselected[(df_countselected['JOBTYPE']==selected_jobtype)]
+        df_selected = df_selected[(df_selected['JOBTYPE']==selected_jobtype)]
     if selected_licensetype != "All":
-        df_countselected = df_countselected[(df_countselected['LICENSETYPE'] == selected_licensetype)]
-    df_counts = df_countselected.groupby(by=['JOBTYPE','LICENSETYPE','JOBISSUEYEAR','JOBISSUEMONTH'], as_index=False).size().reset_index()
-    df_counts = df_counts.rename(index=str, columns={"JOBTYPE": "JOBTYPE", "LICENSETYPE": "LICENSETYPE", "JOBISSUEYEAR": "JOBISSUEYEAR", "JOBISSUEMONTH": "JOBISSUEMONTH", 0: "Count"})
-    return df_counts
+        df_selected = df_selected[(df_selected['LICENSETYPE'] == selected_licensetype)]
+    df_selected['ISSUEDATE'] = df_selected['ISSUEDATE'].dt.strftime('%m/%d/%Y')  #change date format to make it consistent with other dates
+    return df_selected
 
 layout = html.Div(children=[
                 html.H1(children='Trade Licenses'),
@@ -99,27 +108,26 @@ layout = html.Div(children=[
                                 )
                             )
                         ],
-                    )
+                    ),
                 ),
-                html.Div([
-                    html.A(
-                        'Download Counts Data',
-                        id='slide1-TL-count-table-download-link',
-                        download='slide1_TL_license_volumes_counts.csv',
-                        href='',
-                        target='_blank',
-                    )
-                ], style={'text-align': 'right'}),
-                table.DataTable(
-                    # Initialise the rows
-                    rows=[{}],
-                    columns=["JOBTYPE", "LICENSETYPE", "JOBISSUEYEAR","JOBISSUEMONTH", "Count"],
-                    row_selectable=True,
-                    filterable=True,
-                    sortable=True,
-                    selected_row_indices=[],
-                    id='slide1-TL-count-table'
-                )
+                # html.Div(children='Table of Trade Licenses'),
+                # html.Div([
+                #     html.A(
+                #         'Download Trade License Data',
+                #         id='slide1-TL-ind-records-table-download-link',
+                #         download='slide1_TL_license_volumes.csv',
+                #         href='',
+                #         target='_blank',
+                #     )
+                # ], style={'text-align': 'right'}),
+                # table.DataTable(
+                #     # Initialise the rows
+                #     rows=[{}],
+                #     row_selectable=True,
+                #     filterable=True,
+                #     sortable=True,
+                #     selected_row_indices=[],
+                #     id='slide1-TL-table')
                 ])
 
 @app.callback(
@@ -151,27 +159,26 @@ def update_graph(start_date, end_date, jobtype, licensetype):
         )
     }
 
-@app.callback(
-    Output('slide1-TL-count-table', 'rows'),
-    [Input('slide1-TL-my-date-picker-range', 'start_date'),
-     Input('slide1-TL-my-date-picker-range', 'end_date'),
-     Input('slide1-TL-jobtype-dropdown', 'value'),
-     Input('slide1-TL-licensetype-dropdown', 'value')])
-def update_count_table(start_date, end_date, jobtype, licensetype):
-    df_counts = update_counts_table_data(start_date, end_date, jobtype, licensetype)
-    return df_counts.to_dict('records')
+# @app.callback(
+#     Output('slide1-TL-table', 'rows'),
+#     [Input('slide1-TL-my-date-picker-range', 'start_date'),
+#      Input('slide1-TL-my-date-picker-range', 'end_date'),
+#      Input('slide1-TL-jobtype-dropdown', 'value'),
+#      Input('slide1-TL-licensetype-dropdown', 'value')])
+# def update_table(start_date, end_date, jobtype, licensetype):
+#     df_inv = update_ind_records_data(start_date, end_date, jobtype, licensetype)
+#     return df_inv.to_dict('records')
 
-@app.callback(
-    Output('slide1-TL-count-table-download-link', 'href'),
-    [Input('slide1-TL-my-date-picker-range', 'start_date'),
-     Input('slide1-TL-my-date-picker-range', 'end_date'),
-     Input('slide1-TL-jobtype-dropdown', 'value'),
-     Input('slide1-TL-licensetype-dropdown', 'value')])
-def update_count_table_download_link(start_date, end_date, jobtype, licensetype):
-    df = update_counts_table_data(start_date, end_date, jobtype, licensetype)
-    csv_string = df.to_csv(index=False, encoding='utf-8')
-    csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
-    return csv_string
+# @app.callback(
+#     Output('slide1-TL-ind-records-table-download-link', 'href'),
+#     [Input('slide1-TL-my-date-picker-range', 'start_date'),
+#      Input('slide1-TL-my-date-picker-range', 'end_date'),
+#      Input('slide1-TL-jobtype-dropdown', 'value'),
+#      Input('slide1-TL-licensetype-dropdown', 'value')])
+# def update_ind_records_table_download_link(start_date, end_date, jobtype, licensetype):
+#     df = update_ind_records_data(start_date, end_date, jobtype, licensetype)
+#     csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(df.to_csv(index=False, encoding='utf-8'))
+#     return csv_string
 
 if __name__ == '__main__':
     app.run_server(host='127.0.0.1', port=5001)

@@ -6,3 +6,4 @@ __pycache__
 .pytest_cache/
 LI Stat_Summary.docx
 config.py
+makecsv.py

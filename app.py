@@ -12,3 +12,6 @@ server = Flask(__name__)
 app = dash.Dash(server=server)
 auth = dash_auth.BasicAuth(app,USERNAME_PASSWORD_PAIRS)
 app.config.suppress_callback_exceptions = True
+print('App initialized')
+
+

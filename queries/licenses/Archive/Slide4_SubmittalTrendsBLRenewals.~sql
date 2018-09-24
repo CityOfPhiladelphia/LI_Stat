@@ -1,4 +1,6 @@
-
+--Query no. of monthly on-line, L&I Concourse, and mail transactions per license type.
+--For business: April 2016- present
+--runtime 628.072 seconds
 SELECT
     renewalyear,
     renewalmonth,

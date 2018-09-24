@@ -1,11 +1,33 @@
-Select distinct JobType, PaymentMonth, PaymentYear, sum(Amount) TotalAmount
-from (select distinct jt.Description JobType, job.ExternalFileNum, extract(MONTH from fee.LatestPayment) PaymentMonth, 
-extract(YEAR from fee.LatestPayment) PaymentYear, fee.PaymentTotal as Amount
-from query.o_fn_fee fee, api.jobs job, api.jobtypes jt
-where fee.LatestPayment >= '01-JAN-16'
-and fee.ReferencedObjectId = job.JobId 
-and job.JobTypeId = jt.JobTypeId )
-group by JobType, PaymentYear, PaymentMonth
-order by JobType, PaymentYear, PaymentMonth
+SELECT DISTINCT
+    jobtype,
+    paymentmonth,
+    paymentyear,
+    (paymentmonth || '-1-' || paymentyear) AS paymentdaymonthyear,
+    SUM(amount) totalamount
+FROM
+    (
+        SELECT DISTINCT
+            jt.description jobtype,
+            job.externalfilenum,
+            EXTRACT(MONTH FROM fee.latestpayment) paymentmonth,
+            EXTRACT(YEAR FROM fee.latestpayment) paymentyear,
+            fee.paymenttotal AS amount
+        FROM
+            query.o_fn_fee fee,
+            api.jobs job,
+            api.jobtypes jt
+        WHERE
+            fee.latestpayment >= '01-JAN-16'
+            AND fee.referencedobjectid = job.jobid
+            AND job.jobtypeid = jt.jobtypeid
+    )
+GROUP BY
+    jobtype,
+    paymentyear,
+    paymentmonth
+ORDER BY
+    jobtype,
+    paymentyear,
+    paymentmonth
 
 --0:32 runtime

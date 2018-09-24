@@ -91,7 +91,7 @@ app.layout = html.Div([
                                     textinfo='value',
                                     textfont=dict(color='#FFFFFF'),
                                     marker=dict(colors=['#1a6313', '#24b766'], 
-                                        line=dict(color='#000000', width=2)))
+                                    line=dict(color='#000000', width=2)))
                             ]
                         )
                     )

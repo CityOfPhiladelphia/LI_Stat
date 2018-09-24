@@ -10,7 +10,7 @@ import urllib.parse
 
 from app import app, con
 
-testing_mode = True
+testing_mode = False
 print('slide2.py')
 print('Testing mode: ' + str(testing_mode))
 
@@ -24,60 +24,102 @@ else:
 
 df.rename(columns={'JOBTYPE': 'Job Type', 'PAYMENTDAYMONTHYEAR': 'Date', 'TOTALAMOUNT': 'Revenue Collected'}, inplace=True)
 df_counts = df.copy(deep=True) # Make a copy to keep the original for filtering
-df_chart = df_counts.groupby(['Date'])['Revenue Collected'].sum()
+df_chart = (df_counts.groupby(['Date'])['Revenue Collected']
+                     .sum())
+df_jobtype = (df.copy(deep=True)
+                .groupby(['Job Type'])['Revenue Collected']
+                .sum()
+                .reset_index())
+
+unique_job_types = df['Job Type'].unique()
+
+job_type_options = [{'label': unique_job_type,
+                     'value': unique_job_type}
+                     for unique_job_type in unique_job_types]
 
 def update_count_data(selected_start, selected_end, selected_jobtype):
-    df_counts = df[(df['Date']>=selected_start)&(df['Date']<=selected_end)]
-    if selected_jobtype != "All":
-        df_counts = df_counts[(df_counts['Job Type']==selected_jobtype)]
+    df_counts = df[(df['Date'] >= selected_start)
+                  & (df['Date']<=selected_end)
+                  & df['Job Type'].isin(selected_jobtype)]
     df_counts['Date'] = df_counts['Date'].dt.strftime('%B %Y') 
     return df_counts
 
 def update_graph_data(selected_start, selected_end, selected_jobtype):
-    df_chart = df[(df['Date']>=selected_start)&(df['Date']<=selected_end)]
-    if selected_jobtype != "All":
-        df_chart = df_chart[(df_chart['Job Type']==selected_jobtype)]
+    df_chart = df[(df['Date'] >= selected_start)
+                  & (df['Date']<=selected_end)
+                  & df['Job Type'].isin(selected_jobtype)]
     df_chart = df_chart.groupby(['Date'])['Revenue Collected'].sum()
     return df_chart
 
+def update_pie_data(selected_start, selected_end, selected_jobtype):
+    df_jobtype = df[(df['Date'] >= selected_start)
+                    & (df['Date'] <= selected_end)
+                    & df['Job Type'].isin(selected_jobtype)]
+    df_jobtype = df_jobtype.groupby(['Job Type'])['Revenue Collected'].sum()
+    return df_jobtype
+
 layout = html.Div(children=[
-                html.H1(children='License Revenue'),
-                html.Div(children='Please Select Date Range'),
+                html.H1('License Revenue'),
                 html.Div([
-                    dcc.DatePickerRange(
-                        id='slide2-my-date-picker-range',
-                        start_date=datetime(2016, 1, 1),
-                        end_date=datetime.now()
-                    ),
-                ]),
+                    html.Div([
+                        html.P('Filter by Date Range'),
+                        dcc.DatePickerRange(
+                            display_format='MMM Y',
+                            id='slide2-my-date-picker-range',
+                            start_date=datetime(2016, 1, 1),
+                            end_date=datetime.now()
+                        )
+                    ], className='four columns'),
+                    html.Div([
+                        html.P('Filter by Job Type'),
+                        dcc.Dropdown(
+                            id='slide2-jobtype-dropdown',
+                            options=job_type_options,
+                            multi=True,
+                            value=unique_job_types
+                        )
+                    ], className='eight columns')  
+                ], className='dashrow'),
                 html.Div([
-                    html.Div(children='Please Select A Job Type'),
-                    dcc.Dropdown(
-                        id='slide2-jobtype-dropdown',
-                        options=[
-                            {'label': 'All', 'value': 'All'},
-                            {'label': 'Amendment/Renewal', 'value': 'Amendment/Renewal'},
-                            {'label': 'Business License Application', 'value': 'Business License Application'},
-                            {'label': 'Trade License Amend/Renew', 'value': 'Trade License Amend/Renew'},
-                            {'label': 'Trade License Application', 'value': 'Trade License Application'}
-                        ],
-                        value='All'
-                    ),
-                ], style={'width': '30%', 'display': 'inline-block'}),
-                dcc.Graph(id='slide2-my-graph',
-                    figure=go.Figure(
-                        data=[
-                            go.Bar(
-                                x=df_chart.index,
-                                y=df_chart.values,
-                                name='Revenue Collected',
-                                marker=go.bar.Marker(
-                                    color='rgb(26, 118, 255)'
+                    html.Div(
+                        [
+                            dcc.Graph(id='slide2-my-graph',
+                                figure=go.Figure(
+                                    data=[
+                                        go.Scatter(
+                                            x=df_chart.index,
+                                            y=df_chart.values,
+                                            name='Revenue Collected',
+                                            mode='lines',
+                                            line=dict(
+                                                shape='spline',
+                                                color='rgb(26, 118, 255)'
+                                            )
+                                        )
+                                    ]
+                                ),
+                            )
+                        ], className='eight columns'),
+                    html.Div(
+                        [
+                            dcc.Graph(id='slide2-piechart',
+                                figure=go.Figure(
+                                    data=[
+                                        go.Pie(
+                                            labels=df_jobtype.index,
+                                            values=df_jobtype.values,
+                                            hoverinfo='label+value+percent', 
+                                            hole=0.4,
+                                            textfont=dict(color='#FFFFFF'),
+                                            marker=dict(colors=['#FF7070', '#FFCD70', '#77FF70', '#70F0FF'], 
+                                                line=dict(color='#000000', width=2)
+                                            )
+                                        )
+                                    ]
                                 )
                             )
-                        ],
-                    ),
-                ),
+                        ], className='four columns'),
+                ], className='dashrow'),
                 html.Div([
                     html.A(
                         'Download Data',
@@ -100,6 +142,32 @@ layout = html.Div(children=[
                 ])
 
 @app.callback(
+    Output('slide2-piechart', 'figure'),
+    [Input('slide2-my-date-picker-range', 'start_date'),
+     Input('slide2-my-date-picker-range', 'end_date'),
+     Input('slide2-jobtype-dropdown', 'value')])
+def update_pie(start_date, end_date, jobtype):
+    df_jobtype = update_pie_data(start_date, end_date, jobtype)
+    return {
+        'data': [
+             go.Pie(
+                labels=df_jobtype.index,
+                values=df_jobtype.values,
+                hoverinfo='label+value+percent', 
+                hole=0.4,
+                textfont=dict(color='#FFFFFF'),
+                marker=dict(colors=['#FF7070', '#FFCD70', '#77FF70', '#70F0FF'], 
+                    line=dict(color='#000000', width=2)
+                )
+             )
+         ],
+         'layout': go.Layout(
+                legend=dict(orientation='h')
+            )
+
+    }
+
+@app.callback(
     Output('slide2-my-graph', 'figure'),
     [Input('slide2-my-date-picker-range', 'start_date'),
      Input('slide2-my-date-picker-range', 'end_date'),
@@ -108,22 +176,19 @@ def update_graph(start_date, end_date, jobtype):
     df_chart = update_graph_data(start_date, end_date, jobtype)
     return {
         'data': [
-             go.Bar(
+             go.Scatter(
                  x=df_chart.index,
                  y=df_chart.values,
                  name='Revenue Collected',
-                 marker=go.bar.Marker(
-                     color='rgb(26, 118, 255)'
+                 mode='lines',
+                 line=dict(
+                    shape='spline',
+                    color='rgb(26, 118, 255)'
                  )
              )
          ],
         'layout': go.Layout(
-            showlegend=True,
-            legend=go.layout.Legend(
-                x=.75,
-                y=1
-            ),
-            margin=go.layout.Margin(l=40, r=0, t=40, b=80)
+            yaxis= dict(title='Revenue Collected ($)')
         )
     }
 

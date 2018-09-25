@@ -10,7 +10,7 @@ import urllib.parse
 
 from app import app, con
 
-testing_mode = False
+testing_mode = True
 print('slide1_license_volumes_BL.py')
 print('Testing mode: ' + str(testing_mode))
 

@@ -14,27 +14,27 @@ print('slide4.py')
 print('Testing mode: ' + str(testing_mode))
 
 if testing_mode:
-    df = pd.read_csv('Slide4_BL.csv', parse_dates={'LICENSEISSUEDATE': {'format': '%m-%d-%Y'}})
+    df = pd.read_csv('Slide4_BL.csv', parse_dates=['ISSUEDATE'])
     
 else:
     with con() as con:
         with open(r'queries/licenses/FinalQueries_SQL/slide4_submittal_volumes_BL_ind_records_query.sql') as sql:
-            df = (pd.read_sql(sql=sql.read(), con=con, parse_dates={'LICENSEISSUEDATE': {'format': '%m-%d-%Y'}})
-                    .sort_values(by='LICENSEISSUEDATE'))
+            df = (pd.read_sql(sql=sql.read(), con=con, parse_dates=['ISSUEDATE'])
+                    .sort_values(by='ISSUEDATE'))
 
-df_chart_by_month = (df.copy(deep=True)
-                       .assign(LICENSEISSUEDATE=pd.to_datetime(df.LICENSEISSUEDATE.dt.strftime('%b-%Y')))
-                       .groupby(['LICENSEISSUEDATE', 'CREATEDBYTYPE', 'JOBTYPE'])['LICENSENUMBERCOUNT']
-                       .sum()
-                       .reset_index())
+df_chart_createdbytype = (df.copy(deep=True)
+                            .groupby(['ISSUEDATE', 'CREATEDBYTYPE'])['LICENSENUMBERCOUNT']
+                            .sum()
+                            .reset_index()
+                            .sort_values(by='ISSUEDATE')
+                            .assign(ISSUEDATE=lambda x: x['ISSUEDATE'].dt.strftime('%b-%Y')))
 
-df_chart_by_quarter = (df.copy(deep=True)
-                         .assign(LICENSEISSUEDATE=df.LICENSEISSUEDATE.dt.to_period('Q-JUN'))
-                         .groupby(['LICENSEISSUEDATE', 'CREATEDBYTYPE', 'JOBTYPE'])['LICENSENUMBERCOUNT']
-                         .sum()
-                         .reset_index()
-                         # Convert LICENSEISSUEDATE to string to avoid JSON serialization error with Period Datetime Objects
-                         .assign(LICENSEISSUEDATE=lambda row: row.LICENSEISSUEDATE.map(str)))
+df_chart_jobtype = (df.copy(deep=True)
+                      .groupby(['ISSUEDATE', 'JOBTYPE'])['LICENSENUMBERCOUNT']
+                      .sum()
+                      .reset_index()
+                      .sort_values(by='ISSUEDATE')
+                      .assign(ISSUEDATE=lambda x: x['ISSUEDATE'].dt.strftime('%b-%Y')))
 
 df_created_by_type = (df.copy(deep=True)
                         .groupby(['CREATEDBYTYPE'])['LICENSENUMBERCOUNT']
@@ -44,39 +44,75 @@ df_job_type = (df.copy(deep=True)
                  .groupby(['JOBTYPE'])['LICENSENUMBERCOUNT']
                  .sum())
 
-def get_data_object(user_selection):
-    return df[df['CREATEDBYTYPE']==user_selection]
+df_table = (df.copy(deep=True)
+              .groupby(['ISSUEDATE', 'LICENSETYPE', 'CREATEDBYTYPE'])['LICENSENUMBERCOUNT']
+              .sum()
+              .reset_index()
+              .sort_values(by='ISSUEDATE')
+              .assign(ISSUEDATE=lambda x: x['ISSUEDATE'].dt.strftime('%b-%Y'))
+              .rename(columns={'ISSUEDATE': 'Issue Date', 'LICENSETYPE': 'License Type', 'CREATEDBYTYPE': 'Submittal Type', 'LICENSENUMBERCOUNT': 'Number of Licenses Issued'}))
+
+all_licenses = df.copy(deep=True)
+rentals = df.loc[(df['LICENSETYPE'] == 'Rental') & (df['CREATEDBYTYPE'] == 'Online') & (df['ISSUEDATE'] >= '2018-01-01')] 
+vacant_properties = df.loc[(df['LICENSETYPE'].str.contains('Vacant')) & (df['CREATEDBYTYPE'] == 'Online') & (df['ISSUEDATE'] >= '2018-01-01')]
+food = df.loc[(df['LICENSETYPE'].str.contains('Food')) & (df['CREATEDBYTYPE'] == 'Online') & (df['ISSUEDATE'] >= '2018-01-01')]
+cals = df.loc[(df['LICENSETYPE'].str.contains('Activity')) & (df['CREATEDBYTYPE'] == 'Online') & (df['ISSUEDATE'] >= '2018-01-01')]
+
+print('rentals')
+print(rentals.head())
+
+print('vacant_properties')
+print(vacant_properties.head())
+
+print('food')
+print(food.head())
+
+print('cals')
+print(cals.head())
+# def percent_renewals(df):
+#     count_new = len(df.loc[df['JOBTYPE'] == 'Application'].index)
+#     count_renewals = len(df.loc[df['JOBTYPE'] == 'Renewal'].index)
+#     return round(count_renewals / (count_new + count_renewals) * 100, 1)
+
+# df_table_2 = pd.DataFrame(data={
+#     'License Type': ['All Licenses', 'Rentals', 'Vacant Properties', 'Food', 'CALS'],
+#     '% Online Renewals': [percent_renewals(license_type) for license_type in [all_licenses, rentals, vacant_properties, food, cals]]
+# })
 
 layout = html.Div([
-    html.H1('Business Licenses By Submittal Type'),
-    html.P('Filter the data using the dropdowns below:'),
+    html.H1('Business Licenses By Submittal Type', style={'text-align': 'center'}),
     html.Div([
         html.Div([
-            html.P('Created by Type'),
-            dcc.Dropdown(
-                id='slide4BL-dropdown-one',
-                options=[
-                    {'label': 'Staff', 'value': 'Staff'},
-                    {'label': 'Online', 'value': 'Online'}
-                ],
-                multi=True,
-                value=['Staff', 'Online'],
-            )
-        ], className='six columns'),
-        html.Div([
-            html.P('Job Type'),
-            dcc.Dropdown(
-                id='slide4BL-dropdown-two',
-                options=[
-                    {'label': 'Renewal', 'value': 'Renewal'},
-                    {'label': 'Application', 'value': 'Application'}
-                ],
-                multi=True,
-                value=['Renewal', 'Application'],
-            )
-        ], className='six columns') 
-    ], className='dashrow'),
-    html.Div([
+            dcc.Graph(id='slide4BL-createdbytype-chart',
+                figure=go.Figure(
+                    data=[
+                        go.Scatter(
+                            x=df_chart_createdbytype.loc[df_chart_createdbytype['CREATEDBYTYPE'] == 'Online']['ISSUEDATE'],
+                            y=df_chart_createdbytype.loc[df_chart_createdbytype['CREATEDBYTYPE'] == 'Online']['LICENSENUMBERCOUNT'],
+                            name='Online',
+                            mode='lines',
+                            line=dict(
+                                shape='spline',
+                                color='#399327'
+                            )
+                        ),
+                        go.Scatter(
+                            x=df_chart_createdbytype.loc[df_chart_createdbytype['CREATEDBYTYPE'] == 'Staff']['ISSUEDATE'],
+                            y=df_chart_createdbytype.loc[df_chart_createdbytype['CREATEDBYTYPE'] == 'Staff']['LICENSENUMBERCOUNT'],
+                            name='Staff',
+                            mode='lines',
+                            line=dict(
+                                shape='spline',
+                                color='#642692'
+                            )
+                        )
+                    ],
+                    layout=go.Layout(
+                        yaxis=dict(title='Number of Licenses Issued')
+                    )
+                )
+            ),
+        ], className='eight columns'),
         html.Div([
             dcc.Graph(id='slide4BL-createdbytype-piechart',
                 figure=go.Figure(
@@ -87,13 +123,46 @@ layout = html.Div([
                             hoverinfo='label+value+percent', 
                             hole=0.4,
                             textfont=dict(color='#FFFFFF'),
-                            marker=dict(colors=['#1a6313', '#24b766'], 
+                            marker=dict(colors=['#399327', '#642692'], 
                             line=dict(color='#000000', width=2))
                         )
                     ]
                 )
             )
-        ], className='six columns'),
+        ], className='four columns') 
+    ], className='dashrow'),
+    html.Div([
+        html.Div([
+            dcc.Graph(id='slide4BL-jobtype-chart',
+                figure=go.Figure(
+                    data=[
+                        go.Scatter(
+                            x=df_chart_jobtype.loc[df_chart_jobtype['JOBTYPE'] == 'Renewal']['ISSUEDATE'],
+                            y=df_chart_jobtype.loc[df_chart_jobtype['JOBTYPE'] == 'Renewal']['LICENSENUMBERCOUNT'],
+                            name='Renewal',
+                            mode='lines',
+                            line=dict(
+                                shape='spline',
+                                color='#4153f4'
+                            )
+                        ),
+                        go.Scatter(
+                            x=df_chart_jobtype.loc[df_chart_jobtype['JOBTYPE'] == 'Application']['ISSUEDATE'],
+                            y=df_chart_jobtype.loc[df_chart_jobtype['JOBTYPE'] == 'Application']['LICENSENUMBERCOUNT'],
+                            name='Application',
+                            mode='lines',
+                            line=dict(
+                                shape='spline',
+                                color='#f4424b'
+                            )
+                        )
+                    ],
+                    layout=go.Layout(
+                        yaxis=dict(title='Number of Licenses Issued')
+                    )
+                )
+            )
+        ], className='eight columns'),
         html.Div([
             dcc.Graph(id='slide4BL-jobtype-piechart',
                 figure=go.Figure(
@@ -104,77 +173,59 @@ layout = html.Div([
                             hoverinfo='label+value+percent',
                             hole=0.4, 
                             textfont=dict(color='#FFFFFF'),
-                            marker=dict(colors=['#FF7070', '#FFCD70'], 
+                            marker=dict(colors=['#f4424b', '#4153f4'], 
                                 line=dict(color='#000000', width=2))
                         )
                     ]
                 )
             )
-        ], className='six columns')
-    ], className='dashrow'),     
-    html.H2('Monthly View'),
-    dcc.Graph(id='monthly-barchart',
-        figure=go.Figure(
-            data=[
-                go.Bar(
-                    x=df_chart_by_month.loc[df_chart_by_month['JOBTYPE'] == 'Application']['LICENSEISSUEDATE'],
-                    y=df_chart_by_month.loc[df_chart_by_month['JOBTYPE'] == 'Application']['LICENSENUMBERCOUNT'],
-                    name='BL New Applications',
-                    marker=go.bar.Marker(
-                        color='rgb(55, 83, 109)'
-                    )
-                ),
-                go.Bar(
-                    x=df_chart_by_month.loc[df_chart_by_month['JOBTYPE'] == 'Renewal']['LICENSEISSUEDATE'],
-                    y=df_chart_by_month.loc[df_chart_by_month['JOBTYPE'] == 'Renewal']['LICENSENUMBERCOUNT'],
-                    name='BL Renewals',
-                    marker=go.bar.Marker(
-                        color='rgb(26, 118, 255)'
-                    )
-                )
-            ]
-        )
-    ),
-    html.H2('Quarterly View'),
-    dcc.Graph(id='quarterly-barchart',
-        figure=go.Figure(
-            data=[
-                go.Bar(
-                    x=df_chart_by_quarter.loc[df_chart_by_quarter['JOBTYPE'] == 'Application']['LICENSEISSUEDATE'],
-                    y=df_chart_by_quarter.loc[df_chart_by_quarter['JOBTYPE'] == 'Application']['LICENSENUMBERCOUNT'],
-                    name='BL New Applications',
-                    marker=go.bar.Marker(
-                        color='rgb(55, 83, 109)'
-                    )
-                ),
-                go.Bar(
-                    x=df_chart_by_quarter.loc[df_chart_by_quarter['JOBTYPE'] == 'Renewal']['LICENSEISSUEDATE'],
-                    y=df_chart_by_quarter.loc[df_chart_by_quarter['JOBTYPE'] == 'Renewal']['LICENSENUMBERCOUNT'],
-                    name='BL Renewals',
-                    marker=go.bar.Marker(
-                        color='rgb(26, 118, 255)'
-                    )
-                )
-            ]   
-        )
-    ),
+        ], className='four columns')
+    ], className='dashrow'),
     html.Div([
-        html.A(
-            'Download Data',
-            id='Slide4BL-download-link',
-            download='Slide4BL.csv',
-            href='',
-            target='_blank',
-        )
-    ], style={'text-align': 'right'})
+        html.H3('No. of Monthly Online and Staff Transactions Per License Type', style={'text-align': 'center'}),
+        html.Div([
+            html.A(
+                'Download Data',
+                id='Slide4BL-download-link',
+                download='Slide4BL.csv',
+                href='',
+                target='_blank',
+            )
+        ], style={'text-align': 'right'}),
+        html.Div([
+            dt.DataTable(
+                rows=df_table.to_dict('records'),
+                columns=df_table.columns,
+                filterable=True,
+                sortable=True,
+                editable=False,
+                id='slide4-BL-table-1'
+            )
+        ])
+    ], style={'width': '60%', 'margin-left': 'auto', 'margin-right': 'auto'}),
+    html.Div([
+        html.H3('Percent of Online New/Renewals This Year', style={'text-align': 'center'}),
+        html.Div([
+            html.A(
+                'Download Data',
+                id='Slide4BL-download-link',
+                download='Slide4BL.csv',
+                href='',
+                target='_blank',
+            )
+        ], style={'text-align': 'right'}),
+        html.Div([
+            dt.DataTable(
+                rows=df_table_2.to_dict('records'),
+                columns=df_table_2.columns,
+                filterable=True,
+                sortable=True,
+                editable=False,
+                id='slide4-BL-table-2'
+            )
+        ])
+    ], style={'width': '60%', 'margin-left': 'auto', 'margin-right': 'auto'})
 ])
-
-# @app.callback(
-#     Output('Slide4BL-table', 'rows'), 
-#     [Input('field-dropdown', 'value')])
-# def update_table(user_selection):
-#     df = get_data_object(user_selection)
-#     return df.to_dict('records')
 
 # @app.callback(
 #     Output('Slide4BL-download-link', 'href'),

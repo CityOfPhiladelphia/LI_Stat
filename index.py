@@ -5,7 +5,8 @@ from dash.dependencies import Input, Output
 from gevent.pywsgi import WSGIServer
 
 from app import app, server
-from apps import Slide1BL, Slide1TL, Slide2
+# from apps import Slide1BL, Slide1TL, Slide2
+from apps import Slide4BL
 
 
 app.layout = html.Div([
@@ -32,14 +33,14 @@ index_page = html.Div([
 @app.callback(Output('page-content', 'children'),
               [Input('url', 'pathname')])
 def display_page(pathname):
-    if pathname == '/Slide1BL':
-        return Slide1BL.layout
-    elif pathname == '/Slide1TL':
-        return Slide1TL.layout
-    elif pathname == '/Slide2':
-        return Slide2.layout
-    # if pathname == '/Slide4BL':
-    #     return Slide4BL.layout
+    # if pathname == '/Slide1BL':
+    #     return Slide1BL.layout
+    # elif pathname == '/Slide1TL':
+    #     return Slide1TL.layout
+    # elif pathname == '/Slide2':
+    #     return Slide2.layout
+    if pathname == '/Slide4BL':
+        return Slide4BL.layout
     else:
         return index_page
 

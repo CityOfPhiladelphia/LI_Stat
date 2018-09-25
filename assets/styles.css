@@ -1,7 +1,3 @@
-h1 {
-    text-align: center;
-}
-
 /* For devices larger than 400px */
 @media (min-width: 400px) {
     .container {

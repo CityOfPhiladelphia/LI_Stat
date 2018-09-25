@@ -60,7 +60,7 @@ def update_counts_table_data(selected_start, selected_end, selected_jobtype, sel
     return df_counts
 
 layout = html.Div(children=[
-                html.H1(children='Trade License Volumes Over Time'),
+                html.H1(children='Trade License Volumes'),
                 html.Div(children='Please Select Date Range (Job Issue Date)'),
                 html.Div([
                     dcc.DatePickerRange(
@@ -90,11 +90,12 @@ layout = html.Div(children=[
                 dcc.Graph(id='slide1-TL-my-graph',
                     figure=go.Figure(
                         data=[
-                            go.Bar(
+                            go.Scatter(
                                 x=df_counts['JOBISSUEMONTHYEAR'],
                                 y=df_counts['COUNTJOBS'],
-                                name='Trade Licenses',
-                                marker=go.bar.Marker(
+                                mode='lines',
+                                line=dict(
+                                    shape='spline',
                                     color='rgb(26, 118, 255)'
                                 )
                             )
@@ -132,22 +133,18 @@ def update_graph(start_date, end_date, jobtype, licensetype):
     df_counts = update_counts_graph_data(start_date, end_date, jobtype, licensetype)
     return {
         'data': [
-             go.Bar(
+             go.Scatter(
                  x=df_counts['JOBISSUEMONTHYEAR'],
                  y=df_counts['Count'],
-                 name='Trade Licenses',
-                 marker=go.bar.Marker(
-                     color='rgb(26, 118, 255)'
+                 mode='lines',
+                 line=dict(
+                    shape='spline',
+                    color='rgb(26, 118, 255)'
                  )
              )
          ],
         'layout': go.Layout(
-            showlegend=True,
-            legend=go.layout.Legend(
-                x=.75,
-                y=1
-            ),
-            margin=go.layout.Margin(l=40, r=0, t=40, b=80)
+            yaxis= dict(title='Number of Trade Licenses Issued')
         )
     }
 

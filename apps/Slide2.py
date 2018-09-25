@@ -15,21 +15,24 @@ print('slide2.py')
 print('Testing mode: ' + str(testing_mode))
 
 if testing_mode:
-    df = pd.read_csv('Slide2.csv', parse_dates=['PAYMENTDAYMONTHYEAR'])
+    df = pd.read_csv(r'Slide2.csv', parse_dates=['PAYMENTDATE'])
     
 else:
     with con() as con:
-        with open(r'queries/licenses/FinalQueries_SQL/slide2_PaymentsbyMonth.sql') as counts_query:
-            df = pd.read_sql_query(sql=counts_query.read(), con=con, parse_dates={'PAYMENTDAYMONTHYEAR': {'format': '%Y-%m-%d'}})
+        with open(r'queries/licenses/FinalQueries_SQL/slide2_PaymentsbyMonth.sql') as sql:
+            df = pd.read_sql_query(sql=sql.read(), con=con, parse_dates=['PAYMENTDATE'])
 
-df.rename(columns={'JOBTYPE': 'Job Type', 'PAYMENTDAYMONTHYEAR': 'Date', 'TOTALAMOUNT': 'Revenue Collected'}, inplace=True)
+df.rename(columns={'JOBTYPE': 'Job Type', 'PAYMENTDATE': 'Date', 'TOTALAMOUNT': 'Revenue Collected'}, inplace=True)
+
 df_counts = df.copy(deep=True) # Make a copy to keep the original for filtering
-df_chart = (df_counts.groupby(['Date'])['Revenue Collected']
-                     .sum())
-df_jobtype = (df.copy(deep=True)
-                .groupby(['Job Type'])['Revenue Collected']
-                .sum()
-                .reset_index())
+
+df_line_chart = (df_counts.groupby(['Date'])['Revenue Collected']
+                          .sum())
+
+df_pie_chart = (df.copy(deep=True)
+                  .groupby(['Job Type'])['Revenue Collected']
+                  .sum()
+                  .reset_index())
 
 unique_job_types = df['Job Type'].unique()
 
@@ -44,22 +47,22 @@ def update_count_data(selected_start, selected_end, selected_jobtype):
     df_counts['Date'] = df_counts['Date'].dt.strftime('%B %Y') 
     return df_counts
 
-def update_graph_data(selected_start, selected_end, selected_jobtype):
-    df_chart = df[(df['Date'] >= selected_start)
+def update_line_chart_data(selected_start, selected_end, selected_jobtype):
+    df_line_chart = df[(df['Date'] >= selected_start)
                   & (df['Date']<=selected_end)
                   & df['Job Type'].isin(selected_jobtype)]
-    df_chart = df_chart.groupby(['Date'])['Revenue Collected'].sum()
-    return df_chart
+    df_line_chart = df_line_chart.groupby(['Date'])['Revenue Collected'].sum()
+    return df_line_chart
 
 def update_pie_data(selected_start, selected_end, selected_jobtype):
-    df_jobtype = df[(df['Date'] >= selected_start)
+    df_pie_chart = df[(df['Date'] >= selected_start)
                     & (df['Date'] <= selected_end)
                     & df['Job Type'].isin(selected_jobtype)]
-    df_jobtype = df_jobtype.groupby(['Job Type'])['Revenue Collected'].sum()
-    return df_jobtype
+    df_pie_chart = df_pie_chart.groupby(['Job Type'])['Revenue Collected'].sum()
+    return df_pie_chart
 
 layout = html.Div(children=[
-                html.H1('License Revenue'),
+                html.H1('License Revenue', style={'text-align': 'center'}),
                 html.Div([
                     html.Div([
                         html.P('Filter by Date Range'),
@@ -87,8 +90,8 @@ layout = html.Div(children=[
                                 figure=go.Figure(
                                     data=[
                                         go.Scatter(
-                                            x=df_chart.index,
-                                            y=df_chart.values,
+                                            x=df_line_chart.index,
+                                            y=df_line_chart.values,
                                             name='Revenue Collected',
                                             mode='lines',
                                             line=dict(
@@ -106,11 +109,11 @@ layout = html.Div(children=[
                                 figure=go.Figure(
                                     data=[
                                         go.Pie(
-                                            labels=df_jobtype.index,
-                                            values=df_jobtype.values,
+                                            labels=df_pie_chart.index,
+                                            values=df_pie_chart.values,
                                             hoverinfo='label+value+percent', 
                                             hole=0.4,
-                                            textfont=dict(color='#FFFFFF'),
+                                            textfont=dict(color='#000000'),
                                             marker=dict(colors=['#FF7070', '#FFCD70', '#77FF70', '#70F0FF'], 
                                                 line=dict(color='#000000', width=2)
                                             )
@@ -121,41 +124,45 @@ layout = html.Div(children=[
                         ], className='four columns'),
                 ], className='dashrow'),
                 html.Div([
-                    html.A(
-                        'Download Data',
-                        id='slide2-count-table-download-link',
-                        download='slide2.csv',
-                        href='',
-                        target='_blank',
-                    )
-                ], style={'text-align': 'right'}),
-                table.DataTable(
-                    # Initialise the rows
-                    rows=[{}],
-                    columns=["Date", "Job Type", "Revenue Collected"],
-                    row_selectable=True,
-                    filterable=True,
-                    sortable=True,
-                    selected_row_indices=[],
-                    id='slide2-count-table'
-                )
-                ])
+                    html.Div([
+                        html.Div([
+                            html.A(
+                                'Download Data',
+                                id='slide2-count-table-download-link',
+                                download='slide2.csv',
+                                href='',
+                                target='_blank',
+                            )
+                        ], style={'text-align': 'right'}),
+                        table.DataTable(
+                        # Initialise the rows
+                        rows=[{}],
+                        columns=["Date", "Job Type", "Revenue Collected"],
+                        row_selectable=True,
+                        filterable=True,
+                        sortable=True,
+                        selected_row_indices=[],
+                        id='slide2-count-table'
+                        )
+                    ], style={'width': '60%', 'margin-left': 'auto', 'margin-right': 'auto'})
+                ], className='dashrow')
+            ])
 
 @app.callback(
     Output('slide2-piechart', 'figure'),
     [Input('slide2-my-date-picker-range', 'start_date'),
      Input('slide2-my-date-picker-range', 'end_date'),
      Input('slide2-jobtype-dropdown', 'value')])
-def update_pie(start_date, end_date, jobtype):
-    df_jobtype = update_pie_data(start_date, end_date, jobtype)
+def update_pie_chart(start_date, end_date, jobtype):
+    df_pie_chart = update_pie_data(start_date, end_date, jobtype)
     return {
         'data': [
              go.Pie(
-                labels=df_jobtype.index,
-                values=df_jobtype.values,
+                labels=df_pie_chart.index,
+                values=df_pie_chart.values,
                 hoverinfo='label+value+percent', 
                 hole=0.4,
-                textfont=dict(color='#FFFFFF'),
+                textfont=dict(color='#000000'),
                 marker=dict(colors=['#FF7070', '#FFCD70', '#77FF70', '#70F0FF'], 
                     line=dict(color='#000000', width=2)
                 )
@@ -164,7 +171,6 @@ def update_pie(start_date, end_date, jobtype):
          'layout': go.Layout(
                 legend=dict(orientation='h')
             )
-
     }
 
 @app.callback(
@@ -172,13 +178,13 @@ def update_pie(start_date, end_date, jobtype):
     [Input('slide2-my-date-picker-range', 'start_date'),
      Input('slide2-my-date-picker-range', 'end_date'),
      Input('slide2-jobtype-dropdown', 'value')])
-def update_graph(start_date, end_date, jobtype):
-    df_chart = update_graph_data(start_date, end_date, jobtype)
+def update_line_chart(start_date, end_date, jobtype):
+    df_line_chart = update_line_chart_data(start_date, end_date, jobtype)
     return {
         'data': [
              go.Scatter(
-                 x=df_chart.index,
-                 y=df_chart.values,
+                 x=df_line_chart.index,
+                 y=df_line_chart.values,
                  name='Revenue Collected',
                  mode='lines',
                  line=dict(

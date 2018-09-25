@@ -8,11 +8,11 @@ from app import app, server
 from apps import Slide1BL, Slide1TL, Slide2
 
 
-app.layout = html.Div(className='ten columns offset-by-one', children=[
-    dcc.Location(id='url', refresh=False),
-    html.Div(id='page-content'),
-    html.Div(dt.DataTable(rows=[{}]), style={'display': 'none'})
-])
+app.layout = html.Div([
+                dcc.Location(id='url', refresh=False),
+                html.Div(id='page-content'),
+                html.Div(dt.DataTable(rows=[{}]), style={'display': 'none'})
+            ], className='ten columns offset-by-one')
     
 index_page = html.Div([
     html.H2('Licenses & Inspections'),
@@ -23,7 +23,9 @@ index_page = html.Div([
     html.Br(),
     dcc.Link('Trade Licenses Volumes', href='/Slide1TL'),
     html.Br(),
-    dcc.Link('License Revenue', href='/Slide2')
+    dcc.Link('License Revenue', href='/Slide2'),
+    html.Br(),
+    dcc.Link('Business Licenses By Submittal Type', href='Slide4BL')
 ], style={'text-align': 'center'})
 
 
@@ -34,8 +36,10 @@ def display_page(pathname):
         return Slide1BL.layout
     elif pathname == '/Slide1TL':
         return Slide1TL.layout
-    if pathname == '/Slide2':
+    elif pathname == '/Slide2':
         return Slide2.layout
+    # if pathname == '/Slide4BL':
+    #     return Slide4BL.layout
     else:
         return index_page
 

@@ -10,7 +10,7 @@ import urllib.parse
 
 from app import app, con
 
-testing_mode = True
+testing_mode = False
 print('slide2.py')
 print('Testing mode: ' + str(testing_mode))
 
@@ -99,7 +99,8 @@ layout = html.Div(children=[
                                                 color='rgb(26, 118, 255)'
                                             )
                                         )
-                                    ]
+                                    ],
+                                    layout=go.Layout(title=('Revenue Collected By Month'))
                                 ),
                             )
                         ], className='eight columns'),
@@ -118,13 +119,27 @@ layout = html.Div(children=[
                                                 line=dict(color='#000000', width=2)
                                             )
                                         )
-                                    ]
+                                    ],
+                                    layout=go.Layout(title=('Revenue Breakdown by Job Type'))
                                 )
                             )
                         ], className='four columns'),
                 ], className='dashrow'),
                 html.Div([
                     html.Div([
+                        html.H3('Revenue Collected By Month and Job Type', style={'text-align': 'center'}),
+                        html.Div([
+                            table.DataTable(
+                                # Initialise the rows
+                                rows=[{}],
+                                columns=["Date", "Job Type", "Revenue Collected"],
+                                row_selectable=True,
+                                filterable=True,
+                                sortable=True,
+                                selected_row_indices=[],
+                                id='slide2-count-table'
+                            )
+                        ], style={'text-align': 'center'}),
                         html.Div([
                             html.A(
                                 'Download Data',
@@ -133,18 +148,8 @@ layout = html.Div(children=[
                                 href='',
                                 target='_blank',
                             )
-                        ], style={'text-align': 'right'}),
-                        table.DataTable(
-                        # Initialise the rows
-                        rows=[{}],
-                        columns=["Date", "Job Type", "Revenue Collected"],
-                        row_selectable=True,
-                        filterable=True,
-                        sortable=True,
-                        selected_row_indices=[],
-                        id='slide2-count-table'
-                        )
-                    ], style={'width': '60%', 'margin-left': 'auto', 'margin-right': 'auto'})
+                        ], style={'text-align': 'right'})
+                    ], style={'width': '50%', 'margin-left': 'auto', 'margin-right': 'auto','margin-top': '45px', 'margin-bottom': '45px'})
                 ], className='dashrow')
             ])
 
@@ -169,7 +174,8 @@ def update_pie_chart(start_date, end_date, jobtype):
              )
          ],
          'layout': go.Layout(
-                legend=dict(orientation='h')
+                legend=dict(orientation='h'),
+                title=('Revenue Breakdown by Job Type')
             )
     }
 
@@ -194,6 +200,7 @@ def update_line_chart(start_date, end_date, jobtype):
              )
          ],
         'layout': go.Layout(
+            title=('Revenue Collected By Month'),
             yaxis= dict(title='Revenue Collected ($)')
         )
     }

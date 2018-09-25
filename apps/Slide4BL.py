@@ -9,7 +9,9 @@ import datetime
 
 from app import app, con
 
-testing_mode = True
+#TODO the query does not currently bring in CALS
+
+testing_mode = False
 print('slide4.py')
 print('Testing mode: ' + str(testing_mode))
 
@@ -37,10 +39,12 @@ df_chart_jobtype = (df.copy(deep=True)
                       .assign(ISSUEDATE=lambda x: x['ISSUEDATE'].dt.strftime('%b-%Y')))
 
 df_created_by_type = (df.copy(deep=True)
+                        .loc[df['ISSUEDATE'] >= '2018-01-01']
                         .groupby(['CREATEDBYTYPE'])['LICENSENUMBERCOUNT']
                         .sum())
 
 df_job_type = (df.copy(deep=True)
+                 .loc[df['ISSUEDATE'] >= '2018-01-01']
                  .groupby(['JOBTYPE'])['LICENSENUMBERCOUNT']
                  .sum())
 
@@ -58,26 +62,15 @@ vacant_properties = df.loc[(df['LICENSETYPE'].str.contains('Vacant')) & (df['CRE
 food = df.loc[(df['LICENSETYPE'].str.contains('Food')) & (df['CREATEDBYTYPE'] == 'Online') & (df['ISSUEDATE'] >= '2018-01-01')]
 cals = df.loc[(df['LICENSETYPE'].str.contains('Activity')) & (df['CREATEDBYTYPE'] == 'Online') & (df['ISSUEDATE'] >= '2018-01-01')]
 
-print('rentals')
-print(rentals.head())
+def percent_renewals(df):
+    count_new = len(df.loc[df['JOBTYPE'] == 'Application'].index)
+    count_renewals = len(df.loc[df['JOBTYPE'] == 'Renewal'].index)
+    return round(count_renewals / (count_new + count_renewals) * 100, 1)
 
-print('vacant_properties')
-print(vacant_properties.head())
-
-print('food')
-print(food.head())
-
-print('cals')
-print(cals.head())
-# def percent_renewals(df):
-#     count_new = len(df.loc[df['JOBTYPE'] == 'Application'].index)
-#     count_renewals = len(df.loc[df['JOBTYPE'] == 'Renewal'].index)
-#     return round(count_renewals / (count_new + count_renewals) * 100, 1)
-
-# df_table_2 = pd.DataFrame(data={
-#     'License Type': ['All Licenses', 'Rentals', 'Vacant Properties', 'Food', 'CALS'],
-#     '% Online Renewals': [percent_renewals(license_type) for license_type in [all_licenses, rentals, vacant_properties, food, cals]]
-# })
+df_table_2 = pd.DataFrame(data={
+    'License Type': ['All Licenses', 'Rentals', 'Vacant Properties', 'Food'],
+    '% Online Renewals': [percent_renewals(license_type) for license_type in [all_licenses, rentals, vacant_properties, food]]
+})
 
 layout = html.Div([
     html.H1('Business Licenses By Submittal Type', style={'text-align': 'center'}),
@@ -108,6 +101,7 @@ layout = html.Div([
                         )
                     ],
                     layout=go.Layout(
+                        title=('Submittal Type Activity By Month'),
                         yaxis=dict(title='Number of Licenses Issued')
                     )
                 )
@@ -124,9 +118,10 @@ layout = html.Div([
                             hole=0.4,
                             textfont=dict(color='#FFFFFF'),
                             marker=dict(colors=['#399327', '#642692'], 
-                            line=dict(color='#000000', width=2))
+                            line=dict(color='#000000', width=2)),
                         )
-                    ]
+                    ],
+                    layout=go.Layout(title=('2018 Submittal Type Breakdown'))
                 )
             )
         ], className='four columns') 
@@ -158,6 +153,7 @@ layout = html.Div([
                         )
                     ],
                     layout=go.Layout(
+                        title=('Application and Renewal Activity By Month'),
                         yaxis=dict(title='Number of Licenses Issued')
                     )
                 )
@@ -176,55 +172,47 @@ layout = html.Div([
                             marker=dict(colors=['#f4424b', '#4153f4'], 
                                 line=dict(color='#000000', width=2))
                         )
-                    ]
+                    ],
+                    layout=go.Layout(title=('2018 Job Type Breakdown'))
                 )
             )
         ], className='four columns')
     ], className='dashrow'),
     html.Div([
-        html.H3('No. of Monthly Online and Staff Transactions Per License Type', style={'text-align': 'center'}),
-        html.Div([
-            html.A(
-                'Download Data',
-                id='Slide4BL-download-link',
-                download='Slide4BL.csv',
-                href='',
-                target='_blank',
-            )
-        ], style={'text-align': 'right'}),
-        html.Div([
-            dt.DataTable(
-                rows=df_table.to_dict('records'),
-                columns=df_table.columns,
-                filterable=True,
-                sortable=True,
-                editable=False,
-                id='slide4-BL-table-1'
-            )
-        ])
-    ], style={'width': '60%', 'margin-left': 'auto', 'margin-right': 'auto'}),
-    html.Div([
-        html.H3('Percent of Online New/Renewals This Year', style={'text-align': 'center'}),
-        html.Div([
-            html.A(
-                'Download Data',
-                id='Slide4BL-download-link',
-                download='Slide4BL.csv',
-                href='',
-                target='_blank',
-            )
-        ], style={'text-align': 'right'}),
+        html.H3('Percent of Online New/Renewals in 2018', style={'text-align': 'center'}),
         html.Div([
             dt.DataTable(
                 rows=df_table_2.to_dict('records'),
                 columns=df_table_2.columns,
-                filterable=True,
-                sortable=True,
                 editable=False,
                 id='slide4-BL-table-2'
             )
-        ])
-    ], style={'width': '60%', 'margin-left': 'auto', 'margin-right': 'auto'})
+        ], style={'text-align': 'center'})
+    ], style={'width': '40%', 'margin-left': 'auto', 'margin-right': 'auto', 'margin-top': '45px', 'margin-bottom': '45px'}),
+    html.Div([
+        html.H3('No. of Monthly Online and Staff Transactions Per License Type', style={'text-align': 'center'}),
+        html.Div([
+            html.Div([
+                dt.DataTable(
+                    rows=df_table.to_dict('records'),
+                    columns=df_table.columns,
+                    filterable=True,
+                    sortable=True,
+                    editable=False,
+                    id='slide4-BL-table-1'
+                )
+            ], style={'text-align': 'center'})
+        ]),
+        html.Div([
+            html.A(
+                'Download Data',
+                id='Slide4BL-download-link',
+                download='Slide4BL.csv',
+                href='',
+                target='_blank',
+            )
+        ], style={'text-align': 'right'}),
+    ], style={'width': '70%', 'margin-left': 'auto', 'margin-right': 'auto', 'margin-top': '45px', 'margin-bottom': '45px'})
 ])
 
 # @app.callback(

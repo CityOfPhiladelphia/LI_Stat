@@ -10,7 +10,7 @@ import urllib.parse
 
 from app import app, con
 
-testing_mode = False
+testing_mode = True
 print('slide1_license_volumes_BL.py')
 print('Testing mode: ' + str(testing_mode))
 
@@ -50,7 +50,7 @@ def update_counts_graph_data(selected_start, selected_end, selected_jobtype, sel
     df_counts.index = df_counts.index.to_period('m') # Turn index from Date to PeriodIndex
     df_counts = df_counts.reindex(idx) # Reindex df_counts based on the list of ALL months in the date range so that it includes even those that didn't have any values
     df_counts['Count'].fillna(0, inplace=True) # Give any months without a Count value the value of 0
-    df_counts['JOBISSUEMONTHYEAR'] = df_counts.index.strftime('%B %Y') # Replace the values in the JOBISSUEMONTHYEAR field with the (formatted) values from the index. The JOBISSUEMONTHYEAR field values are the ones that are going to display on the x-axis of the graph
+    df_counts['JOBISSUEMONTHYEAR'] = df_counts.index.strftime('%b %Y') # Replace the values in the JOBISSUEMONTHYEAR field with the (formatted) values from the index. The JOBISSUEMONTHYEAR field values are the ones that are going to display on the x-axis of the graph
     return df_counts
 
 def update_counts_table_data(selected_start, selected_end, selected_jobtype, selected_licensetype):
@@ -59,38 +59,43 @@ def update_counts_table_data(selected_start, selected_end, selected_jobtype, sel
         df_countselected = df_countselected[(df_countselected['JOBTYPE']==selected_jobtype)]
     if selected_licensetype != "All":
         df_countselected = df_countselected[(df_countselected['LICENSETYPE'] == selected_licensetype)]
-    df_counts = df_countselected.groupby(by=['JOBTYPE','LICENSETYPE','JOBISSUEYEAR','JOBISSUEMONTH'], as_index=False).size().reset_index()
-    df_counts = df_counts.rename(index=str, columns={"JOBTYPE": "JOBTYPE", "LICENSETYPE": "LICENSETYPE", "JOBISSUEYEAR": "JOBISSUEYEAR", "JOBISSUEMONTH": "JOBISSUEMONTH", 0: "Count"})
+    df_counts = df_countselected.groupby(by=['JOBTYPE','LICENSETYPE', 'JOBISSUEMONTHYEAR'], as_index=False).size().reset_index()
+    df_counts.assign(ISSUEDATE=lambda x: x['JOBISSUEMONTHYEAR'].dt.strftime('%b-%Y'), inplace=True)
+    df_counts = df_counts.rename(index=str, columns={"JOBTYPE": "Job Type", "LICENSETYPE": "License Type", "JOBISSUEMONTHYEAR": "Month Issued", 0: "Number of Licenses Issued"})
     return df_counts
 
 layout = html.Div(children=[
-                html.H1(children='Business License Volumes'),
-                html.Div(children='Please Select Date Range (Job Issue Date)'),
+                html.H1('Business License Volumes', style={'text-align': 'center'}),
                 html.Div([
-                    dcc.DatePickerRange(
-                        id='slide1-BL-my-date-picker-range',
-                        start_date=datetime(2016, 1, 1),
-                        end_date=datetime.now()
-                    ),
-                ]),
-                html.Div([
-                    dcc.Dropdown(
-                        id='slide1-BL-jobtype-dropdown',
-                        options=[
-                            {'label': 'All', 'value': 'All'},
-                            {'label': 'Application', 'value': 'Application'},
-                            {'label': 'Renewal', 'value': 'Renewal'}
-                        ],
-                        value='All'
-                    ),
-                ], style={'width': '30%', 'display': 'inline-block'}),
-                html.Div([
-                    dcc.Dropdown(
-                        id='slide1-BL-licensetype-dropdown',
-                        options=[{'label': k, 'value': k} for k in unique_licensetypes],
-                        value='All'
-                    ),
-                ], style={'width': '30%', 'display': 'inline-block'}),
+                    html.Div([
+                        html.P('Filter by Date Range'),
+                        dcc.DatePickerRange(
+                            id='slide1-BL-my-date-picker-range',
+                            start_date=datetime(2016, 1, 1),
+                            end_date=datetime.now()
+                        ),
+                    ], className='four columns'),
+                    html.Div([
+                        html.P('Filter by Job Type'),
+                        dcc.Dropdown(
+                            id='slide1-BL-jobtype-dropdown',
+                            options=[
+                                {'label': 'All', 'value': 'All'},
+                                {'label': 'Application', 'value': 'Application'},
+                                {'label': 'Renewal', 'value': 'Renewal'}
+                            ],
+                            value='All'
+                        ),
+                    ], className='four columns'),
+                    html.Div([
+                        html.P('Filter by License Type'),
+                        dcc.Dropdown(
+                                id='slide1-BL-licensetype-dropdown',
+                                options=[{'label': k, 'value': k} for k in unique_licensetypes],
+                                value='All'
+                        ),
+                    ], className='four columns'),
+                ], className='dashrow'),
                 dcc.Graph(id='slide1-BL-my-graph',
                     figure=go.Figure(
                         data=[
@@ -107,25 +112,30 @@ layout = html.Div(children=[
                     ),
                 ),
                 html.Div([
-                    html.A(
-                        'Download Data',
-                        id='slide1-BL-count-table-download-link',
-                        download='slide1_BL_license_volumes_counts.csv',
-                        href='',
-                        target='_blank',
-                    )
-                ], style={'text-align': 'right'}),
-                table.DataTable(
-                    # Initialise the rows
-                    rows=[{}],
-                    columns=["JOBTYPE", "LICENSETYPE", "JOBISSUEYEAR","JOBISSUEMONTH", "Count"],
-                    row_selectable=True,
-                    filterable=True,
-                    sortable=True,
-                    selected_row_indices=[],
-                    id='slide1-BL-count-table'
-                ),
-                ])
+                    html.Div([
+                        html.H3('License Volumes By License Type and Month', style={'text-align': 'center'}),
+                        html.Div([
+                            table.DataTable(
+                                # Initialise the rows
+                                rows=[{}],
+                                columns=["Job Type", "License Type", "Month Issued", "Number of Licenses Issued"],
+                                editable=False,
+                                sortable=True,
+                                id='slide1-BL-count-table'
+                            ),
+                        ], style={'text-align': 'center'}),
+                        html.Div([
+                            html.A(
+                                'Download Data',
+                                id='slide1-BL-count-table-download-link',
+                                download='slide1_BL_license_volumes_counts.csv',
+                                href='',
+                                target='_blank',
+                            )
+                        ], style={'text-align': 'right'})
+                    ], style={'width': '55%', 'margin-left': 'auto', 'margin-right': 'auto','margin-top': '45px', 'margin-bottom': '45px'})
+                ], className='dashrow')
+            ])
 
 @app.callback(
     Output('slide1-BL-my-graph', 'figure'),
@@ -148,6 +158,7 @@ def update_graph(start_date, end_date, jobtype, licensetype):
              )
          ],
         'layout': go.Layout(
+            title='Number of Licenses Issued By Month',
             yaxis= dict(title='Number of Business Licenses Issued')
         )
     }

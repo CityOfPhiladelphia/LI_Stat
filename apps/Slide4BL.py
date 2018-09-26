@@ -11,8 +11,8 @@ from app import app, con
 
 #TODO the query does not currently bring in CALS
 
-testing_mode = False
-print('slide4.py')
+testing_mode = True
+print('slide4_BL.py')
 print('Testing mode: ' + str(testing_mode))
 
 if testing_mode:
@@ -20,7 +20,7 @@ if testing_mode:
     
 else:
     with con() as con:
-        with open(r'queries/licenses/FinalQueries_SQL/slide4_submittal_volumes_BL_ind_records_query.sql') as sql:
+        with open(r'queries/licenses/FinalQueries_SQL/slide4_submittal_volumes_BL.sql') as sql:
             df = (pd.read_sql(sql=sql.read(), con=con, parse_dates=['ISSUEDATE'])
                     .sort_values(by='ISSUEDATE'))
 
@@ -31,12 +31,26 @@ df_chart_createdbytype = (df.copy(deep=True)
                             .sort_values(by='ISSUEDATE')
                             .assign(ISSUEDATE=lambda x: x['ISSUEDATE'].dt.strftime('%b-%Y')))
 
+df_chart_createdbytype_all = (df.copy(deep=True)
+                                .groupby(['ISSUEDATE'])['LICENSENUMBERCOUNT']
+                                .sum()
+                                .reset_index()
+                                .sort_values(by='ISSUEDATE')
+                                .assign(ISSUEDATE=lambda x: x['ISSUEDATE'].dt.strftime('%b-%Y')))
+
 df_chart_jobtype = (df.copy(deep=True)
                       .groupby(['ISSUEDATE', 'JOBTYPE'])['LICENSENUMBERCOUNT']
                       .sum()
                       .reset_index()
                       .sort_values(by='ISSUEDATE')
                       .assign(ISSUEDATE=lambda x: x['ISSUEDATE'].dt.strftime('%b-%Y')))
+
+df_chart_jobtype_all = (df.copy(deep=True)
+                          .groupby(['ISSUEDATE'])['LICENSENUMBERCOUNT']
+                          .sum()
+                          .reset_index()
+                          .sort_values(by='ISSUEDATE')
+                          .assign(ISSUEDATE=lambda x: x['ISSUEDATE'].dt.strftime('%b-%Y')))
 
 df_created_by_type = (df.copy(deep=True)
                         .loc[df['ISSUEDATE'] >= '2018-01-01']
@@ -72,13 +86,38 @@ df_table_2 = pd.DataFrame(data={
     '% Online Renewals': [percent_renewals(license_type) for license_type in [all_licenses, rentals, vacant_properties, food]]
 })
 
+count_2016 = len(df.loc[(df['ISSUEDATE'] >= '2016-01-01') & (df['ISSUEDATE'] < '2017-01-01')]
+                .index)
+count_2017 = len(df.loc[(df['ISSUEDATE'] >= '2017-01-01') & (df['ISSUEDATE'] < '2018-01-01')]
+                .index)
+count_2018 = len(df.loc[(df['ISSUEDATE'] >= '2018-01-01')]
+                .index)
+count_all = len(df.index)
+
+df_table_3 = pd.DataFrame(data={
+    '2016': [count_2016],
+    '2017': [count_2017],
+    '2018': [count_2018],
+    'All': [count_all]
+})
+
 layout = html.Div([
-    html.H1('Business Licenses By Submittal Type', style={'text-align': 'center'}),
+    html.H1('Business Licenses Volumes', style={'text-align': 'center'}),
     html.Div([
         html.Div([
             dcc.Graph(id='slide4BL-createdbytype-chart',
                 figure=go.Figure(
                     data=[
+                        go.Scatter(
+                            x=df_chart_createdbytype_all['ISSUEDATE'],
+                            y=df_chart_createdbytype_all['LICENSENUMBERCOUNT'],
+                            name='All',
+                            mode='lines',
+                            line=dict(
+                                shape='spline',
+                                color='#000000'
+                            )
+                        ),
                         go.Scatter(
                             x=df_chart_createdbytype.loc[df_chart_createdbytype['CREATEDBYTYPE'] == 'Online']['ISSUEDATE'],
                             y=df_chart_createdbytype.loc[df_chart_createdbytype['CREATEDBYTYPE'] == 'Online']['LICENSENUMBERCOUNT'],
@@ -132,6 +171,16 @@ layout = html.Div([
                 figure=go.Figure(
                     data=[
                         go.Scatter(
+                            x=df_chart_jobtype_all['ISSUEDATE'],
+                            y=df_chart_jobtype_all['LICENSENUMBERCOUNT'],
+                            name='All',
+                            mode='lines',
+                            line=dict(
+                                shape='spline',
+                                color='#000000'
+                            )
+                        ),
+                        go.Scatter(
                             x=df_chart_jobtype.loc[df_chart_jobtype['JOBTYPE'] == 'Renewal']['ISSUEDATE'],
                             y=df_chart_jobtype.loc[df_chart_jobtype['JOBTYPE'] == 'Renewal']['LICENSENUMBERCOUNT'],
                             name='Renewal',
@@ -179,7 +228,18 @@ layout = html.Div([
         ], className='four columns')
     ], className='dashrow'),
     html.Div([
-        html.H3('Percent of Online New/Renewals in 2018', style={'text-align': 'center'}),
+        html.H3('Volume of Licenses Issued', style={'text-align': 'center'}),
+        html.Div([
+            dt.DataTable(
+                rows=df_table_3.to_dict('records'),
+                columns=df_table_3.columns,
+                editable=False,
+                id='slide4-BL-table-3'
+            )
+        ], style={'text-align': 'center'})
+    ], style={'width': '30%', 'margin-left': 'auto', 'margin-right': 'auto', 'margin-top': '45px', 'margin-bottom': '45px'}),
+    html.Div([
+        html.H3('Percent of Online Transactions Which Were Renewals (2018)', style={'text-align': 'center'}),
         html.Div([
             dt.DataTable(
                 rows=df_table_2.to_dict('records'),

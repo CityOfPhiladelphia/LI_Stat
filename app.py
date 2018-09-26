@@ -13,7 +13,7 @@ external_stylesheets = ['https://unpkg.com/phila-standards@0.11.2/dist/css/phila
 meta_tags=[
     {
         'og:image': 'https://beta.phila.gov/media/20160715133810/phila-gov.jpg',
-        'content': 'My description'
+        'content': 'LI Stat'
     }]
 
 server = Flask(__name__)

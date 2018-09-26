@@ -10,7 +10,7 @@ import urllib.parse
 
 from app import app, con
 
-testing_mode = False
+testing_mode = True
 print('slide2.py')
 print('Testing mode: ' + str(testing_mode))
 
@@ -133,10 +133,8 @@ layout = html.Div(children=[
                                 # Initialise the rows
                                 rows=[{}],
                                 columns=["Date", "Job Type", "Revenue Collected"],
-                                row_selectable=True,
-                                filterable=True,
+                                editable=False,
                                 sortable=True,
-                                selected_row_indices=[],
                                 id='slide2-count-table'
                             )
                         ], style={'text-align': 'center'}),
@@ -149,7 +147,7 @@ layout = html.Div(children=[
                                 target='_blank',
                             )
                         ], style={'text-align': 'right'})
-                    ], style={'width': '50%', 'margin-left': 'auto', 'margin-right': 'auto','margin-top': '45px', 'margin-bottom': '45px'})
+                    ], style={'width': '45%', 'margin-left': 'auto', 'margin-right': 'auto','margin-top': '45px', 'margin-bottom': '45px'})
                 ], className='dashrow')
             ])
 

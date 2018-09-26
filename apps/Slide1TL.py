@@ -10,7 +10,7 @@ import urllib.parse
 
 from app import app, con
 
-testing_mode = False
+testing_mode = True
 print('slide1_license_volumes_TL.py')
 print('Testing mode: ' + str(testing_mode))
 
@@ -60,33 +60,37 @@ def update_counts_table_data(selected_start, selected_end, selected_jobtype, sel
     return df_counts
 
 layout = html.Div(children=[
-                html.H1(children='Trade License Volumes'),
-                html.Div(children='Please Select Date Range (Job Issue Date)'),
+                html.H1('Trade License Volumes', style={'text-align': 'center'}),
                 html.Div([
-                    dcc.DatePickerRange(
-                        id='slide1-TL-my-date-picker-range',
-                        start_date=datetime(2016, 1, 1),
-                        end_date=datetime.now()
-                    ),
-                ]),
-                html.Div([
-                    dcc.Dropdown(
-                        id='slide1-TL-jobtype-dropdown',
-                        options=[
-                            {'label': 'All', 'value': 'All'},
-                            {'label': 'Application', 'value': 'Application'},
-                            {'label': 'Renewal', 'value': 'Renewal'}
-                        ],
-                        value='All'
-                    ),
-                ], style={'width': '30%', 'display': 'inline-block'}),
-                html.Div([
-                    dcc.Dropdown(
-                        id='slide1-TL-licensetype-dropdown',
-                        options=[{'label': k, 'value': k} for k in unique_licensetypes],
-                        value='All'
-                    ),
-                ], style={'width': '30%', 'display': 'inline-block'}),
+                    html.Div([
+                        html.P('Filter by Date Range'),
+                        dcc.DatePickerRange(
+                            id='slide1-TL-my-date-picker-range',
+                            start_date=datetime(2016, 1, 1),
+                            end_date=datetime.now()
+                            ),
+                    ], className='four columns'),
+                    html.Div([
+                        html.P('Filter by Job Type'),
+                        dcc.Dropdown(
+                            id='slide1-TL-jobtype-dropdown',
+                            options=[
+                                {'label': 'All', 'value': 'All'},
+                                {'label': 'Application', 'value': 'Application'},
+                                {'label': 'Renewal', 'value': 'Renewal'}
+                            ],
+                            value='All'
+                        ),
+                    ], className='four columns'),
+                    html.Div([
+                        html.P('Filter By License Type'),
+                        dcc.Dropdown(
+                            id='slide1-TL-licensetype-dropdown',
+                            options=[{'label': k, 'value': k} for k in unique_licensetypes],
+                            value='All'
+                        ),
+                    ], className='four columns'),
+                ], className='dashrow'),
                 dcc.Graph(id='slide1-TL-my-graph',
                     figure=go.Figure(
                         data=[
@@ -115,10 +119,8 @@ layout = html.Div(children=[
                     # Initialise the rows
                     rows=[{}],
                     columns=["JOBTYPE", "LICENSETYPE", "JOBISSUEYEAR","JOBISSUEMONTH", "Count"],
-                    row_selectable=True,
-                    filterable=True,
                     sortable=True,
-                    selected_row_indices=[],
+                    editable=False,
                     id='slide1-TL-count-table'
                 )
                 ])
@@ -144,6 +146,7 @@ def update_graph(start_date, end_date, jobtype, licensetype):
              )
          ],
         'layout': go.Layout(
+            title='Number of Licenses Issued By Month',
             yaxis= dict(title='Number of Trade Licenses Issued')
         )
     }

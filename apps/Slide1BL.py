@@ -15,54 +15,53 @@ print('slide1_license_volumes_BL.py')
 print('Testing mode: ' + str(testing_mode))
 
 if testing_mode:
-    df_counts = pd.read_csv('Slide1_BL_counts.csv')
-    df_ind_records = pd.read_csv('Slide1_BL_ind_records.csv')
+    df = pd.read_csv('Slide1_BL.csv', parse_dates=['ISSUEDATE'])
 
 else:
     with con() as con:
-        with open(r'queries/licenses/FinalQueries_SQL/slide1_license_volumes_BL_counts_query.sql') as counts_query:
-            df_counts = pd.read_sql_query(counts_query.read(), con)
-        with open(r'queries/licenses/FinalQueries_SQL/slide1_license_volumes_BL_ind_records_query.sql') as ind_records_query:
-            df_ind_records = pd.read_sql_query(ind_records_query.read(), con)
+        with open(r'queries/licenses/FinalQueries_SQL/slide1_license_volumes_BL.sql') as sql:
+            df = pd.read_sql_query(sql=sql.read(), con=con, parse_dates=['ISSUEDATE'])
 
+# strip first 3 characters "BL_"
+df['JOBTYPE'] = df['JOBTYPE'].map(lambda x: str(x)[3:])  
 
-df_counts['JOBTYPE'] = df_counts['JOBTYPE'].map(lambda x: str(x)[3:])  # strip first 3 characters "BL_" just to make it easier for user to read
+df.rename(columns={'ISSUEDATE': 'Issue Date', 'LICENSETYPE': 'License Type', 'COUNTJOBS': 'Number of Licenses Issued'}, inplace=True)
 
-unique_licensetypes = df_counts['LICENSETYPE'].unique()
+unique_licensetypes = df['License Type'].unique()
 unique_licensetypes = np.append(['All'], unique_licensetypes)
 
-df_ind_records['ISSUEDATE'] = pd.to_datetime(df_ind_records['ISSUEDATE'], errors = 'coerce') #make sure IssueDate column is of type datetime so that filtering of dataframe based on date can happen later
-df_ind_records['JOBTYPE'] = df_ind_records['JOBTYPE'].map(lambda x: str(x)[3:])  # strip first 3 characters "BL_" just to make it easier for user to read
-
 def update_counts_graph_data(selected_start, selected_end, selected_jobtype, selected_licensetype):
-    df_countselected = df_ind_records[(df_ind_records['ISSUEDATE']>=selected_start)&(df_ind_records['ISSUEDATE']<=selected_end)]
+    df_selected = df.copy(deep=True)
+
     if selected_jobtype != "All":
-        df_countselected = df_countselected[(df_countselected['JOBTYPE']==selected_jobtype)]
+        df_selected = df_selected[(df_selected['JOBTYPE']==selected_jobtype)]
     if selected_licensetype != "All":
-        df_countselected = df_countselected[(df_countselected['LICENSETYPE']==selected_licensetype)]
-    df_counts = df_countselected.groupby(by=['JOBISSUEMONTHYEAR','JOBISSUEYEAR','JOBISSUEMONTH'], as_index=False).size().reset_index()
-    df_counts = df_counts.rename(index=str, columns={"JOBISSUEMONTHYEAR":"JOBISSUEMONTHYEAR","JOBISSUEYEAR":"JOBISSUEYEAR","JOBISSUEMONTH":"JOBISSUEMONTH", 0: "Count"})
-    df_counts = df_counts.sort_values(by=['JOBISSUEYEAR','JOBISSUEMONTH'])
-    #Adding in months that had counts of 0 so there aren't any missing columns in the graph
-    idx = pd.date_range(selected_start, selected_end, freq='M').to_period('m') # Create list of all months in date range
-    df_counts['JOBISSUEDAYMONTHYEAR'] = '1 ' + df_counts['JOBISSUEMONTH'].astype(str) + ' ' + df_counts['JOBISSUEYEAR'].astype(str) # Create field that has day, month, and year so you can convert that to a Date (you have to have a day value)
-    df_counts.index = pd.to_datetime(df_counts['JOBISSUEDAYMONTHYEAR'], format='%d %m %Y') # Make index of df_counts dataframe a Date
-    df_counts.index = df_counts.index.to_period('m') # Turn index from Date to PeriodIndex
-    df_counts = df_counts.reindex(idx) # Reindex df_counts based on the list of ALL months in the date range so that it includes even those that didn't have any values
-    df_counts['Count'].fillna(0, inplace=True) # Give any months without a Count value the value of 0
-    df_counts['JOBISSUEMONTHYEAR'] = df_counts.index.strftime('%b %Y') # Replace the values in the JOBISSUEMONTHYEAR field with the (formatted) values from the index. The JOBISSUEMONTHYEAR field values are the ones that are going to display on the x-axis of the graph
-    return df_counts
+        df_selected = df_selected[(df_selected['License Type']==selected_licensetype)]
+
+    df_selected = (df_selected.loc[(df['Issue Date']>=selected_start)&(df_selected['Issue Date']<=selected_end)]
+                              .groupby(by=['Issue Date'])['Number of Licenses Issued']
+                              .sum()
+                              .reset_index()
+                              .sort_values(by=['Issue Date']))
+
+    df_selected['Issue Date'] = df_selected['Issue Date'].apply(lambda x: datetime.strftime(x, '%b-%Y'))
+    return df_selected
 
 def update_counts_table_data(selected_start, selected_end, selected_jobtype, selected_licensetype):
-    df_countselected = df_ind_records[(df_ind_records['ISSUEDATE']>=selected_start)&(df_ind_records['ISSUEDATE']<=selected_end)]
+    df_selected = df.copy(deep=True)
+    
     if selected_jobtype != "All":
-        df_countselected = df_countselected[(df_countselected['JOBTYPE']==selected_jobtype)]
+        df_selected = df_selected[(df_selected['JOBTYPE']==selected_jobtype)]
     if selected_licensetype != "All":
-        df_countselected = df_countselected[(df_countselected['LICENSETYPE'] == selected_licensetype)]
-    df_counts = df_countselected.groupby(by=['JOBTYPE','LICENSETYPE', 'JOBISSUEMONTHYEAR'], as_index=False).size().reset_index()
-    df_counts.assign(ISSUEDATE=lambda x: x['JOBISSUEMONTHYEAR'].dt.strftime('%b-%Y'), inplace=True)
-    df_counts = df_counts.rename(index=str, columns={"JOBTYPE": "Job Type", "LICENSETYPE": "License Type", "JOBISSUEMONTHYEAR": "Month Issued", 0: "Number of Licenses Issued"})
-    return df_counts
+        df_selected = df_selected[(df_selected['License Type'] == selected_licensetype)]
+
+    (df_selected.loc[(df['Issue Date']>=selected_start)&(df_selected['Issue Date']<=selected_end)]
+                              .groupby(by=['Issue Date', 'License Type'])['Number of Licenses Issued']
+                              .sum()
+                              .reset_index()
+                              .sort_values(by=['Issue Date','License Type']))
+    df_selected['Issue Date'] = df_selected['Issue Date'].apply(lambda x: datetime.strftime(x, '%b-%Y'))
+    return df_selected
 
 layout = html.Div(children=[
                 html.H1('Business License Volumes', style={'text-align': 'center'}),
@@ -70,6 +69,7 @@ layout = html.Div(children=[
                     html.Div([
                         html.P('Filter by Date Range'),
                         dcc.DatePickerRange(
+                            display_format='MMM Y',
                             id='slide1-BL-my-date-picker-range',
                             start_date=datetime(2016, 1, 1),
                             end_date=datetime.now()
@@ -100,8 +100,8 @@ layout = html.Div(children=[
                     figure=go.Figure(
                         data=[
                             go.Scatter(
-                                x=df_counts['JOBISSUEMONTHYEAR'],
-                                y=df_counts['COUNTJOBS'],
+                                x=df['Issue Date'],
+                                y=df['Number of Licenses Issued'],
                                 mode='lines',
                                 line=dict(
                                     shape='spline',
@@ -116,9 +116,9 @@ layout = html.Div(children=[
                         html.H3('License Volumes By License Type and Month', style={'text-align': 'center'}),
                         html.Div([
                             table.DataTable(
-                                # Initialise the rows
                                 rows=[{}],
-                                columns=["Job Type", "License Type", "Month Issued", "Number of Licenses Issued"],
+                                #columns=['Issue Date', 'LICENSETYPE', 'COUNTJOBS'],
+                                columns=['Issue Date', 'License Type', 'Number of Licenses Issued'],
                                 editable=False,
                                 sortable=True,
                                 id='slide1-BL-count-table'
@@ -144,12 +144,12 @@ layout = html.Div(children=[
      Input('slide1-BL-jobtype-dropdown', 'value'),
      Input('slide1-BL-licensetype-dropdown', 'value')])
 def update_graph(start_date, end_date, jobtype, licensetype):
-    df_counts = update_counts_graph_data(start_date, end_date, jobtype, licensetype)
+    df = update_counts_graph_data(start_date, end_date, jobtype, licensetype)
     return {
         'data': [
              go.Scatter(
-                 x=df_counts['JOBISSUEMONTHYEAR'],
-                 y=df_counts['Count'],
+                 x=df['Issue Date'],
+                 y=df['Number of Licenses Issued'],
                  mode='lines',
                  line=dict(
                     shape='spline',
@@ -170,8 +170,8 @@ def update_graph(start_date, end_date, jobtype, licensetype):
      Input('slide1-BL-jobtype-dropdown', 'value'),
      Input('slide1-BL-licensetype-dropdown', 'value')])
 def update_count_table(start_date, end_date, jobtype, licensetype):
-    df_counts = update_counts_table_data(start_date, end_date, jobtype, licensetype)
-    return df_counts.to_dict('records')
+    df = update_counts_table_data(start_date, end_date, jobtype, licensetype)
+    return df.to_dict('records')
 
 @app.callback(
     Output('slide1-BL-count-table-download-link', 'href'),

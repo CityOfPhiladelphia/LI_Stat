@@ -86,13 +86,10 @@ df_table_2 = pd.DataFrame(data={
     '% Online Renewals': [percent_renewals(license_type) for license_type in [all_licenses, rentals, vacant_properties, food]]
 })
 
-count_2016 = len(df.loc[(df['ISSUEDATE'] >= '2016-01-01') & (df['ISSUEDATE'] < '2017-01-01')]
-                .index)
-count_2017 = len(df.loc[(df['ISSUEDATE'] >= '2017-01-01') & (df['ISSUEDATE'] < '2018-01-01')]
-                .index)
-count_2018 = len(df.loc[(df['ISSUEDATE'] >= '2018-01-01')]
-                .index)
-count_all = len(df.index)
+count_2016 = df.loc[(df['ISSUEDATE'] >= '2016-01-01') & (df['ISSUEDATE'] < '2017-01-01')]['LICENSENUMBERCOUNT'].sum()
+count_2017 = df.loc[(df['ISSUEDATE'] >= '2017-01-01') & (df['ISSUEDATE'] < '2018-01-01')]['LICENSENUMBERCOUNT'].sum()
+count_2018 = df.loc[(df['ISSUEDATE'] >= '2018-01-01')]['LICENSENUMBERCOUNT'].sum()
+count_all = df['LICENSENUMBERCOUNT'].sum()
 
 df_table_3 = pd.DataFrame(data={
     '2016': [count_2016],
@@ -102,7 +99,7 @@ df_table_3 = pd.DataFrame(data={
 })
 
 layout = html.Div([
-    html.H1('Business Licenses Volumes', style={'text-align': 'center'}),
+    html.H1('Business Licenses Mode of Submittal', style={'text-align': 'center'}),
     html.Div([
         html.Div([
             dcc.Graph(id='slide4BL-createdbytype-chart',
@@ -272,7 +269,7 @@ layout = html.Div([
                 target='_blank',
             )
         ], style={'text-align': 'right'}),
-    ], style={'width': '70%', 'margin-left': 'auto', 'margin-right': 'auto', 'margin-top': '45px', 'margin-bottom': '45px'})
+    ], style={'width': '55%', 'margin-left': 'auto', 'margin-right': 'auto', 'margin-top': '45px', 'margin-bottom': '45px'})
 ])
 
 # @app.callback(

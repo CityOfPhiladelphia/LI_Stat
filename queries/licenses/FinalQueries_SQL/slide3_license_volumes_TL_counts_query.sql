@@ -1,73 +1,76 @@
-SELECT jobtype, 
-       licensetype,
-       jobissuemonthyear, 
-       jobissueyear, 
-       jobissuemonth, 
-       Count(DISTINCT licensenumber) COUNTJOBS 
-FROM   (SELECT DISTINCT tlic.licensetype                            LicenseType, 
-                        tlic.licensenumber                          LicenseNumber, 
-                        ( CASE 
-                            WHEN tlic.initialissuedate >= '01-JAN-16' THEN 'Application' 
-                          END )                                     JobType, 
-                        ( CASE 
-                            WHEN Extract(month FROM tlic.initialissuedate) LIKE '1' THEN 'January'
-                            WHEN Extract(month FROM tlic.initialissuedate) LIKE '2' THEN 'February'
-                            WHEN Extract(month FROM tlic.initialissuedate) LIKE '3' THEN 'March'
-                            WHEN Extract(month FROM tlic.initialissuedate) LIKE '4' THEN 'April'
-                            WHEN Extract(month FROM tlic.initialissuedate) LIKE '5' THEN 'May' 
-                            WHEN Extract(month FROM tlic.initialissuedate) LIKE '6' THEN 'June' 
-                            WHEN Extract(month FROM tlic.initialissuedate) LIKE '7' THEN 'July' 
-                            WHEN Extract(month FROM tlic.initialissuedate) LIKE '8' THEN 'August'
-                            WHEN Extract(month FROM tlic.initialissuedate) LIKE '9' THEN 'September'
-                            WHEN Extract(month FROM tlic.initialissuedate) LIKE '10' THEN 'October'
-                            WHEN Extract(month FROM tlic.initialissuedate) LIKE '11' THEN 'November'
-                            WHEN Extract(month FROM tlic.initialissuedate) LIKE '12' THEN 'December'
-                          END ) 
-                        || ' ' 
-                        || Extract(year FROM tlic.initialissuedate) JobIssueMonthYear, 
-                        Extract(year FROM tlic.initialissuedate)    JOBISSUEYEAR, 
-                        Extract(month FROM tlic.initialissuedate)   JOBISSUEMONTH 
-        FROM   query.o_tl_license tlic 
-        WHERE  tlic.initialissuedate >= '01-JAN-16' 
-               AND tlic.initialissuedate <= SYSDATE 
-        UNION 
-        SELECT DISTINCT tlic.licensetype                        LicenseType, 
-                        tlic.licensenumber                      LicenseNumber, 
-                        tar.applicationtype                     JobType, 
-                        ( CASE 
-                            WHEN Extract(month FROM tar.completeddate) LIKE '1' THEN 'January' 
-                            WHEN Extract(month FROM tar.completeddate) LIKE '2' THEN 'February' 
-                            WHEN Extract(month FROM tar.completeddate) LIKE '3' THEN 'March' 
-                            WHEN Extract(month FROM tar.completeddate) LIKE '4' THEN 'April' 
-                            WHEN Extract(month FROM tar.completeddate) LIKE '5' THEN 'May' 
-                            WHEN Extract(month FROM tar.completeddate) LIKE '6' THEN 'June' 
-                            WHEN Extract(month FROM tar.completeddate) LIKE '7' THEN 'July' 
-                            WHEN Extract(month FROM tar.completeddate) LIKE '8' THEN 'August' 
-                            WHEN Extract(month FROM tar.completeddate) LIKE '9' THEN 'September'
-                            WHEN Extract(month FROM tar.completeddate) LIKE '10' THEN 'October' 
-                            WHEN Extract(month FROM tar.completeddate) LIKE '11' THEN 'November'
-                            WHEN Extract(month FROM tar.completeddate) LIKE '12' THEN 'December'
-                          END ) 
-                        || ' ' 
-                        || Extract(year FROM tar.completeddate) JobIssueMonthYear, 
-                        Extract(year FROM tar.completeddate)    JOBISSUEYEAR, 
-                        Extract(month FROM tar.completeddate)   JOBISSUEMONTH 
-        FROM   query.o_tl_license tlic, 
-               query.r_tl_amendrenew_license lra, 
-               query.j_tl_amendrenew tar 
-        WHERE  tlic.objectid = lra.licenseid 
-               AND lra.amendrenewid = tar.objectid 
-               AND tar.completeddate >= '01-JAN-16' 
-               AND tar.completeddate <= SYSDATE 
-               AND tar.statusdescription LIKE 'Approved' 
-               AND tar.applicationtype LIKE 'Renewal') 
-GROUP  BY jobissuemonthyear, 
-          jobissueyear, 
-          jobissuemonth, 
-          jobtype,
-          licensetype
-ORDER  BY jobissueyear, 
-          jobissuemonth,
-          jobtype,
-          licensetype
+SELECT
+     jobtype,
+     licensetype,
+     issuedate,
+     COUNT(DISTINCT licensenumber) countjobs,
+     SUM(amount) totalamount
+ FROM
+     (
+         SELECT
+             licensetype,
+             licensenumber,
+             jobtype,
+             TO_DATE(jobissueyear
+                       || '/'
+                       || jobissuemonth
+                       || '/'
+                       || '01','yyyy/mm/dd') AS issuedate,
+             amount
+         FROM
+             (
+                 SELECT DISTINCT
+                     tlic.licensetype      licensetype,
+                     tlic.licensenumber    licensenumber,
+                     tap.applicationtype   jobtype,
+                     EXTRACT(YEAR FROM tlic.initialissuedate) jobissueyear,
+                     EXTRACT(MONTH FROM tlic.initialissuedate) jobissuemonth,
+                     fee.paymenttotal      AS amount
+                 FROM
+                     query.o_tl_license tlic,
+                     query.j_tl_application tap,
+                     query.o_fn_fee fee,
+                     api.jobs job,
+                     api.jobtypes jt
+                 WHERE
+                     tlic.objectid = tap.tradelicenseobjectid
+                     AND tap.jobid = job.jobid
+                     AND fee.referencedobjectid = job.jobid
+                     AND job.jobtypeid = jt.jobtypeid
+                     AND tlic.initialissuedate >= '01-JAN-16'
+                     AND tlic.initialissuedate <= SYSDATE
+                 UNION
+                 SELECT DISTINCT
+                     tlic.licensetype      licensetype,
+                     tlic.licensenumber    licensenumber,
+                     tar.applicationtype   jobtype,
+                     EXTRACT(YEAR FROM tar.completeddate) jobissueyear,
+                     EXTRACT(MONTH FROM tar.completeddate) jobissuemonth,
+                     fee.paymenttotal      AS amount
+                 FROM
+                     query.o_tl_license tlic,
+                     query.r_tl_amendrenew_license lra,
+                     query.j_tl_amendrenew tar,
+                     query.o_fn_fee fee,
+                     api.jobs job,
+                     api.jobtypes jt
+                 WHERE
+                     tlic.objectid = lra.licenseid
+                     AND lra.amendrenewid = tar.objectid
+                     AND fee.referencedobjectid = job.jobid
+                     AND job.jobtypeid = jt.jobtypeid
+                     AND tar.jobid = job.jobid
+                     AND tar.completeddate >= '01-JAN-16'
+                     AND tar.completeddate <= SYSDATE
+                     AND tar.statusdescription LIKE 'Approved'
+                     AND tar.applicationtype LIKE 'Renewal'
+             )
+     )
+ GROUP BY
+     issuedate,
+     jobtype,
+     licensetype
+ ORDER BY
+     issuedate,
+     jobtype,
+     licensetype
 --runtime 86 sec 

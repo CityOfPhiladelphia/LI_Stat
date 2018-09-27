@@ -29,13 +29,11 @@ SELECT
                      query.o_tl_license tlic,
                      query.j_tl_application tap,
                      query.o_fn_fee fee,
-                     api.jobs job,
-                     api.jobtypes jt
+                     api.jobs job
                  WHERE
                      tlic.objectid = tap.tradelicenseobjectid
                      AND tap.jobid = job.jobid
                      AND fee.referencedobjectid = job.jobid
-                     AND job.jobtypeid = jt.jobtypeid
                      AND tlic.initialissuedate >= '01-JAN-16'
                      AND tlic.initialissuedate <= SYSDATE
                  UNION
@@ -48,16 +46,12 @@ SELECT
                      fee.paymenttotal      AS amount
                  FROM
                      query.o_tl_license tlic,
-                     query.r_tl_amendrenew_license lra,
                      query.j_tl_amendrenew tar,
                      query.o_fn_fee fee,
-                     api.jobs job,
-                     api.jobtypes jt
+                     api.jobs job
                  WHERE
-                     tlic.objectid = lra.licenseid
-                     AND lra.amendrenewid = tar.objectid
+                     tlic.objectid = tar.licenseobjectid
                      AND fee.referencedobjectid = job.jobid
-                     AND job.jobtypeid = jt.jobtypeid
                      AND tar.jobid = job.jobid
                      AND tar.completeddate >= '01-JAN-16'
                      AND tar.completeddate <= SYSDATE

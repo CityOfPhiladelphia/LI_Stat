@@ -24,6 +24,8 @@ else:
 
 df.rename(columns={'JOBTYPE': 'Job Type', 'PAYMENTDATE': 'Date', 'TOTALAMOUNT': 'Revenue Collected'}, inplace=True)
 
+total_revenue = '${:,.0f}'.format(df['Revenue Collected'].sum())
+
 df_counts = df.copy(deep=True) # Make a copy to keep the original for filtering
 
 df_line_chart = (df_counts.groupby(['Date'])['Revenue Collected']
@@ -65,6 +67,13 @@ def update_pie_data(selected_start, selected_end, selected_jobtype):
                     & df['Job Type'].isin(selected_jobtype)]
     df_pie_chart = df_pie_chart.groupby(['Job Type'])['Revenue Collected'].sum()
     return df_pie_chart
+
+def update_total_revenue(selected_start, selected_end, selected_jobtype):
+    df_selected = df[(df['Date'] >= selected_start)
+                  & (df['Date']<=selected_end)
+                  & df['Job Type'].isin(selected_jobtype)]
+    total_license_volume = df_selected['Revenue Collected'].sum()
+    return '${:,.0f}'.format(total_license_volume)
 
 layout = html.Div(children=[
                 html.H1('License Revenue', style={'text-align': 'center'}),
@@ -115,7 +124,7 @@ layout = html.Div(children=[
                                             )
                                 ),
                             )
-                        ], className='eight columns'),
+                        ], className='seven columns'),
                     html.Div(
                         [
                             dcc.Graph(id='slide2-piechart',
@@ -136,6 +145,10 @@ layout = html.Div(children=[
                                 )
                             )
                         ], className='four columns'),
+                    html.Div([
+                        html.H1('', id='slide2-indicator', style={'font-size': '20pt'}),
+                        html.H2('Collected', style={'font-size': '15pt'})
+                    ], className='one column', style={'text-align': 'center', 'margin': 'auto', 'padding': '150px 0'})
                 ], className='dashrow'),
                 html.Div([
                     html.Div([
@@ -218,6 +231,15 @@ def update_line_chart(start_date, end_date, jobtype):
                             yaxis=dict(hoverformat = '4.0f')
                             )
     }
+
+@app.callback(
+    Output('slide2-indicator', 'children'),
+    [Input('slide2-my-date-picker-range', 'start_date'),
+     Input('slide2-my-date-picker-range', 'end_date'),
+     Input('slide2-jobtype-dropdown', 'value')])
+def update_total_license_volume_indicator(start_date, end_date, jobtype):
+    total_revenue = update_total_revenue(start_date, end_date, jobtype)
+    return str(total_revenue)
 
 @app.callback(
     Output('slide2-count-table', 'rows'),

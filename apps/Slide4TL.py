@@ -28,28 +28,28 @@ df_chart_createdbytype = (df.copy(deep=True)
                             .sum()
                             .reset_index()
                             .sort_values(by='ISSUEDATE')
-                            .assign(ISSUEDATE=lambda x: x['ISSUEDATE'].dt.strftime('%b-%Y')))
+                            .assign(DateText=lambda x: x['ISSUEDATE'].dt.strftime('%b-%Y')))
 
 df_chart_createdbytype_all = (df.copy(deep=True)
                                 .groupby(['ISSUEDATE'])['LICENSENUMBERCOUNT']
                                 .sum()
                                 .reset_index()
                                 .sort_values(by='ISSUEDATE')
-                                .assign(ISSUEDATE=lambda x: x['ISSUEDATE'].dt.strftime('%b-%Y')))
+                                .assign(DateText=lambda x: x['ISSUEDATE'].dt.strftime('%b-%Y')))
 
 df_chart_jobtype = (df.copy(deep=True)
                       .groupby(['ISSUEDATE', 'JOBTYPE'])['LICENSENUMBERCOUNT']
                       .sum()
                       .reset_index()
                       .sort_values(by='ISSUEDATE')
-                      .assign(ISSUEDATE=lambda x: x['ISSUEDATE'].dt.strftime('%b-%Y')))
+                      .assign(DateText=lambda x: x['ISSUEDATE'].dt.strftime('%b-%Y')))
 
 df_chart_jobtype_all = (df.copy(deep=True)
                           .groupby(['ISSUEDATE'])['LICENSENUMBERCOUNT']
                           .sum()
                           .reset_index()
                           .sort_values(by='ISSUEDATE')
-                          .assign(ISSUEDATE=lambda x: x['ISSUEDATE'].dt.strftime('%b-%Y')))
+                          .assign(DateText=lambda x: x['ISSUEDATE'].dt.strftime('%b-%Y')))
 
 df_created_by_type = (df.copy(deep=True)
                         .loc[df['ISSUEDATE'] >= '2018-01-01']
@@ -106,6 +106,8 @@ layout = html.Div([
                             y=df_chart_createdbytype_all['LICENSENUMBERCOUNT'],
                             name='All',
                             mode='lines',
+                            text=df_chart_createdbytype_all['DateText'],
+                            hoverinfo='y',
                             line=dict(
                                 shape='spline',
                                 color='#000000'
@@ -116,6 +118,8 @@ layout = html.Div([
                             y=df_chart_createdbytype.loc[df_chart_createdbytype['CREATEDBYTYPE'] == 'Online']['LICENSENUMBERCOUNT'],
                             name='Online',
                             mode='lines',
+                            text=df_chart_createdbytype.loc[df_chart_createdbytype['CREATEDBYTYPE'] == 'Online']['DateText'],
+                            hoverinfo='y',
                             line=dict(
                                 shape='spline',
                                 color='#399327'
@@ -126,6 +130,8 @@ layout = html.Div([
                             y=df_chart_createdbytype.loc[df_chart_createdbytype['CREATEDBYTYPE'] == 'Staff']['LICENSENUMBERCOUNT'],
                             name='Staff',
                             mode='lines',
+                            text=df_chart_createdbytype.loc[df_chart_createdbytype['CREATEDBYTYPE'] == 'Staff']['DateText'],
+                            hoverinfo='text+y',
                             line=dict(
                                 shape='spline',
                                 color='#642692'
@@ -168,6 +174,8 @@ layout = html.Div([
                             y=df_chart_jobtype_all['LICENSENUMBERCOUNT'],
                             name='All',
                             mode='lines',
+                            text=df_chart_jobtype_all['DateText'],
+                            hoverinfo='y',
                             line=dict(
                                 shape='spline',
                                 color='#000000'
@@ -178,6 +186,8 @@ layout = html.Div([
                             y=df_chart_jobtype.loc[df_chart_jobtype['JOBTYPE'] == 'Renewal']['LICENSENUMBERCOUNT'],
                             name='Renewal',
                             mode='lines',
+                            text=df_chart_jobtype.loc[df_chart_jobtype['JOBTYPE'] == 'Renewal']['DateText'],
+                            hoverinfo='y',
                             line=dict(
                                 shape='spline',
                                 color='#4153f4'
@@ -188,6 +198,8 @@ layout = html.Div([
                             y=df_chart_jobtype.loc[df_chart_jobtype['JOBTYPE'] == 'Application']['LICENSENUMBERCOUNT'],
                             name='Application',
                             mode='lines',
+                            text=df_chart_jobtype.loc[df_chart_jobtype['JOBTYPE'] == 'Application']['DateText'],
+                            hoverinfo='text+y',
                             line=dict(
                                 shape='spline',
                                 color='#f4424b'
@@ -221,7 +233,7 @@ layout = html.Div([
         ], className='four columns')
     ], className='dashrow'),
     html.Div([
-        html.H3('Volume of Licenses Issued', style={'text-align': 'center'}),
+        html.H3('Volume of Licenses Issued from January to July', style={'text-align': 'center'}),
         html.Div([
             dt.DataTable(
                 rows=df_table_3.to_dict('records'),

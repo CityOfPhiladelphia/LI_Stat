@@ -149,9 +149,7 @@ layout = html.Div(children=[
                                 layout=go.Layout(title=('Revenue Breakdown by Job Type'))
                             )
                         )
-                    ], style={'width': '45%', 'margin-left': 'auto', 'margin-right': 'auto', 'margin-bottom': '45px'})
-                ], className='dashrow'),
-                html.Div([
+                    ], className='six columns'),
                     html.Div([
                         html.H3('Revenue Collected By Month and Job Type', style={'text-align': 'center'}),
                         html.Div([
@@ -173,7 +171,7 @@ layout = html.Div(children=[
                                 target='_blank',
                             )
                         ], style={'text-align': 'right'})
-                    ], style={'width': '45%', 'margin-left': 'auto', 'margin-right': 'auto','margin-top': '45px', 'margin-bottom': '45px'})
+                    ], className='six columns')
                 ], className='dashrow')
             ])
 

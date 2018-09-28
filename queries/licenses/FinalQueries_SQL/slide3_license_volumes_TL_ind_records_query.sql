@@ -1,5 +1,5 @@
 SELECT DISTINCT ( CASE 
-                   WHEN tlic.initialissuedate >= '01-JAN-16' THEN 'Application' 
+                   WHEN tlic.initialissuedate between (tlic.RenewedOnDate -1) and (tlic.RenewedOnDate + 1) THEN 'Application' 
                  END )                                      JobType, 
                 tlic.licensetype                            LicenseType, 
                 tlic.externalfilenum                        LicenseNumber,
@@ -30,6 +30,7 @@ SELECT DISTINCT ( CASE
                 END )                                   JobLink
 FROM   query.o_tl_license tlic 
 WHERE  tlic.initialissuedate >= '01-JAN-16' 
+       AND TLIC.InitialIssueDate between (tlic.RenewedOnDate -1) and (tlic.RenewedOnDate + 1)
        AND tlic.initialissuedate <= SYSDATE 
 UNION 
 SELECT DISTINCT tar.applicationtype                     JobType, 

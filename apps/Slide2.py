@@ -27,7 +27,9 @@ df.rename(columns={'JOBTYPE': 'Job Type', 'PAYMENTDATE': 'Date', 'TOTALAMOUNT': 
 df_counts = df.copy(deep=True) # Make a copy to keep the original for filtering
 
 df_line_chart = (df_counts.groupby(['Date'])['Revenue Collected']
-                          .sum())
+                          .sum()
+                          .reset_index()
+                          .assign(DateText=lambda x: x['Date'].dt.strftime('%b %Y')))
 
 df_pie_chart = (df.copy(deep=True)
                   .groupby(['Job Type'])['Revenue Collected']
@@ -44,14 +46,17 @@ def update_count_data(selected_start, selected_end, selected_jobtype):
     df_counts = df[(df['Date'] >= selected_start)
                   & (df['Date']<=selected_end)
                   & df['Job Type'].isin(selected_jobtype)]
-    df_counts['Date'] = df_counts['Date'].dt.strftime('%B %Y') 
+    df_counts['Date'] = df_counts['Date'].dt.strftime('%b %Y') 
     return df_counts
 
 def update_line_chart_data(selected_start, selected_end, selected_jobtype):
     df_line_chart = df[(df['Date'] >= selected_start)
                   & (df['Date']<=selected_end)
                   & df['Job Type'].isin(selected_jobtype)]
-    df_line_chart = df_line_chart.groupby(['Date'])['Revenue Collected'].sum()
+    df_line_chart = (df_line_chart.groupby(['Date'])['Revenue Collected']
+                                  .sum()
+                                  .reset_index()
+                                  .assign(DateText=lambda x: x['Date'].dt.strftime('%b %Y')))
     return df_line_chart
 
 def update_pie_data(selected_start, selected_end, selected_jobtype):
@@ -90,17 +95,24 @@ layout = html.Div(children=[
                                 figure=go.Figure(
                                     data=[
                                         go.Scatter(
-                                            x=df_line_chart.index,
-                                            y=df_line_chart.values,
+                                            x=df_line_chart['Date'],
+                                            y=df_line_chart['Revenue Collected'],
                                             name='Revenue Collected',
                                             mode='lines',
+                                            text=df_line_chart['DateText'],
+                                            hoverinfo = 'text+y',
                                             line=dict(
                                                 shape='spline',
                                                 color='rgb(26, 118, 255)'
-                                            )
+                                            ),
+                                            showlegend = False
                                         )
                                     ],
-                                    layout=go.Layout(title=('Revenue Collected By Month'))
+                                    layout=go.Layout(
+                                                title=('Revenue Collected By Month'), 
+                                                xaxis=dict(zeroline = False), 
+                                                yaxis=dict(hoverformat = '4.0f')
+                                            )
                                 ),
                             )
                         ], className='eight columns'),
@@ -187,20 +199,24 @@ def update_line_chart(start_date, end_date, jobtype):
     return {
         'data': [
              go.Scatter(
-                 x=df_line_chart.index,
-                 y=df_line_chart.values,
+                 x=df_line_chart['Date'],
+                 y=df_line_chart['Revenue Collected'],
                  name='Revenue Collected',
                  mode='lines',
+                 text=df_line_chart['DateText'],
+                 hoverinfo = 'text+y',
                  line=dict(
                     shape='spline',
                     color='rgb(26, 118, 255)'
-                 )
+                 ),
+                 showlegend = False
              )
          ],
         'layout': go.Layout(
-            title=('Revenue Collected By Month'),
-            yaxis= dict(title='Revenue Collected ($)')
-        )
+                            title=('Revenue Collected By Month'), 
+                            xaxis=dict(zeroline = False), 
+                            yaxis=dict(hoverformat = '4.0f')
+                            )
     }
 
 @app.callback(

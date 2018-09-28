@@ -22,10 +22,12 @@ else:
         with open(r'queries/licenses/FinalQueries_SQL/slide1_license_volumes_BL.sql') as sql:
             df = pd.read_sql_query(sql=sql.read(), con=con, parse_dates=['ISSUEDATE'])
 
-# strip first 3 characters "BL_"
-df['JOBTYPE'] = df['JOBTYPE'].map(lambda x: str(x)[3:])  
-
-df.rename(columns={'ISSUEDATE': 'Issue Date', 'LICENSETYPE': 'License Type', 'COUNTJOBS': 'Number of Licenses Issued'}, inplace=True)
+# Strip 'BL_' from JOBTYPE
+# Rename the columns to be more readable
+# Make a DateText Column to display on the graph
+df = (df.assign(JOBTYPE=lambda x: x['JOBTYPE'][3:])
+        .rename(columns={'ISSUEDATE': 'Issue Date', 'LICENSETYPE': 'License Type', 'COUNTJOBS': 'Number of Licenses Issued'})
+        .assign(DateText=lambda x: x['Issue Date'].dt.strftime('%b %Y')))
 
 unique_licensetypes = df['License Type'].unique()
 unique_licensetypes = np.append(['All'], unique_licensetypes)
@@ -39,12 +41,10 @@ def update_counts_graph_data(selected_start, selected_end, selected_jobtype, sel
         df_selected = df_selected[(df_selected['License Type']==selected_licensetype)]
 
     df_selected = (df_selected.loc[(df['Issue Date']>=selected_start)&(df_selected['Issue Date']<=selected_end)]
-                              .groupby(by=['Issue Date'])['Number of Licenses Issued']
+                              .groupby(by=['Issue Date', 'DateText'])['Number of Licenses Issued']
                               .sum()
                               .reset_index()
                               .sort_values(by=['Issue Date']))
-
-    df_selected['Issue Date'] = df_selected['Issue Date'].apply(lambda x: datetime.strftime(x, '%b-%Y'))
     return df_selected
 
 def update_counts_table_data(selected_start, selected_end, selected_jobtype, selected_licensetype):
@@ -60,7 +60,7 @@ def update_counts_table_data(selected_start, selected_end, selected_jobtype, sel
                               .sum()
                               .reset_index()
                               .sort_values(by=['Issue Date','License Type']))
-    df_selected['Issue Date'] = df_selected['Issue Date'].apply(lambda x: datetime.strftime(x, '%b-%Y'))
+    df_selected['Issue Date'] = df_selected['Issue Date'].apply(lambda x: datetime.strftime(x, '%b %Y'))
     return df_selected
 
 layout = html.Div(children=[
@@ -103,6 +103,8 @@ layout = html.Div(children=[
                                 x=df['Issue Date'],
                                 y=df['Number of Licenses Issued'],
                                 mode='lines',
+                                text=df['DateText'],
+                                hoverinfo='text+y',
                                 line=dict(
                                     shape='spline',
                                     color='rgb(26, 118, 255)'
@@ -151,6 +153,8 @@ def update_graph(start_date, end_date, jobtype, licensetype):
                  x=df['Issue Date'],
                  y=df['Number of Licenses Issued'],
                  mode='lines',
+                 text=df['DateText'],
+                 hoverinfo = 'text+y',
                  line=dict(
                     shape='spline',
                     color='rgb(26, 118, 255)'

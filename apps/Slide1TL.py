@@ -30,6 +30,20 @@ df = (df.rename(columns={'ISSUEDATE': 'Issue Date', 'LICENSETYPE': 'License Type
 unique_licensetypes = df['License Type'].unique()
 unique_licensetypes = np.append(['All'], unique_licensetypes)
 
+total_license_volume = df['Number of Licenses Issued'].sum()
+
+def update_total_license_volume(selected_start, selected_end, selected_jobtype, selected_licensetype):
+    df_selected = df.copy(deep=True)
+
+    if selected_jobtype != "All":
+        df_selected = df_selected[(df_selected['JOBTYPE']==selected_jobtype)]
+    if selected_licensetype != "All":
+        df_selected = df_selected[(df_selected['License Type']==selected_licensetype)]
+
+    df_selected = df_selected.loc[(df['Issue Date']>=selected_start)&(df_selected['Issue Date']<=selected_end)]
+    total_license_volume = df_selected['Number of Licenses Issued'].sum()
+    return total_license_volume
+
 def update_counts_graph_data(selected_start, selected_end, selected_jobtype, selected_licensetype):
     df_selected = df.copy(deep=True)
 
@@ -94,23 +108,31 @@ layout = html.Div(children=[
                         ),
                     ], className='four columns'),
                 ], className='dashrow'),
-                dcc.Graph(id='slide1-TL-my-graph',
-                    figure=go.Figure(
-                        data=[
-                            go.Scatter(
-                                x=df['Issue Date'],
-                                y=df['Number of Licenses Issued'],
-                                mode='lines',
-                                text=df['DateText'],
-                                hoverinfo='text+y',
-                                line=dict(
-                                    shape='spline',
-                                    color='rgb(26, 118, 255)'
-                                )
+                html.Div([
+                    html.Div([
+                        dcc.Graph(id='slide1-TL-my-graph',
+                            figure=go.Figure(
+                                data=[
+                                    go.Scatter(
+                                        x=df['Issue Date'],
+                                        y=df['Number of Licenses Issued'],
+                                        mode='lines',
+                                        text=df['DateText'],
+                                        hoverinfo='text+y',
+                                        line=dict(
+                                            shape='spline',
+                                            color='rgb(26, 118, 255)'
+                                        )
+                                    )
+                                ],
                             )
-                        ],
-                    ),
-                ),
+                        )
+                    ], className='nine columns'),
+                    html.Div([
+                        html.H1('', id='slide1-TL-indicator', style={'font-size': '45pt'}),
+                        html.H2('Licenses Issued', style={'font-size': '40pt'})
+                    ], className='three columns', style={'text-align': 'center', 'margin': 'auto', 'padding': '75px 0'})
+                ], className='dashrow'),
                 html.Div([
                     html.Div([
                         html.H3('License Volumes By License Type and Month', style={'text-align': 'center'}),
@@ -164,6 +186,16 @@ def update_graph(start_date, end_date, jobtype, licensetype):
             yaxis= dict(title='Number of Trade Licenses Issued')
         )
     }
+
+@app.callback(
+    Output('slide1-TL-indicator', 'children'),
+    [Input('slide1-TL-my-date-picker-range', 'start_date'),
+     Input('slide1-TL-my-date-picker-range', 'end_date'),
+     Input('slide1-TL-jobtype-dropdown', 'value'),
+     Input('slide1-TL-licensetype-dropdown', 'value')])
+def update_total_license_volume_indicator(start_date, end_date, jobtype, licensetype):
+    total_license_volume = update_total_license_volume(start_date, end_date, jobtype, licensetype)
+    return str(total_license_volume)
 
 @app.callback(
     Output('slide1-TL-count-table', 'rows'),

@@ -25,12 +25,25 @@ else:
 # Strip 'BL_' from JOBTYPE
 # Rename the columns to be more readable
 # Make a DateText Column to display on the graph
-df = (df.assign(JOBTYPE=lambda x: x['JOBTYPE'][3:])
-        .rename(columns={'ISSUEDATE': 'Issue Date', 'LICENSETYPE': 'License Type', 'COUNTJOBS': 'Number of Licenses Issued'})
+df = (df.rename(columns={'ISSUEDATE': 'Issue Date', 'LICENSETYPE': 'License Type', 'COUNTJOBS': 'Number of Licenses Issued'})
         .assign(DateText=lambda x: x['Issue Date'].dt.strftime('%b %Y')))
 
 unique_licensetypes = df['License Type'].unique()
 unique_licensetypes = np.append(['All'], unique_licensetypes)
+
+total_license_volume = df['Number of Licenses Issued'].sum()
+
+def update_total_license_volume(selected_start, selected_end, selected_jobtype, selected_licensetype):
+    df_selected = df.copy(deep=True)
+
+    if selected_jobtype != "All":
+        df_selected = df_selected[(df_selected['JOBTYPE']==selected_jobtype)]
+    if selected_licensetype != "All":
+        df_selected = df_selected[(df_selected['License Type']==selected_licensetype)]
+
+    df_selected = df_selected.loc[(df['Issue Date']>=selected_start)&(df_selected['Issue Date']<=selected_end)]
+    total_license_volume = df_selected['Number of Licenses Issued'].sum()
+    return total_license_volume
 
 def update_counts_graph_data(selected_start, selected_end, selected_jobtype, selected_licensetype):
     df_selected = df.copy(deep=True)
@@ -81,8 +94,8 @@ layout = html.Div(children=[
                             id='slide1-BL-jobtype-dropdown',
                             options=[
                                 {'label': 'All', 'value': 'All'},
-                                {'label': 'Application', 'value': 'Application'},
-                                {'label': 'Renewal', 'value': 'Renewal'}
+                                {'label': 'Application', 'value': 'BL_Application'},
+                                {'label': 'Renewal', 'value': 'BL_Renewal'}
                             ],
                             value='All'
                         ),
@@ -96,23 +109,31 @@ layout = html.Div(children=[
                         ),
                     ], className='four columns'),
                 ], className='dashrow'),
-                dcc.Graph(id='slide1-BL-my-graph',
-                    figure=go.Figure(
-                        data=[
-                            go.Scatter(
-                                x=df['Issue Date'],
-                                y=df['Number of Licenses Issued'],
-                                mode='lines',
-                                text=df['DateText'],
-                                hoverinfo='text+y',
-                                line=dict(
-                                    shape='spline',
-                                    color='rgb(26, 118, 255)'
-                                )
-                            )
-                        ],
-                    ),
-                ),
+                html.Div([
+                    html.Div([
+                        dcc.Graph(id='slide1-BL-my-graph',
+                            figure=go.Figure(
+                                data=[
+                                    go.Scatter(
+                                        x=df['Issue Date'],
+                                        y=df['Number of Licenses Issued'],
+                                        mode='lines',
+                                        text=df['DateText'],
+                                        hoverinfo='text+y',
+                                        line=dict(
+                                            shape='spline',
+                                            color='rgb(26, 118, 255)'
+                                        )
+                                    )
+                                ],
+                            ),
+                        ),
+                    ], className='nine columns'),
+                    html.Div([
+                        html.H1('', id='slide1-BL-indicator', style={'font-size': '45pt'}),
+                        html.H2('Licenses Issued', style={'font-size': '40pt'})
+                    ], className='three columns', style={'text-align': 'center', 'margin': 'auto', 'padding': '75px 0'})
+                ], className='dashrow'),
                 html.Div([
                     html.Div([
                         html.H3('License Volumes By License Type and Month', style={'text-align': 'center'}),
@@ -166,6 +187,16 @@ def update_graph(start_date, end_date, jobtype, licensetype):
             yaxis= dict(title='Number of Business Licenses Issued')
         )
     }
+
+@app.callback(
+    Output('slide1-BL-indicator', 'children'),
+    [Input('slide1-BL-my-date-picker-range', 'start_date'),
+     Input('slide1-BL-my-date-picker-range', 'end_date'),
+     Input('slide1-BL-jobtype-dropdown', 'value'),
+     Input('slide1-BL-licensetype-dropdown', 'value')])
+def update_total_license_volume_indicator(start_date, end_date, jobtype, licensetype):
+    total_license_volume = update_total_license_volume(start_date, end_date, jobtype, licensetype)
+    return str(total_license_volume)
 
 @app.callback(
     Output('slide1-BL-count-table', 'rows'),

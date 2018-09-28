@@ -124,31 +124,32 @@ layout = html.Div(children=[
                                             )
                                 ),
                             )
-                        ], className='seven columns'),
-                    html.Div(
-                        [
-                            dcc.Graph(id='slide2-piechart',
-                                figure=go.Figure(
-                                    data=[
-                                        go.Pie(
-                                            labels=df_pie_chart.index,
-                                            values=df_pie_chart.values,
-                                            hoverinfo='label+value+percent', 
-                                            hole=0.4,
-                                            textfont=dict(color='#000000'),
-                                            marker=dict(colors=['#FF7070', '#FFCD70', '#77FF70', '#70F0FF'], 
-                                                line=dict(color='#000000', width=2)
-                                            )
-                                        )
-                                    ],
-                                    layout=go.Layout(title=('Revenue Breakdown by Job Type'))
-                                )
-                            )
-                        ], className='four columns'),
+                        ], className='nine columns'),
                     html.Div([
-                        html.H1('', id='slide2-indicator', style={'font-size': '20pt'}),
-                        html.H2('Collected', style={'font-size': '15pt'})
-                    ], className='one column', style={'text-align': 'center', 'margin': 'auto', 'padding': '150px 0'})
+                        html.H1('', id='slide2-indicator', style={'font-size': '45pt'}),
+                        html.H2('Collected', style={'font-size': '40pt'})
+                    ], className='three columns', style={'text-align': 'center', 'margin': 'auto', 'padding': '150px 0'})
+                ], className='dashrow'),
+                html.Div([
+                    html.Div([
+                        dcc.Graph(id='slide2-piechart',
+                            figure=go.Figure(
+                                data=[
+                                    go.Pie(
+                                        labels=df_pie_chart.index,
+                                        values=df_pie_chart.values,
+                                        hoverinfo='label+value+percent', 
+                                        hole=0.4,
+                                        textfont=dict(color='#000000'),
+                                        marker=dict(colors=['#FF7070', '#FFCD70', '#77FF70', '#70F0FF'], 
+                                            line=dict(color='#000000', width=2)
+                                        )
+                                    )
+                                ],
+                                layout=go.Layout(title=('Revenue Breakdown by Job Type'))
+                            )
+                        )
+                    ], style={'width': '45%', 'margin-left': 'auto', 'margin-right': 'auto', 'margin-bottom': '45px'})
                 ], className='dashrow'),
                 html.Div([
                     html.Div([

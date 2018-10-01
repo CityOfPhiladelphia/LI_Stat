@@ -8,10 +8,31 @@ from app import app, server
 from apps import Slide1BL, Slide1TL, Slide2, Slide3BL, Slide4BL, Slide4TL
 
 app.layout = html.Div([
-                dcc.Location(id='url', refresh=False),
-                html.Div(id='page-content'),
-                html.Div(dt.DataTable(rows=[{}]), style={'display': 'none'})
-            ], className='ten columns offset-by-one')
+                html.Nav([
+                    html.Div([
+                        html.Button('Business Licenses', className='dropbtn'),
+                        html.Div([
+                            html.A('Volumes', href='/Slide1BL'),
+                            html.A('Trends', href='/Slide3BL'),
+                            html.A('Submittal Type', href='/Slide4BL')
+                        ], className='dropdown-content')
+                    ], className='dropdown'),
+                    html.Div([
+                        html.Button('Trade Licenses', className='dropbtn'),
+                        html.Div([
+                            html.A('Volumes', href='/Slide1TL'),
+                            html.A('Trends', href='/Slide3TL'),
+                            html.A('Submittal Type', href='/Slide4TL')
+                        ], className='dropdown-content')
+                    ], className='dropdown'),
+                    html.A('License Revenue', href='/Slide2')
+                ], className='navbar'),
+                html.Div([
+                    dcc.Location(id='url', refresh=False),
+                    html.Div(id='page-content'),
+                    html.Div(dt.DataTable(rows=[{}]), style={'display': 'none'})
+                ], className='container', style={'margin': 'auto'})
+            ])
     
 index_page = html.Div([
     html.H2('Licenses & Inspections'),

@@ -86,7 +86,7 @@ top_ten_applications_payments = (select_top_ten_absolute_changes(applications_pa
                                         'PercentChange': '% Change'}))
 
 layout = html.Div([
-                html.H1('License Trends', style={'text-align': 'center'}),
+                html.H1('Business License Trends', style={'text-align': 'center'}),
                 html.Div([
                     html.H3('Top Significant Changes in Application Volumes [1]'),
                     table.DataTable(

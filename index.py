@@ -9,14 +9,8 @@ from apps import Slide1BL, Slide1TL, Slide2, Slide3BL, Slide4BL, Slide4TL
 
 app.layout = html.Div([
                 html.Nav([
-                    html.Div([
-                        html.Button('Business Licenses', className='dropbtn'),
-                        html.Div([
-                            html.A('Volumes', href='/Slide1BL'),
-                            html.A('Trends', href='/Slide3BL'),
-                            html.A('Submittal Type', href='/Slide4BL')
-                        ], className='dropdown-content')
-                    ], className='dropdown'),
+                    html.P('City of Philadelphia | LI Stat'),
+                    html.A('License Revenue', href='/Slide2'),
                     html.Div([
                         html.Button('Trade Licenses', className='dropbtn'),
                         html.Div([
@@ -25,7 +19,14 @@ app.layout = html.Div([
                             html.A('Submittal Type', href='/Slide4TL')
                         ], className='dropdown-content')
                     ], className='dropdown'),
-                    html.A('License Revenue', href='/Slide2'),
+                    html.Div([
+                        html.Button('Business Licenses', className='dropbtn'),
+                        html.Div([
+                            html.A('Volumes', href='/Slide1BL'),
+                            html.A('Trends', href='/Slide3BL'),
+                            html.A('Submittal Type', href='/Slide4BL')
+                        ], className='dropdown-content')
+                    ], className='dropdown'),
                 ], className='navbar'),
                 html.Div([
                     dcc.Location(id='url', refresh=False),

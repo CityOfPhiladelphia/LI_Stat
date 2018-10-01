@@ -30,7 +30,7 @@ df = (df.rename(columns={'ISSUEDATE': 'Issue Date', 'LICENSETYPE': 'License Type
 unique_licensetypes = df['License Type'].unique()
 unique_licensetypes = np.append(['All'], unique_licensetypes)
 
-total_license_volume = df['Number of Licenses Issued'].sum()
+total_license_volume = '{:,.0f}'.format(df['Number of Licenses Issued'].sum())
 
 def update_total_license_volume(selected_start, selected_end, selected_jobtype, selected_licensetype):
     df_selected = df.copy(deep=True)
@@ -42,7 +42,7 @@ def update_total_license_volume(selected_start, selected_end, selected_jobtype, 
 
     df_selected = df_selected.loc[(df['Issue Date']>=selected_start)&(df_selected['Issue Date']<=selected_end)]
     total_license_volume = df_selected['Number of Licenses Issued'].sum()
-    return total_license_volume
+    return '{:,.0f}'.format(total_license_volume)
 
 def update_counts_graph_data(selected_start, selected_end, selected_jobtype, selected_licensetype):
     df_selected = df.copy(deep=True)

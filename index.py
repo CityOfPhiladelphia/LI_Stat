@@ -34,7 +34,7 @@ app.layout = html.Div([
                     html.Div(dt.DataTable(rows=[{}]), style={'display': 'none'})
                 ], className='container', style={'margin': 'auto'}),
                 html.Nav([
-                    html.A('Questions? Click Here to Contact LIGISTeam', href='mailto:ligisteam@phila.gov')
+                    html.A('Questions? Click Here to Contact LI GIS Team', href='mailto:ligisteam@phila.gov')
                 ], className='footer-navbar')
             ])
 

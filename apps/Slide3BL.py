@@ -25,10 +25,10 @@ else:
 
 # Select only Jan-June 2017 and 2018, then group them by year, job and licensetype
 licenses = (df.loc[(df['ISSUEDATE'] >= '2017-01-01') 
-                        & (df['ISSUEDATE'] < '2017-07-01')]
-                     .append(df.loc[(df['ISSUEDATE'] >= '2018-01-01') 
-                                  & (df['ISSUEDATE'] < '2018-07-01')])
-                     .assign(ISSUEDATE=lambda x: x['ISSUEDATE'].dt.strftime('%Y')))
+                 & (df['ISSUEDATE'] < '2017-07-01')]
+              .append(df.loc[(df['ISSUEDATE'] >= '2018-01-01') 
+                           & (df['ISSUEDATE'] < '2018-07-01')])
+              .assign(ISSUEDATE=lambda x: x['ISSUEDATE'].dt.strftime('%Y')))
 
 license_volumes = licenses.groupby(['ISSUEDATE', 'JOBTYPE', 'LICENSETYPE'], as_index=False)['COUNTJOBS'].sum()
 
@@ -46,26 +46,33 @@ def select_top_ten_absolute_changes(license_volumes, filteramount):
     license_volumes = (license_volumes.loc[(license_volumes['2017'] > filteramount) 
                                          | (license_volumes['2018'] > filteramount)]
                                       .assign(AbsolutePercentChange=lambda x:abs(x['PercentChange']))
+                                      .sort_values(by='2018', ascending=False)
+                                      .dropna().head(10)
                                       .sort_values(by='AbsolutePercentChange', ascending=False)
-                                      .drop(columns=['AbsolutePercentChange'])
-                                      .dropna().head(10))
+                                      .drop(columns=['AbsolutePercentChange']))
     return license_volumes
+
+# Create column names dictionaries for easy renaming later on.
+# These make the tables a lot easier to read and understand.
+license_column_names = {'LICENSETYPE': 'License Type', 
+                        '2017': '2017 License Volume', 
+                        '2018': '2018 License Volume', 
+                        'PercentChange': '% Change'}
+
+payment_column_names = {'LICENSETYPE': 'License Type', 
+                        '2017': '2017 License Payments', 
+                        '2018': '2018 License Payments', 
+                        'PercentChange': '% Change'}
 
 renewal_volumes = clean_and_pivot_data(license_volumes, jobtype='Renewal', values='COUNTJOBS')
                                 
 applications_volumes = clean_and_pivot_data(license_volumes, jobtype='Application', values='COUNTJOBS')
 
 top_ten_renewal_volumes = (select_top_ten_absolute_changes(renewal_volumes, 100)
-                   .rename(columns={'LICENSETYPE': 'License Type', 
-                                    '2017': '2017 License Volume', 
-                                    '2018': '2018 License Volume', 
-                                    'PercentChange': '% Change'}))
+                          .rename(columns=license_column_names))
 
 top_ten_applications_volumes = (select_top_ten_absolute_changes(applications_volumes, 100)
-                       .rename(columns={'LICENSETYPE': 'License Type', 
-                                        '2017': '2017 License Volume', 
-                                        '2018': '2018 License Volume', 
-                                        'PercentChange': '% Change'}))
+                               .rename(columns=license_column_names))
 
 license_payments = licenses.groupby(['ISSUEDATE', 'JOBTYPE', 'LICENSETYPE'], as_index=False)['TOTALAMOUNT'].sum()
 
@@ -73,20 +80,21 @@ renewal_payments = clean_and_pivot_data(license_payments, jobtype='Renewal', val
                                 
 applications_payments = clean_and_pivot_data(license_payments, jobtype='Application', values='TOTALAMOUNT')
 
+# Helper functions for rounding payments up the the nearest dollar
+rounding_functions = {'2017': lambda x: round(x['2017']),
+                      '2018': lambda x: round(x['2018'])}
+
 top_ten_renewal_payments = (select_top_ten_absolute_changes(renewal_payments, 10000)
-                   .rename(columns={'LICENSETYPE': 'License Type', 
-                                    '2017': '2017 License Payments', 
-                                    '2018': '2018 License Payments', 
-                                    'PercentChange': '% Change'}))
+                           .assign(**rounding_functions)
+                           .rename(columns=payment_column_names))
 
 top_ten_applications_payments = (select_top_ten_absolute_changes(applications_payments, 10000)
-                       .rename(columns={'LICENSETYPE': 'License Type', 
-                                        '2017': '2017 License Payments', 
-                                        '2018': '2018 License Payments', 
-                                        'PercentChange': '% Change'}))
+                                .assign(**rounding_functions)
+                                .rename(columns=payment_column_names))
 
 layout = html.Div([
                 html.H1('Business License Trends', style={'text-align': 'center'}),
+                html.H2('From January - July', style={'text-align': 'center'}),
                 html.Div([
                     html.H3('Top Significant Changes in Application Volumes [1]'),
                     table.DataTable(

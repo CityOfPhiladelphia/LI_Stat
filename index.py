@@ -25,32 +25,17 @@ app.layout = html.Div([
                             html.A('Submittal Type', href='/Slide4TL')
                         ], className='dropdown-content')
                     ], className='dropdown'),
-                    html.A('License Revenue', href='/Slide2')
+                    html.A('License Revenue', href='/Slide2'),
                 ], className='navbar'),
                 html.Div([
                     dcc.Location(id='url', refresh=False),
                     html.Div(id='page-content'),
                     html.Div(dt.DataTable(rows=[{}]), style={'display': 'none'})
-                ], className='container', style={'margin': 'auto'})
+                ], className='container', style={'margin': 'auto'}),
+                html.Nav([
+                    html.A('Questions? Click Here to Contact LIGISTeam', href='mailto:ligisteam@phila.gov')
+                ], className='footer-navbar')
             ])
-    
-index_page = html.Div([
-    html.H2('Licenses & Inspections'),
-    html.Br(),
-    html.H3('LI Stat Dashboards'),
-    html.Br(),
-    dcc.Link('Business Licenses Volumes', href='/Slide1BL'),
-    html.Br(),
-    dcc.Link('Trade Licenses Volumes', href='/Slide1TL'),
-    html.Br(),
-    dcc.Link('License Revenue', href='/Slide2'),
-    html.Br(),
-    dcc.Link('Business License Trends', href='/Slide3BL'),
-    html.Br(),
-    dcc.Link('Business Licenses by Submittal Type', href='/Slide4BL'),
-    html.Br(),
-    dcc.Link('Trade Licenses by Submittal Type', href='/Slide4TL')
-], style={'text-align': 'center'})
 
 
 @app.callback(Output('page-content', 'children'),
@@ -69,7 +54,7 @@ def display_page(pathname):
     elif pathname == '/Slide4TL':
         return Slide4TL.layout
     else:
-        return index_page
+        return Slide1BL.layout
 
 if __name__ == '__main__':
     app.run_server(host='127.0.0.1', port=5001)

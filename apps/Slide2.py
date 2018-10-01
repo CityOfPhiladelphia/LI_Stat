@@ -19,7 +19,7 @@ if testing_mode:
     
 else:
     with con() as con:
-        with open(r'queries/licenses/FinalQueries_SQL/slide2_PaymentsbyMonth.sql') as sql:
+        with open(r'queries/licenses/slide2_PaymentsbyMonth.sql') as sql:
             df = pd.read_sql_query(sql=sql.read(), con=con, parse_dates=['PAYMENTDATE'])
 
 df.rename(columns={'JOBTYPE': 'Job Type', 'PAYMENTDATE': 'Date', 'TOTALAMOUNT': 'Revenue Collected'}, inplace=True)

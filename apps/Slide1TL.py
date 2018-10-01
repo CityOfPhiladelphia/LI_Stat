@@ -19,7 +19,7 @@ if testing_mode:
 
 else:
     with con() as con:
-        with open(r'queries/licenses/FinalQueries_SQL/slide1_license_volumes_TL.sql') as sql:
+        with open(r'queries/licenses/slide1_license_volumes_TL.sql') as sql:
             df = pd.read_sql_query(sql=sql.read(), con=con, parse_dates=['ISSUEDATE'])
 
 # Rename the columns to be more readable

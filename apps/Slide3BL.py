@@ -20,7 +20,7 @@ if testing_mode:
 
 else:
     with con() as con:
-        with open(r'queries/licenses/FinalQueries_SQL/slide3_license_trends_BL.sql') as sql:
+        with open(r'queries/licenses/slide3_license_trends_BL.sql') as sql:
             df = pd.read_sql_query(sql=sql.read(), con=con, parse_dates=['ISSUEDATE'])
 
 # Select only Jan-June 2017 and 2018, then group them by year, job and licensetype

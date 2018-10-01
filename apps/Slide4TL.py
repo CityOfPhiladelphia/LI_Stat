@@ -19,7 +19,7 @@ if testing_mode:
     
 else:
     with con() as con:
-        with open(r'queries/licenses/FinalQueries_SQL/slide4_submittal_volumes_TL.sql') as sql:
+        with open(r'queries/licenses/slide4_submittal_volumes_TL.sql') as sql:
             df = (pd.read_sql(sql=sql.read(), con=con, parse_dates=['ISSUEDATE'])
                     .sort_values(by='ISSUEDATE'))
 

@@ -1,10 +1,16 @@
-select p.PERMITNUMBER, 
-p.APDTTM,
-p.PERMITISSUEDATE,
-p.PERMITTYPE,
-p.TYPEOFWORK,
-a.ISSDTTM
-from imsv7.li_allpermits p, imsv7.apact a
-where TO_DATE(p.APDTTM, 'YYYY-MM-DD') != TO_DATE(p.PERMITISSUEDATE, 'YYYY-MM-DD')
-and p.APDTTM >= '01-JAN-2016'
-and p.APKEY = a.APKEY (+)
+SELECT b.apno,
+  b.APDTTM,
+  b.issdttm PermitIssueDate,
+  defn.aptype PermitType,
+  b.worktype,
+  act.ISSDTTM ReviewIssueDate,
+  b.parentkey
+FROM imsv7.apbldg b,
+  imsv7.apact act,
+  imsv7.apdefn defn
+WHERE b.apkey                        = act.apkey
+AND b.apdefnkey                      = defn.apdefnkey
+AND TO_DATE(b.APDTTM, 'YYYY-MM-DD') != TO_DATE(b.ISSDTTM, 'YYYY-MM-DD')
+AND b.APDTTM                        >= '01-JAN-2016'
+AND b.APKEY                          = act.APKEY (+)
+AND b.parentkey = '1'

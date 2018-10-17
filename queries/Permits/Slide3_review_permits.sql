@@ -1,0 +1,10 @@
+select p.PERMITNUMBER, 
+p.APDTTM,
+p.PERMITISSUEDATE,
+p.PERMITTYPE,
+p.TYPEOFWORK,
+a.ISSDTTM
+from imsv7.li_allpermits p, imsv7.apact a
+where TO_DATE(p.APDTTM, 'YYYY-MM-DD') != TO_DATE(p.PERMITISSUEDATE, 'YYYY-MM-DD')
+and p.APDTTM >= '01-JAN-2016'
+and p.APKEY = a.APKEY (+)

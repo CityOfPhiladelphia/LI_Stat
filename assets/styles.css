@@ -74,6 +74,11 @@
   width: 100%;
 }
 
+.filters {
+  margin-top: 75px;
+  margin-bottom: 40px;
+}
+
 /* Navbar container */
 .navbar {
   overflow: hidden;

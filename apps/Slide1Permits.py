@@ -81,7 +81,7 @@ def update_counts_table_data(selected_start, selected_end, selected_permittype):
     return df_selected
 
 layout = html.Div(children=[
-                html.H1('Permit Volumes', style={'text-align': 'center'}),
+                html.H1('Permit Volumes and Revenues', style={'text-align': 'center'}),
                 html.Div([
                     html.Div([
                         html.P('Filter by Date Range'),
@@ -91,7 +91,7 @@ layout = html.Div(children=[
                             start_date=datetime(2016, 1, 1),
                             end_date=datetime.now()
                         ),
-                    ], className='four columns'),
+                    ], className='six columns'),
                     html.Div([
                         html.P('Filter by Permit Type'),
                         dcc.Dropdown(
@@ -99,8 +99,8 @@ layout = html.Div(children=[
                                 options=[{'label': k, 'value': k} for k in unique_permittypes],
                                 value='All'
                         ),
-                    ], className='four columns'),
-                ], className='dashrow'),
+                    ], className='five columns'),
+                ], className='dashrow filters'),
                 html.Div([
                     html.Div([
                         dcc.Graph(id='slide1-permits-graph',
@@ -151,15 +151,17 @@ layout = html.Div(children=[
                                 )
                             )
                         )
-                    ], className='nine columns'),
+                    ], className='twelve columns'),
+                ], className='dashrow'),
+                html.Div([
                     html.Div([
                         html.H1('', id='slide1-permits-indicator', style={'font-size': '35pt'}),
                         html.H2('Permits Issued', style={'font-size': '30pt'})
-                    ], className='four columns', style={'text-align': 'center', 'margin': 'auto', 'padding': '65px 0'}),
+                    ], className='six columns', style={'text-align': 'center', 'margin': 'auto', 'padding': '50px 0'}),
                     html.Div([
                         html.H1('', id='slide1-feespaid-indicator', style={'font-size': '35pt'}),
                         html.H2('Fees Paid', style={'font-size': '30pt'})
-                    ], className='four columns', style={'text-align': 'center', 'margin': 'auto', 'padding': '65px 0'})
+                    ], className='six columns', style={'text-align': 'center', 'margin': 'auto', 'padding': '50px 0'})
                 ], className='dashrow'),
                 html.Div([
                     html.Div([
@@ -182,7 +184,7 @@ layout = html.Div(children=[
                                 target='_blank',
                             )
                         ], style={'text-align': 'right'})
-                    ], style={'width': '55%', 'margin-left': 'auto', 'margin-right': 'auto','margin-top': '45px', 'margin-bottom': '45px'})
+                    ], style={'width': '75%', 'margin-left': 'auto', 'margin-right': 'auto','margin-top': '50px', 'margin-bottom': '50px'})
                 ], className='dashrow')
             ])
 

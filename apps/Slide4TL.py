@@ -10,7 +10,7 @@ import datetime
 from app import app, con
 
 
-testing_mode = True
+testing_mode = False
 print('slide4_TL.py')
 print('Testing mode: ' + str(testing_mode))
 

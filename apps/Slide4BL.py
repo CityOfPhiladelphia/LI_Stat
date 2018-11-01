@@ -11,7 +11,7 @@ from app import app, con
 
 #TODO the query does not currently bring in CALS
 
-testing_mode = True
+testing_mode = False
 print('slide4_BL.py')
 print('Testing mode: ' + str(testing_mode))
 

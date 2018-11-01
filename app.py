@@ -3,10 +3,12 @@ import dash_auth
 import cx_Oracle
 from flask import Flask
 from li_dbs import ECLIPSE_PROD
+from li_dbs import LIDB
 from config import USERNAME_PASSWORD_PAIRS
 
 
 con = ECLIPSE_PROD.ECLIPSE_PROD
+con_LIDB = LIDB.LIDB
 
 external_stylesheets = ['https://unpkg.com/phila-standards@0.11.2/dist/css/phila-app.min.css']
 

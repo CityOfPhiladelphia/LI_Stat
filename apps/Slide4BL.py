@@ -77,8 +77,8 @@ food = df.loc[(df['LICENSETYPE'].str.contains('Food')) & (df['CREATEDBYTYPE'] ==
 cals = df.loc[(df['LICENSETYPE'].str.contains('Activity')) & (df['CREATEDBYTYPE'] == 'Online') & (df['ISSUEDATE'] >= '2018-01-01')]
 
 def percent_renewals(df):
-    count_new = len(df.loc[df['JOBTYPE'] == 'Application'].index)
-    count_renewals = len(df.loc[df['JOBTYPE'] == 'Renewal'].index)
+    count_new = df.loc[df['JOBTYPE'] == 'Application']['LICENSENUMBERCOUNT'].sum()
+    count_renewals = df.loc[df['JOBTYPE'] == 'Renewal']['LICENSENUMBERCOUNT'].sum()
     return round(count_renewals / (count_new + count_renewals) * 100, 1)
 
 df_table_2 = pd.DataFrame(data={

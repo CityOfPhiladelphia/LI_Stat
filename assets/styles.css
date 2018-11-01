@@ -74,6 +74,11 @@
   width: 100%;
 }
 
+.filters {
+  margin-top: 75px;
+  margin-bottom: 40px;
+}
+
 /* Navbar container */
 .navbar {
   overflow: hidden;
@@ -174,4 +179,16 @@
   padding: 14px 16px;
   text-decoration: none;
   font-size: 17px;
+}
+
+div#slide1-permits-count-table-div div.react-grid-Cell:nth-child(2) {
+   text-align: left;
+}
+
+div#slide1-permits-count-table-div div.react-grid-Cell:nth-child(3) {
+   text-align: right;
+}
+
+div#slide1-permits-count-table-div div.react-grid-Cell:nth-child(4) {
+   text-align: right;
 }

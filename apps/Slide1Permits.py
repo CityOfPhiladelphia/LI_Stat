@@ -27,6 +27,12 @@ else:
 df = (df.rename(columns={'ISSUEDATE': 'Issue Date', 'PERMITDESCRIPTION': 'Permit Type', 'COUNTPERMITS': 'Permits Issued', 'TOTALFEESPAID': 'Fees Paid'})
         .assign(DateText=lambda x: x['Issue Date'].dt.strftime('%b %Y')))
 
+df['Fees Paid'] = pd.to_numeric(df['Fees Paid'])
+
+df['Permit Type'] = df['Permit Type'].map(lambda x: x.replace(" PERMIT", ""))
+df['Permit Type'] = df['Permit Type'].str.lower()
+df['Permit Type'] = df['Permit Type'].str.title()
+
 unique_permittypes = df['Permit Type'].unique()
 unique_permittypes = np.append(['All'], unique_permittypes)
 
@@ -51,7 +57,7 @@ def update_total_fees_paid(selected_start, selected_end, selected_permittype):
 
     df_selected = df_selected.loc[(df['Issue Date'] >= selected_start)&(df_selected['Issue Date'] <= selected_end)]
     total_fees_paid = df_selected['Fees Paid'].sum()
-    return '{:,.0f}'.format(total_fees_paid)
+    return '${:,.0f}'.format(total_fees_paid)
 
 def update_counts_graph_data(selected_start, selected_end, selected_permittype):
     df_selected = df.copy(deep=True)
@@ -78,6 +84,8 @@ def update_counts_table_data(selected_start, selected_end, selected_permittype):
                               .reset_index()
                               .sort_values(by=['Issue Date', 'Permit Type']))
     df_selected['Issue Date'] = df_selected['Issue Date'].apply(lambda x: datetime.strftime(x, '%b %Y'))
+    df_selected['Permits Issued'] = df_selected['Permits Issued'].map('{:,.0f}'.format)
+    df_selected['Fees Paid'] = df_selected['Fees Paid'].map('${:,.0f}'.format)
     return df_selected
 
 layout = html.Div(children=[
@@ -128,7 +136,7 @@ layout = html.Div(children=[
                                             shape='spline',
                                             color='#ff7f0e'
                                         ),
-                                        name='Fees Paid',
+                                        name='Fees Paid ($)',
                                         yaxis='y2'
                                     )
                                 ],
@@ -138,7 +146,7 @@ layout = html.Div(children=[
                                         title='Permits Issued'
                                     ),
                                     yaxis2=dict(
-                                        title='Fees Paid',
+                                        title='Fees Paid ($)',
                                         titlefont=dict(
                                             color='#ff7f0e'
                                         ),
@@ -174,7 +182,9 @@ layout = html.Div(children=[
                                 sortable=True,
                                 id='slide1-permits-count-table'
                             ),
-                        ], style={'text-align': 'center'}),
+                        ], style={'text-align': 'center'},
+                           id='slide1-permits-count-table-div'
+                        ),
                         html.Div([
                             html.A(
                                 'Download Data',
@@ -184,7 +194,7 @@ layout = html.Div(children=[
                                 target='_blank',
                             )
                         ], style={'text-align': 'right'})
-                    ], style={'width': '75%', 'margin-left': 'auto', 'margin-right': 'auto','margin-top': '50px', 'margin-bottom': '50px'})
+                    ], style={'width': '65%', 'margin-left': 'auto', 'margin-right': 'auto','margin-top': '50px', 'margin-bottom': '50px'})
                 ], className='dashrow')
             ])
 
@@ -219,7 +229,7 @@ def update_graph(start_date, end_date, permittype):
                     shape='spline',
                     color='#ff7f0e'
                 ),
-                name='Fees Paid',
+                name='Fees Paid ($)',
                 yaxis='y2'
             )
         ],
@@ -229,7 +239,7 @@ def update_graph(start_date, end_date, permittype):
                 title='Permits Issued'
             ),
             yaxis2=dict(
-                title='Fees Paid',
+                title='Fees Paid ($)',
                 titlefont=dict(
                     color='#ff7f0e'
                 ),

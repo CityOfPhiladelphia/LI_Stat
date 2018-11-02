@@ -10,3 +10,4 @@ config.py
 makecsv.py
 *.bat
 *.db
+.~sql

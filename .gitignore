@@ -9,3 +9,4 @@ Stat_Summary.docx
 config.py
 makecsv.py
 *.bat
+*.db

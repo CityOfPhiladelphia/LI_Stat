@@ -2,7 +2,8 @@ SELECT trim(b.apno) PermitNumber,
   b.APDTTM ProcessingDate,
   nvl(act.issdttm, b.issdttm) PermitIssueDate,
   defn.aptype PermitType,
-  b.worktype
+  b.worktype,
+  b.parentkey
 FROM imsv7.apbldg b,
   imsv7.apact act,
   imsv7.apdefn defn
@@ -16,7 +17,8 @@ SELECT trim(u.apno) PermitNumber,
   u.APDTTM ProcessingDate,
   nvl(act.issdttm, u.issdttm) PermitIssueDate,
   defn.aptype PermitType,
-  u.worktype
+  u.worktype,
+  u.parentkey
 FROM imsv7.apuse u,
   imsv7.apact act,
   imsv7.apdefn defn

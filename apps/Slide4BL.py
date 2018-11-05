@@ -11,12 +11,12 @@ from app import app, con
 
 #TODO the query does not currently bring in CALS
 
-testing_mode = False
+testing_mode = True
 print('slide4_BL.py')
 print('Testing mode: ' + str(testing_mode))
 
 if testing_mode:
-    df = pd.read_csv('Slide4_BL.csv', parse_dates=['ISSUEDATE'])
+    df = pd.read_csv('test_data/Slide4_BL.csv', parse_dates=['ISSUEDATE'])
     
 else:
     with con() as con:

@@ -10,7 +10,7 @@ import urllib.parse
 
 from app import app, con_LIDB
 
-testing_mode = False
+testing_mode = True
 print('slide1Permits.py')
 print('Testing mode: ' + str(testing_mode))
 

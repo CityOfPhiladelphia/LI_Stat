@@ -10,12 +10,12 @@ import datetime
 from app import app, con
 
 
-testing_mode = False
+testing_mode = True
 print('slide4_TL.py')
 print('Testing mode: ' + str(testing_mode))
 
 if testing_mode:
-    df = pd.read_csv('Slide4_TL.csv', parse_dates=['ISSUEDATE'])
+    df = pd.read_csv('test_data/Slide4_TL.csv', parse_dates=['ISSUEDATE'])
     
 else:
     with con() as con:

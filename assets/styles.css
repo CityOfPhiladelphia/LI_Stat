@@ -100,7 +100,15 @@
 }
 
 /* Links inside the navbar */
-.navbar a {
+.navbar > a {
+  float: right;
+  font-size: 16px;
+  color: white;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+}
+.navbar > a:visited {
   float: right;
   font-size: 16px;
   color: white;
@@ -172,9 +180,9 @@
 }
 
 /* Style the links inside the footer navigation bar */
-.footer-navbar a {
+.footer-navbar a:link {
   display: block;
-  color: #f2f2f2;
+  color: white;
   text-align: center;
   padding: 14px 16px;
   text-decoration: none;
@@ -191,4 +199,5 @@ div#slide1-permits-count-table-div div.react-grid-Cell:nth-child(3) {
 
 div#slide1-permits-count-table-div div.react-grid-Cell:nth-child(4) {
    text-align: right;
+}
 }

@@ -30,7 +30,7 @@ SELECT
         WHERE tlic.objectid = tap.tradelicenseobjectid (+)
              AND tap.jobid = job.jobid (+) 
              AND job.jobid = fee.referencedobjectid (+)
-             AND tlic.initialissuedate >= '01-oct-18'
+             AND tlic.initialissuedate >= '01-JAN-16'
              AND tlic.initialissuedate <= SYSDATE
          UNION
          SELECT DISTINCT
@@ -45,7 +45,7 @@ SELECT
              query.j_tl_amendrenew tar 
         WHERE  tlic.objectid = lra.licenseid 
              AND lra.amendrenewid = tar.objectid 
-             AND tar.completeddate >= '01-oct-18' 
+             AND tar.completeddate >= '01-JAN-16'
              AND tar.completeddate <= SYSDATE 
              AND tar.statusdescription LIKE 'Approved' 
              AND tar.applicationtype LIKE 'Renewal'

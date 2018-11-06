@@ -192,12 +192,35 @@
 div#slide1-permits-count-table-div div.react-grid-Cell:nth-child(2) {
    text-align: left;
 }
-
 div#slide1-permits-count-table-div div.react-grid-Cell:nth-child(3) {
    text-align: right;
 }
-
 div#slide1-permits-count-table-div div.react-grid-Cell:nth-child(4) {
    text-align: right;
 }
+
+div#slide2permits_volume_changes_table div.react-grid-Cell:nth-child(1) {
+   text-align: left;
+}
+div#slide2permits_volume_changes_table div.react-grid-Cell:nth-child(2) {
+   text-align: right;
+}
+div#slide2permits_volume_changes_table div.react-grid-Cell:nth-child(3) {
+   text-align: right;
+}
+div#slide2permits_volume_changes_table div.react-grid-Cell:nth-child(4) {
+   text-align: right;
+}
+
+div#slide2permits_payment_changes_table div.react-grid-Cell:nth-child(1) {
+   text-align: left;
+}
+div#slide2permits_payment_changes_table div.react-grid-Cell:nth-child(2) {
+   text-align: right;
+}
+div#slide2permits_payment_changes_table div.react-grid-Cell:nth-child(3) {
+   text-align: right;
+}
+div#slide2permits_payment_changes_table div.react-grid-Cell:nth-child(4) {
+   text-align: right;
 }

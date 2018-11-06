@@ -14,7 +14,7 @@ app.layout = html.Div([
                         html.Button('Permits', className='dropbtn'),
                         html.Div([
                             html.A('Volumes and Revenues', href='/Slide1Permits'),
-                            html.A('Trends', href='/Slide2Permits')
+                            html.A('Trends', href='/Slide2Permits'),
                             html.A('OTC vs Review', href='/Slide3Permits')
                         ], className='dropdown-content')
                     ], className='dropdown'),

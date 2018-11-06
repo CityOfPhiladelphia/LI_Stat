@@ -1,8 +1,16 @@
 SELECT NVL(otc.PermitDescription, review.PermitDescription) PermitDescription,
 NVL(otc.issuedate, review.issuedate) IssueDate,
 NVL(otc.typeofwork, review.typeofwork) TypeOfWork,
-otc.countotcpermits,
-review.countreviewpermits
+(CASE
+WHEN otc.countotcpermits IS NOT NULL
+THEN otc.countotcpermits
+ELSE 0
+END) countotcpermits,
+(CASE
+WHEN review.countreviewpermits IS NOT NULL
+THEN review.countreviewpermits
+ELSE 0
+END) countreviewpermits
 FROM
   (SELECT PermitDescription,
     issuedate,

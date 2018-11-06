@@ -24,7 +24,7 @@ else:
 
 # Rename the columns to be more readable
 # Make a DateText Column to display on the graph
-df = (df.rename(columns={'ISSUEDATE': 'Issue Date', 'PERMITDESCRIPTION': 'Permit Type', 'COUNTOTCPERMITS': 'OTC Permits Issued', 'COUNTREVIEWPERMITS': 'Reviewed Permits Issued'})
+df = (df.rename(columns={'ISSUEDATE': 'Issue Date', 'PERMITDESCRIPTION': 'Permit Type', 'TYPEOFWORK': 'Work Type', 'COUNTOTCPERMITS': 'OTC Permits Issued', 'COUNTREVIEWPERMITS': 'Reviewed Permits Issued'})
         .assign(DateText=lambda x: x['Issue Date'].dt.strftime('%b %Y')))
 
 df['Permit Type'] = df['Permit Type'].map(lambda x: x.replace(" PERMIT", ""))
@@ -33,35 +33,43 @@ df['Permit Type'] = df['Permit Type'].str.title()
 
 unique_permittypes = df['Permit Type'].unique()
 unique_permittypes = np.append(['All'], unique_permittypes)
+unique_worktypes = df['Work Type'].unique()
+unique_worktypes = np.append(['All'], unique_worktypes)
 
 total_otc_permit_volume = '{:,.0f}'.format(df['OTC Permits Issued'].sum())
 total_review_permit_volume = '{:,.0f}'.format(df['Reviewed Permits Issued'].sum())
 
-def update_total_otc_permit_volume(selected_start, selected_end, selected_permittype):
+def update_total_otc_permit_volume(selected_start, selected_end, selected_permittype, selected_worktype):
     df_selected = df.copy(deep=True)
 
     if selected_permittype != "All":
         df_selected = df_selected[(df_selected['Permit Type'] == selected_permittype)]
+    if selected_worktype != "All":
+        df_selected = df_selected[(df_selected['Work Type'] == selected_worktype)]
 
     df_selected = df_selected.loc[(df['Issue Date'] >= selected_start)&(df_selected['Issue Date'] <= selected_end)]
     total_otc_permit_volume = df_selected['OTC Permits Issued'].sum()
     return '{:,.0f}'.format(total_otc_permit_volume)
 
-def update_total_review_permit_volume(selected_start, selected_end, selected_permittype):
+def update_total_review_permit_volume(selected_start, selected_end, selected_permittype, selected_worktype):
     df_selected = df.copy(deep=True)
 
     if selected_permittype != "All":
         df_selected = df_selected[(df_selected['Permit Type'] == selected_permittype)]
+    if selected_worktype != "All":
+        df_selected = df_selected[(df_selected['Work Type'] == selected_worktype)]
 
     df_selected = df_selected.loc[(df['Issue Date'] >= selected_start)&(df_selected['Issue Date'] <= selected_end)]
     total_review_permit_volume = df_selected['Reviewed Permits Issued'].sum()
     return '{:,.0f}'.format(total_review_permit_volume)
 
-def update_counts_graph_data(selected_start, selected_end, selected_permittype):
+def update_counts_graph_data(selected_start, selected_end, selected_permittype, selected_worktype):
     df_selected = df.copy(deep=True)
 
     if selected_permittype != "All":
         df_selected = df_selected[(df_selected['Permit Type'] == selected_permittype)]
+    if selected_worktype != "All":
+        df_selected = df_selected[(df_selected['Work Type'] == selected_worktype)]
 
     df_selected = (df_selected.loc[(df['Issue Date'] >= selected_start) & (df_selected['Issue Date'] <= selected_end)]
                               .groupby(by=['Issue Date', 'DateText'])['OTC Permits Issued', 'Reviewed Permits Issued']
@@ -70,11 +78,13 @@ def update_counts_graph_data(selected_start, selected_end, selected_permittype):
                               .sort_values(by=['Issue Date']))
     return df_selected
 
-def update_counts_table_data(selected_start, selected_end, selected_permittype):
+def update_counts_table_data(selected_start, selected_end, selected_permittype, selected_worktype):
     df_selected = df.copy(deep=True)
 
     if selected_permittype != "All":
         df_selected = df_selected[(df_selected['Permit Type'] == selected_permittype)]
+    if selected_worktype != "All":
+        df_selected = df_selected[(df_selected['Work Type'] == selected_worktype)]
 
     (df_selected.loc[(df['Issue Date']>=selected_start) & (df_selected['Issue Date']<=selected_end)]
                               .groupby(by=['Issue Date', 'Permit Type'])['OTC Permits Issued', 'Reviewed Permits Issued']
@@ -97,7 +107,7 @@ layout = html.Div(children=[
                             start_date=datetime(2016, 1, 1),
                             end_date=datetime.now()
                         ),
-                    ], className='six columns'),
+                    ], className='four columns'),
                     html.Div([
                         html.P('Filter by Permit Type'),
                         dcc.Dropdown(
@@ -105,7 +115,15 @@ layout = html.Div(children=[
                                 options=[{'label': k, 'value': k} for k in unique_permittypes],
                                 value='All'
                         ),
-                    ], className='five columns'),
+                    ], className='four columns'),
+                    html.Div([
+                        html.P('Filter by Work Type'),
+                        dcc.Dropdown(
+                            id='slide3-permits-worktype-dropdown',
+                            options=[{'label': k, 'value': k} for k in unique_worktypes],
+                            value='All'
+                        ),
+                    ], className='four columns'),
                 ], className='dashrow filters'),
                 html.Div([
                     html.Div([
@@ -159,11 +177,11 @@ layout = html.Div(children=[
                 ], className='dashrow'),
                 html.Div([
                     html.Div([
-                        html.H3('OTC and Reviewed Permits Issued by Type and Month', style={'text-align': 'center'}),
+                        html.H3('Permits Issued', style={'text-align': 'center'}),
                         html.Div([
                             table.DataTable(
                                 rows=[{}],
-                                columns=['Issue Date', 'Permit Type', 'OTC Permits Issued', 'Reviewed Permits Issued'],
+                                columns=['Issue Date', 'Permit Type', 'Work Type', 'OTC Permits Issued', 'Reviewed Permits Issued'],
                                 editable=False,
                                 sortable=True,
                                 id='slide3-permits-count-table'
@@ -180,7 +198,7 @@ layout = html.Div(children=[
                                 target='_blank',
                             )
                         ], style={'text-align': 'right'})
-                    ], style={'width': '65%', 'margin-left': 'auto', 'margin-right': 'auto','margin-top': '50px', 'margin-bottom': '50px'})
+                    ], style={'width': '75%', 'margin-left': 'auto', 'margin-right': 'auto','margin-top': '50px', 'margin-bottom': '50px'})
                 ], className='dashrow')
             ])
 
@@ -188,9 +206,10 @@ layout = html.Div(children=[
     Output('slide3-permits-graph', 'figure'),
     [Input('slide3-permits-date-picker-range', 'start_date'),
      Input('slide3-permits-date-picker-range', 'end_date'),
-     Input('slide3-permits-permittype-dropdown', 'value')])
-def update_graph(start_date, end_date, permittype):
-    df = update_counts_graph_data(start_date, end_date, permittype)
+     Input('slide3-permits-permittype-dropdown', 'value'),
+     Input('slide3-permits-worktype-dropdown', 'value')])
+def update_graph(start_date, end_date, permittype, worktype):
+    df = update_counts_graph_data(start_date, end_date, permittype, worktype)
     return {
         'data': [
             go.Scatter(
@@ -230,36 +249,40 @@ def update_graph(start_date, end_date, permittype):
     Output('slide3-otcpermits-indicator', 'children'),
     [Input('slide3-permits-date-picker-range', 'start_date'),
      Input('slide3-permits-date-picker-range', 'end_date'),
-     Input('slide3-permits-permittype-dropdown', 'value')])
-def update_total_otcpermits_volume_indicator(start_date, end_date, permittype):
-    total_permit_volume = update_total_otc_permit_volume(start_date, end_date, permittype)
+     Input('slide3-permits-permittype-dropdown', 'value'),
+     Input('slide3-permits-worktype-dropdown', 'value')])
+def update_total_otcpermits_volume_indicator(start_date, end_date, permittype, worktype):
+    total_permit_volume = update_total_otc_permit_volume(start_date, end_date, permittype, worktype)
     return str(total_permit_volume)
 
 @app.callback(
     Output('slide3-reviewpermits-indicator', 'children'),
     [Input('slide3-permits-date-picker-range', 'start_date'),
      Input('slide3-permits-date-picker-range', 'end_date'),
-     Input('slide3-permits-permittype-dropdown', 'value')])
-def update_total_reviewpermits_indicator(start_date, end_date, permittype):
-    total_fees_paid = update_total_review_permit_volume(start_date, end_date, permittype)
+     Input('slide3-permits-permittype-dropdown', 'value'),
+     Input('slide3-permits-worktype-dropdown', 'value')])
+def update_total_reviewpermits_indicator(start_date, end_date, permittype, worktype):
+    total_fees_paid = update_total_review_permit_volume(start_date, end_date, permittype, worktype)
     return str(total_fees_paid)
 
 @app.callback(
     Output('slide3-permits-count-table', 'rows'),
     [Input('slide3-permits-date-picker-range', 'start_date'),
      Input('slide3-permits-date-picker-range', 'end_date'),
-     Input('slide3-permits-permittype-dropdown', 'value')])
-def update_count_table(start_date, end_date, permittype):
-    df = update_counts_table_data(start_date, end_date, permittype)
+     Input('slide3-permits-permittype-dropdown', 'value'),
+     Input('slide3-permits-worktype-dropdown', 'value')])
+def update_count_table(start_date, end_date, permittype, worktype):
+    df = update_counts_table_data(start_date, end_date, permittype, worktype)
     return df.to_dict('records')
 
 @app.callback(
     Output('slide3-permits-count-table-download-link', 'href'),
     [Input('slide3-permits-date-picker-range', 'start_date'),
      Input('slide3-permits-date-picker-range', 'end_date'),
-     Input('slide3-permits-permittype-dropdown', 'value')])
-def update_count_table_download_link(start_date, end_date, permittype):
-    df = update_counts_table_data(start_date, end_date, permittype)
+     Input('slide3-permits-permittype-dropdown', 'value'),
+     Input('slide3-permits-worktype-dropdown', 'value')])
+def update_count_table_download_link(start_date, end_date, permittype, worktype):
+    df = update_counts_table_data(start_date, end_date, permittype, worktype)
     csv_string = df.to_csv(index=False, encoding='utf-8')
     csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
     return csv_string

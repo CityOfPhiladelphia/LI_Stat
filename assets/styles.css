@@ -224,3 +224,16 @@ div#slide2permits_payment_changes_table div.react-grid-Cell:nth-child(3) {
 div#slide2permits_payment_changes_table div.react-grid-Cell:nth-child(4) {
    text-align: right;
 }
+
+div#slide3-permits-count-table-div div.react-grid-Cell:nth-child(2) {
+   text-align: left;
+}
+div#slide3-permits-count-table-div div.react-grid-Cell:nth-child(3) {
+   text-align: left;
+}
+div#slide3-permits-count-table-div div.react-grid-Cell:nth-child(4) {
+   text-align: right;
+}
+div#slide3-permits-count-table-div div.react-grid-Cell:nth-child(5) {
+   text-align: right;
+}

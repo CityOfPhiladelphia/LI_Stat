@@ -11,7 +11,6 @@ SELECT distinct b.apno,
   b.worktype,
   act.ISSDTTM ReviewIssueDate,
   f.feedesc,
-  f.amt, f.paiddttm, f.payord,
   rec.hours
 FROM imsv7.apbldg b,
   imsv7.apact act,

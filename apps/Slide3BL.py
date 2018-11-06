@@ -11,12 +11,12 @@ import urllib.parse
 from app import app, con
     
 
-testing_mode = False
+testing_mode = True
 print('slide3BL.py')
 print('Testing mode: ' + str(testing_mode))
 
 if testing_mode:
-    df = pd.read_csv('Slide3_BL.csv', parse_dates=['ISSUEDATE'])
+    df = pd.read_csv('test_data/Slide3_BL.csv', parse_dates=['ISSUEDATE'])
 
 else:
     with con() as con:

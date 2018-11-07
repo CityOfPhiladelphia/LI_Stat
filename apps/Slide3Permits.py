@@ -27,13 +27,19 @@ else:
 df = (df.rename(columns={'ISSUEDATE': 'Issue Date', 'PERMITDESCRIPTION': 'Permit Type', 'TYPEOFWORK': 'Work Type', 'COUNTOTCPERMITS': 'OTC Permits Issued', 'COUNTREVIEWPERMITS': 'Reviewed Permits Issued'})
         .assign(DateText=lambda x: x['Issue Date'].dt.strftime('%b %Y')))
 
+df['Permit Type'] = df['Permit Type'].astype(str)
 df['Permit Type'] = df['Permit Type'].map(lambda x: x.replace(" PERMIT", ""))
 df['Permit Type'] = df['Permit Type'].str.lower()
 df['Permit Type'] = df['Permit Type'].str.title()
 
 unique_permittypes = df['Permit Type'].unique()
+unique_permittypes.sort()
 unique_permittypes = np.append(['All'], unique_permittypes)
+
+df['Work Type'] = df['Work Type'].fillna('None').astype(str)
+
 unique_worktypes = df['Work Type'].unique()
+unique_worktypes.sort()
 unique_worktypes = np.append(['All'], unique_worktypes)
 
 total_otc_permit_volume = '{:,.0f}'.format(df['OTC Permits Issued'].sum())

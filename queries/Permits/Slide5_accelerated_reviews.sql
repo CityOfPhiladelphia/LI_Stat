@@ -7,7 +7,7 @@ SELECT distinct b.apno,
       WHEN b.issdttm - b.APDTTM > 10
       THEN 'Outside SLA'
    END) SLACompliance,
-  defn.aptype PermitType,
+  defn.apdesc PermitDescription,
   b.worktype,
   act.ISSDTTM ReviewIssueDate,
   f.feedesc,
@@ -23,5 +23,6 @@ AND b.APKEY       = act.APKEY (+)
 AND b.apkey       = f.apkey (+)
 AND b.apkey       = rec.apkey (+)
 AND b.APDTTM     >= '01-JAN-2016'
+AND b.issdttm IS NOT NULL
 AND f.stat        = 'P'
 AND (f.feedesc LIKE '%ACCELERATED%' OR f.FEEDESC LIKE '%ACCELARATED%')

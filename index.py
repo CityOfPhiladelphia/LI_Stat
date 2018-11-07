@@ -5,7 +5,7 @@ from dash.dependencies import Input, Output
 from gevent.pywsgi import WSGIServer
 
 from app import app, server
-from apps import Slide1BL, Slide1TL, Slide2, Slide3BL, Slide4BL, Slide4TL, Slide1Permits, Slide2Permits, Slide3Permits
+from apps import Slide1BL, Slide1TL, Slide2, Slide3BL, Slide4BL, Slide4TL, Slide1Permits, Slide2Permits, Slide3Permits, Slide5Permits
 
 app.layout = html.Div([
                 html.Nav([
@@ -15,7 +15,8 @@ app.layout = html.Div([
                         html.Div([
                             html.A('Volumes and Revenues', href='/Slide1Permits'),
                             html.A('Trends', href='/Slide2Permits'),
-                            html.A('OTC vs Review', href='/Slide3Permits')
+                            html.A('OTC vs Review', href='/Slide3Permits'),
+                            html.A('Accelerated Reviews', href='/Slide5Permits')
                         ], className='dropdown-content')
                     ], className='dropdown'),
                     html.A('License Revenue', href='/Slide2'),
@@ -68,6 +69,8 @@ def display_page(pathname):
         return Slide2Permits.layout
     elif pathname == '/Slide3Permits':
         return Slide3Permits.layout
+    elif pathname == '/Slide5Permits':
+        return Slide5Permits.layout
     else:
         return Slide1BL.layout
 

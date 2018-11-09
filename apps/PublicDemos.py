@@ -50,18 +50,22 @@ def update_counts_graph_data(selected_start, selected_end):
 
 
 layout = html.Div(children=[
-                html.H1('Public Demolitions', style={'text-align': 'center'}),
+                html.H1('Public Demolitions', style={'text-align': 'center', 'margin-bottom': '20px'}),
                 html.Div([
                     html.Div([
                         html.P('Filter by Demolition Date'),
                         dcc.DatePickerRange(
                             display_format='MMM Y',
                             id='public-demos-date-picker-range',
-                            start_date=datetime(2016, 1, 1),
+                            start_date=datetime(2008, 1, 1),
                             end_date=datetime.now()
                         ),
-                    ], className='six columns')
-                ], className='dashrow filters'),
+                    ], className='seven columns'),
+                    html.Div([
+                        html.H2('', id='public-demos-indicator', style={'font-size': '30pt'}),
+                        html.H3('Completed Public Demos', style={'font-size': '25pt'})
+                    ], className='five columns', style={'text-align': 'center', 'margin': 'auto', 'padding': '0px 0'})
+                ], className='dashrow'),
                 html.Div([
                     html.Div([
                         dcc.Graph(id='public-demos-graph',
@@ -90,11 +94,7 @@ layout = html.Div(children=[
                                 )
                             )
                         )
-                    ], className='nine columns'),
-                    html.Div([
-                        html.H1('', id='public-demos-indicator', style={'font-size': '35pt'}),
-                        html.H2('Completed Public Demos', style={'font-size': '30pt'})
-                    ], className='three columns', style={'text-align': 'center', 'margin': 'auto', 'padding': '50px 0'})
+                    ], className='twelve columns'),
                 ], className='dashrow'),
             ])
 

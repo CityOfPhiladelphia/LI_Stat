@@ -10,12 +10,12 @@ import urllib.parse
 
 from app import app, con
 
-testing_mode = False
+testing_mode = True
 print('slide2.py')
 print('Testing mode: ' + str(testing_mode))
 
 if testing_mode:
-    df = pd.read_csv(r'Slide2.csv', parse_dates=['PAYMENTDATE'])
+    df = pd.read_csv(r'test_data/Slide2.csv', parse_dates=['PAYMENTDATE'])
     
 else:
     with con() as con:

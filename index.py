@@ -5,7 +5,10 @@ from dash.dependencies import Input, Output
 from gevent.pywsgi import WSGIServer
 
 from app import app, server
-from apps import Slide1BL, Slide1TL, Slide2, Slide3BL, Slide4BL, Slide4TL, Slide1Permits, Slide2Permits, Slide3Permits, Slide5Permits, PublicDemos
+from apps import (Slide1BL, Slide1TL, Slide2, Slide3BL, Slide4BL, Slide4TL, 
+                  Slide1Permits, Slide2Permits, Slide3Permits, Slide5Permits, 
+                  PublicDemos, ImmDang)
+
 
 app.layout = html.Div([
                 html.Nav([
@@ -13,7 +16,7 @@ app.layout = html.Div([
                     html.Div([
                         html.Button('Miscellaneous?', className='dropbtn'),
                         html.Div([
-                            html.A('Imminently Dangerous Properties', href=''),
+                            html.A('Imminently Dangerous Properties', href='/ImmDang'),
                             html.A('Unsafe Properties', href=''),
                             html.A('Public Demolitions', href='/PublicDemos')
                         ], className='dropdown-content')
@@ -81,6 +84,8 @@ def display_page(pathname):
         return Slide5Permits.layout
     elif pathname == '/PublicDemos':
         return PublicDemos.layout
+    elif pathname == 'ImmDang':
+        return ImmDang.layout
     else:
         return Slide1BL.layout
 

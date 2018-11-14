@@ -7,7 +7,7 @@ from gevent.pywsgi import WSGIServer
 from app import app, server
 from apps import (Slide1BL, Slide1TL, Slide2, Slide3BL, Slide4BL, Slide4TL, 
                   Slide1Permits, Slide2Permits, Slide3Permits, Slide5Permits, 
-                  PublicDemos, ImmDang)
+                  PublicDemos, ImmDang, Unsafes)
 
 
 app.layout = html.Div([
@@ -17,7 +17,7 @@ app.layout = html.Div([
                         html.Button('Miscellaneous?', className='dropbtn'),
                         html.Div([
                             html.A('Imminently Dangerous Properties', href='/ImmDang'),
-                            html.A('Unsafe Properties', href=''),
+                            html.A('Unsafe Properties', href='/Unsafes'),
                             html.A('Public Demolitions', href='/PublicDemos')
                         ], className='dropdown-content')
                     ], className='dropdown'),
@@ -86,6 +86,8 @@ def display_page(pathname):
         return PublicDemos.layout
     elif pathname == 'ImmDang':
         return ImmDang.layout
+    elif pathname == 'Unsafes':
+        return Unsafes.layout
     else:
         return Slide1BL.layout
 

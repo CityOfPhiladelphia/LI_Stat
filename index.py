@@ -84,9 +84,9 @@ def display_page(pathname):
         return Slide5Permits.layout
     elif pathname == '/PublicDemos':
         return PublicDemos.layout
-    elif pathname == 'ImmDang':
+    elif pathname == '/ImmDang':
         return ImmDang.layout
-    elif pathname == 'Unsafes':
+    elif pathname == '/Unsafes':
         return Unsafes.layout
     else:
         return Slide1BL.layout

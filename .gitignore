@@ -11,3 +11,5 @@ makecsv.py
 *.bat
 *.db
 *.~sql
+*.txt
+*.log

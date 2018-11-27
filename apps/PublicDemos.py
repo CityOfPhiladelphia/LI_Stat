@@ -10,7 +10,7 @@ import urllib.parse
 
 from app import app, con_DataBridge
 
-testing_mode = True
+testing_mode = False
 print('PublicDemos.py')
 print('Testing mode: ' + str(testing_mode))
 

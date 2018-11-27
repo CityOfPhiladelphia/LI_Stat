@@ -14,7 +14,7 @@ app.layout = html.Div([
                 html.Nav([
                     html.P('City of Philadelphia | LI Stat'),
                     html.Div([
-                        html.Button('Miscellaneous?', className='dropbtn'),
+                        html.Button('Miscellaneous', className='dropbtn'),
                         html.Div([
                             html.A('Imminently Dangerous Properties', href='/ImmDang'),
                             html.A('Unsafe Properties', href='/Unsafes'),

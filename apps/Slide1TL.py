@@ -11,7 +11,7 @@ import urllib.parse
 from app import app, con
 
 testing_mode = False
-print('slide1_license_volumes_TL.py')
+print('slide1_TL.py')
 print('Testing mode: ' + str(testing_mode))
 
 if testing_mode:

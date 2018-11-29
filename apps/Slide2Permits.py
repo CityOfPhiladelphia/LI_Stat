@@ -8,7 +8,7 @@ from datetime import datetime
 import numpy as np
 import urllib.parse
 
-from app import app, con
+from app import app, con_LIDB
     
 
 testing_mode = False
@@ -19,9 +19,9 @@ if testing_mode:
     df = pd.read_csv('test_data/Slide1Permits.csv', parse_dates=['ISSUEDATE'])
 
 else:
-    with con() as con:
+    with con_LIDB() as con_LIDB:
         with open(r'queries/permits/Slide1_MonthlyPermitsSubmittedwithPaidFees.sql') as sql:
-            df = pd.read_sql_query(sql=sql.read(), con=con, parse_dates=['ISSUEDATE'])
+            df = pd.read_sql_query(sql=sql.read(), con=con_LIDB, parse_dates=['ISSUEDATE'])
 
 df['PERMITDESCRIPTION'] = df['PERMITDESCRIPTION'].map(lambda x: x.replace(" PERMIT", ""))
 df['PERMITDESCRIPTION'] = df['PERMITDESCRIPTION'].str.lower()

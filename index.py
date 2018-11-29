@@ -5,8 +5,8 @@ from dash.dependencies import Input, Output
 from gevent.pywsgi import WSGIServer
 
 from app import app, server
-from apps import (Slide1BL, Slide1TL, Slide2, Slide3BL, Slide4BL, Slide4TL, 
-                  Slide1Permits, Slide2Permits, Slide3Permits, Slide5Permits, 
+from apps import (Slide1BL, Slide1TL, Slide2, Slide3BL, Slide4BL, Slide4TL,
+                  Slide1Permits, Slide2Permits, Slide3Permits, Slide5Permits,
                   PublicDemos, ImmDang, Unsafes)
 
 

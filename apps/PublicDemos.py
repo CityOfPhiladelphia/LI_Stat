@@ -124,7 +124,8 @@ def update_graph(start_date, end_date):
                 title='Demolition Date'
             ),
             yaxis=dict(
-                title='Completed Public Demos'
+                title='Completed Public Demos',
+                range=[0, df['Count of Demos'].max() + (df['Count of Demos'].max() / 50)]
             )
         )
     }

@@ -225,10 +225,14 @@ def update_line_chart(start_date, end_date, jobtype):
              )
          ],
         'layout': go.Layout(
-                            title=('Revenue Collected By Month'), 
-                            xaxis=dict(zeroline = False), 
-                            yaxis=dict(hoverformat = '4.0f')
-                            )
+            title=('Revenue Collected By Month'),
+            xaxis=dict(zeroline = False),
+            yaxis=dict(
+                title='$',
+                hoverformat='4.0f',
+                range=[0, df_line_chart['Revenue Collected'].max() + (df_line_chart['Revenue Collected'].max() / 50)]
+            )
+        )
     }
 
 @app.callback(

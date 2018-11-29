@@ -124,7 +124,8 @@ def update_graph(start_date, end_date):
         'layout': go.Layout(
                 title='Number of ID Violations',
                 yaxis=dict(
-                    title='Number of ID Violations'
+                    title='Number of ID Violations',
+                    range=[0, df_results['Number of Violations'].max() + (df_results['Number of Violations'].max() / 50)]
                 )
         )
     }

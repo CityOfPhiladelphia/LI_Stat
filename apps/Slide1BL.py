@@ -184,7 +184,10 @@ def update_graph(start_date, end_date, jobtype, licensetype):
          ],
         'layout': go.Layout(
             title='Number of Licenses Issued By Month',
-            yaxis= dict(title='Number of Business Licenses Issued')
+            yaxis=dict(
+                title='Number of Business Licenses Issued',
+                range=[0, df['Number of Licenses Issued'].max() + (df['Number of Licenses Issued'].max() / 50)]
+            )
         )
     }
 

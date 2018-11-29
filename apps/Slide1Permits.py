@@ -236,10 +236,12 @@ def update_graph(start_date, end_date, permittype):
         'layout': go.Layout(
             title='Permits Issued vs Fees Paid',
             yaxis=dict(
-                title='Permits Issued'
+                title='Permits Issued',
+                range=[0, df['Permits Issued'].max() + (df['Permits Issued'].max() / 50)]
             ),
             yaxis2=dict(
                 title='Fees Paid ($)',
+                range=[0, df['Fees Paid'].max() + (df['Fees Paid'].max() / 50)],
                 titlefont=dict(
                     color='#ff7f0e'
                 ),

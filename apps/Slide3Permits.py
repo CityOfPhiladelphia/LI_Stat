@@ -246,7 +246,8 @@ def update_graph(start_date, end_date, permittype, worktype):
         'layout': go.Layout(
             title='Permits Issued: OTC vs Reviewed',
             yaxis=dict(
-                title='Permits Issued'
+                title='Permits Issued',
+                range=[0, (df['OTC Permits Issued'].max() + (df['OTC Permits Issued'].max()/50)) if (df['OTC Permits Issued'].max() > df['Reviewed Permits Issued'].max()) else (df['Reviewed Permits Issued'].max() + (df['Reviewed Permits Issued'].max()/50))]
             )
         )
     }

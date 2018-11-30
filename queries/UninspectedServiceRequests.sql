@@ -1,4 +1,4 @@
-SELECT DISTINCT sub.SERVNO "Service Request No.",
+SELECT DISTINCT sub.SERVNO "Service Request Num",
   sub.address "Address",
   sub.sr_problemdesc "Problem Description",
   sub.sr_calldate "Call Date",

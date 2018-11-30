@@ -8,7 +8,7 @@ def send_email():
                       'shannon.holm@phila.gov']
     sender = 'peter.dannemann@phila.gov'
     commaspace = ', '
-    email = 'LI Dashboards server failed to launch. Please restart the VM and manually launch the web server.'
+    email = 'LI Stat server failed to launch. Please restart the VM and manually launch the web server.'
     text = f'AUTOMATIC EMAIL: \n {email}'
     msg = MIMEText(text)
     msg['To'] = commaspace.join(recipientslist)

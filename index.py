@@ -93,5 +93,8 @@ def display_page(pathname):
 
 if __name__ == '__main__':
     #app.run_server(host='127.0.0.1', port=5001)
-    http_server = WSGIServer(('0.0.0.0', 5000), server)
-    http_server.serve_forever()
+    try:
+        http_server = WSGIServer(('0.0.0.0', 8000), server)
+        http_server.serve_forever()
+    except:
+        send_email()

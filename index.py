@@ -7,9 +7,8 @@ from gevent.pywsgi import WSGIServer
 from app import app, server
 from apps import (Slide1BL, Slide1TL, Slide2, Slide3BL, Slide4BL, Slide4TL,
                   Slide1Permits, Slide2Permits, Slide3Permits, Slide5Permits,
-                  ImmDang, Unsafes, PublicDemos)
+                  ImmDang, Unsafes, PublicDemos, UninspectedServiceRequests)
 from send_email import send_email
-
 
 app.layout = html.Div([
                 html.Nav([
@@ -19,7 +18,8 @@ app.layout = html.Div([
                         html.Div([
                             html.A('Imminently Dangerous Properties', href='/ImmDang'),
                             html.A('Unsafe Properties', href='/Unsafes'),
-                            html.A('Public Demolitions', href='/PublicDemos')
+                            html.A('Public Demolitions', href='/PublicDemos'),
+                            html.A('Uninspected Service Requests', href='/UninspectedServiceRequests')
                         ], className='dropdown-content')
                     ], className='dropdown'),
                     html.Div([
@@ -89,13 +89,15 @@ def display_page(pathname):
         return ImmDang.layout
     elif pathname == '/Unsafes':
         return Unsafes.layout
+    elif pathname == '/UninspectedServiceRequests':
+        return UninspectedServiceRequests.layout
     else:
         return Slide1BL.layout
 
 if __name__ == '__main__':
     #app.run_server(host='127.0.0.1', port=5001)
     try:
-        http_server = WSGIServer(('0.0.0.0', 8000), server)
+        http_server = WSGIServer(('0.0.0.0', 5000), server)
         http_server.serve_forever()
     except:
         send_email()

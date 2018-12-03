@@ -5,7 +5,7 @@ from dash.dependencies import Input, Output
 from gevent.pywsgi import WSGIServer
 
 from app import app, server
-from apps import (Slide1BL, Slide1TL, Slide2, Slide3BL, Slide4BL, Slide4TL,
+from apps import (Slide1BL, Slide1TL, Slide2BL, Slide2TL, Slide3BL, Slide4BL, Slide4TL,
                   Slide1Permits, Slide2Permits, Slide3Permits, Slide5Permits,
                   ImmDang, Unsafes, PublicDemos, UninspectedServiceRequests)
 from send_email import send_email
@@ -31,11 +31,11 @@ app.layout = html.Div([
                             html.A('Accelerated Reviews', href='/Slide5Permits')
                         ], className='dropdown-content')
                     ], className='dropdown'),
-                    html.A('License Revenue', href='/Slide2'),
                     html.Div([
                         html.Button('Trade Licenses', className='dropbtn'),
                         html.Div([
                             html.A('Volumes', href='/Slide1TL'),
+                            html.A('Revenue', href='/Slide2TL'),
                             html.A('Trends', href='/Slide3TL'),
                             html.A('Submittal Type', href='/Slide4TL')
                         ], className='dropdown-content')
@@ -44,6 +44,7 @@ app.layout = html.Div([
                         html.Button('Business Licenses', className='dropbtn'),
                         html.Div([
                             html.A('Volumes', href='/Slide1BL'),
+                            html.A('Revenue', href='/Slide2BL'),
                             html.A('Trends', href='/Slide3BL'),
                             html.A('Submittal Type', href='/Slide4BL')
                         ], className='dropdown-content')
@@ -67,8 +68,10 @@ def display_page(pathname):
         return Slide1BL.layout
     elif pathname == '/Slide1TL':
         return Slide1TL.layout
-    elif pathname == '/Slide2':
-        return Slide2.layout
+    elif pathname == '/Slide2BL':
+        return Slide2BL.layout
+    elif pathname == '/Slide2TL':
+        return Slide2TL.layout
     elif pathname == '/Slide3BL':
         return Slide3BL.layout
     elif pathname == '/Slide4BL':
@@ -101,4 +104,5 @@ if __name__ == '__main__':
     except:
         send_email()
 
+    print('Server has loaded.')
     http_server.serve_forever()

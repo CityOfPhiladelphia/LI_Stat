@@ -8,8 +8,6 @@ SELECT
              ( CASE
                  WHEN jobtype LIKE 'Amendment/Renewal' THEN 'Business License Amend/Renew'
                  WHEN jobtype LIKE 'Business License Application' THEN 'Business License Application'
-                 WHEN jobtype LIKE 'Trade License Amend/Renew' THEN ' Trade License Amend/Renew'
-                 WHEN jobtype LIKE 'Trade License Application' THEN 'Trade License Application'
              END ) AS jobtype,
              TO_DATE(paymentyear
                        || '/'
@@ -31,6 +29,7 @@ SELECT
                      api.jobtypes jt
                  WHERE
                      fee.latestpayment >= '01-JAN-16'
+                     AND jt.description IN ('Amendment/Renewal', 'Business License Application')
                      AND fee.referencedobjectid = job.jobid
                      AND job.jobtypeid = jt.jobtypeid
              )

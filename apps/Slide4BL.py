@@ -86,10 +86,10 @@ df_table_2 = pd.DataFrame(data={
     '% Online Renewals': [percent_renewals(license_type) for license_type in [all_licenses, rentals, vacant_properties, food]]
 })
 
-count_2016 = df.loc[(df['ISSUEDATE'] >= '2016-01-01') & (df['ISSUEDATE'] < '2017-01-01')]['LICENSENUMBERCOUNT'].sum()
-count_2017 = df.loc[(df['ISSUEDATE'] >= '2017-01-01') & (df['ISSUEDATE'] < '2018-01-01')]['LICENSENUMBERCOUNT'].sum()
-count_2018 = df.loc[(df['ISSUEDATE'] >= '2018-01-01')]['LICENSENUMBERCOUNT'].sum()
-count_all = df['LICENSENUMBERCOUNT'].sum()
+count_2016 = df.loc[(df['ISSUEDATE'] >= '2016-01-01') & (df['ISSUEDATE'] < '2016-08-01')]['LICENSENUMBERCOUNT'].sum()
+count_2017 = df.loc[(df['ISSUEDATE'] >= '2017-01-01') & (df['ISSUEDATE'] < '2017-08-01')]['LICENSENUMBERCOUNT'].sum()
+count_2018 = df.loc[(df['ISSUEDATE'] >= '2018-01-01')  & (df['ISSUEDATE'] < '2018-08-01')]['LICENSENUMBERCOUNT'].sum()
+count_all = count_2016 + count_2017 + count_2018
 
 df_table_3 = pd.DataFrame(data={
     '2016': [count_2016],

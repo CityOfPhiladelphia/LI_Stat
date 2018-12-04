@@ -103,14 +103,14 @@ layout = html.Div(children=[
     [Input('public-demos-date-picker-range', 'start_date'),
      Input('public-demos-date-picker-range', 'end_date')])
 def update_graph(start_date, end_date):
-    df = update_counts_graph_data(start_date, end_date)
+    df_results = update_counts_graph_data(start_date, end_date)
     return {
         'data': [
             go.Scatter(
-                x=df['Demo Date'],
-                y=df['Count of Demos'],
+                x=df_results['Demo Date'],
+                y=df_results['Count of Demos'],
                 mode='lines',
-                text=df['DateText'],
+                text=df_results['DateText'],
                 hoverinfo='text+y',
                 line=dict(
                     shape='spline',
@@ -125,7 +125,7 @@ def update_graph(start_date, end_date):
             ),
             yaxis=dict(
                 title='Completed Public Demos',
-                range=[0, df['Count of Demos'].max() + (df['Count of Demos'].max() / 50)]
+                range=[0, df_results['Count of Demos'].max() + (df_results['Count of Demos'].max() / 50)]
             )
         )
     }

@@ -11,7 +11,7 @@ import urllib.parse
 from app import app, con
 
 testing_mode = False
-print('slide2.py')
+print('Slide2BL.py')
 print('Testing mode: ' + str(testing_mode))
 
 if testing_mode:
@@ -19,7 +19,7 @@ if testing_mode:
     
 else:
     with con() as con:
-        with open(r'queries/licenses/slide2_PaymentsbyMonth.sql') as sql:
+        with open(r'queries/licenses/slide2_PaymentsbyMonth_BL.sql') as sql:
             df = pd.read_sql_query(sql=sql.read(), con=con, parse_dates=['PAYMENTDATE'])
 
 df.rename(columns={'JOBTYPE': 'Job Type', 'PAYMENTDATE': 'Date', 'TOTALAMOUNT': 'Revenue Collected'}, inplace=True)
@@ -76,13 +76,13 @@ def update_total_revenue(selected_start, selected_end, selected_jobtype):
     return '${:,.0f}'.format(total_license_volume)
 
 layout = html.Div(children=[
-                html.H1('License Revenue', style={'text-align': 'center'}),
+                html.H1('Business License Revenue', style={'text-align': 'center'}),
                 html.Div([
                     html.Div([
                         html.P('Filter by Date Range'),
                         dcc.DatePickerRange(
                             display_format='MMM Y',
-                            id='slide2-my-date-picker-range',
+                            id='slide2BL-my-date-picker-range',
                             start_date=datetime(2016, 1, 1),
                             end_date=datetime.now()
                         )
@@ -90,7 +90,7 @@ layout = html.Div(children=[
                     html.Div([
                         html.P('Filter by Job Type'),
                         dcc.Dropdown(
-                            id='slide2-jobtype-dropdown',
+                            id='slide2BL-jobtype-dropdown',
                             options=job_type_options,
                             multi=True,
                             value=unique_job_types
@@ -100,7 +100,7 @@ layout = html.Div(children=[
                 html.Div([
                     html.Div(
                         [
-                            dcc.Graph(id='slide2-my-graph',
+                            dcc.Graph(id='slide2BL-my-graph',
                                 figure=go.Figure(
                                     data=[
                                         go.Scatter(
@@ -126,13 +126,13 @@ layout = html.Div(children=[
                             )
                         ], className='nine columns'),
                     html.Div([
-                        html.H1('', id='slide2-indicator', style={'font-size': '45pt'}),
+                        html.H1('', id='slide2BL-indicator', style={'font-size': '45pt'}),
                         html.H2('Collected', style={'font-size': '40pt'})
                     ], className='three columns', style={'text-align': 'center', 'margin': 'auto', 'padding': '150px 0'})
                 ], className='dashrow'),
                 html.Div([
                     html.Div([
-                        dcc.Graph(id='slide2-piechart',
+                        dcc.Graph(id='slide2BL-piechart',
                             figure=go.Figure(
                                 data=[
                                     go.Pie(
@@ -159,14 +159,14 @@ layout = html.Div(children=[
                                 columns=["Date", "Job Type", "Revenue Collected"],
                                 editable=False,
                                 sortable=True,
-                                id='slide2-count-table'
+                                id='slide2BL-count-table'
                             )
                         ], style={'text-align': 'center'}),
                         html.Div([
                             html.A(
                                 'Download Data',
-                                id='slide2-count-table-download-link',
-                                download='slide2.csv',
+                                id='slide2BL-count-table-download-link',
+                                download='slide2BL.csv',
                                 href='',
                                 target='_blank',
                             )
@@ -176,17 +176,17 @@ layout = html.Div(children=[
             ])
 
 @app.callback(
-    Output('slide2-piechart', 'figure'),
-    [Input('slide2-my-date-picker-range', 'start_date'),
-     Input('slide2-my-date-picker-range', 'end_date'),
-     Input('slide2-jobtype-dropdown', 'value')])
+    Output('slide2BL-piechart', 'figure'),
+    [Input('slide2BL-my-date-picker-range', 'start_date'),
+     Input('slide2BL-my-date-picker-range', 'end_date'),
+     Input('slide2BL-jobtype-dropdown', 'value')])
 def update_pie_chart(start_date, end_date, jobtype):
-    df_pie_chart = update_pie_data(start_date, end_date, jobtype)
+    df_pie_chart_updated = update_pie_data(start_date, end_date, jobtype)
     return {
         'data': [
              go.Pie(
-                labels=df_pie_chart.index,
-                values=df_pie_chart.values,
+                labels=df_pie_chart_updated.index,
+                values=df_pie_chart_updated.values,
                 hoverinfo='label+value+percent', 
                 hole=0.4,
                 textfont=dict(color='#000000'),
@@ -202,64 +202,64 @@ def update_pie_chart(start_date, end_date, jobtype):
     }
 
 @app.callback(
-    Output('slide2-my-graph', 'figure'),
-    [Input('slide2-my-date-picker-range', 'start_date'),
-     Input('slide2-my-date-picker-range', 'end_date'),
-     Input('slide2-jobtype-dropdown', 'value')])
+    Output('slide2BL-my-graph', 'figure'),
+    [Input('slide2BL-my-date-picker-range', 'start_date'),
+     Input('slide2BL-my-date-picker-range', 'end_date'),
+     Input('slide2BL-jobtype-dropdown', 'value')])
 def update_line_chart(start_date, end_date, jobtype):
-    df_line_chart = update_line_chart_data(start_date, end_date, jobtype)
+    df_line_chart_updated = update_line_chart_data(start_date, end_date, jobtype)
     return {
         'data': [
              go.Scatter(
-                 x=df_line_chart['Date'],
-                 y=df_line_chart['Revenue Collected'],
+                 x=df_line_chart_updated['Date'],
+                 y=df_line_chart_updated['Revenue Collected'],
                  name='Revenue Collected',
                  mode='lines',
-                 text=df_line_chart['DateText'],
-                 hoverinfo = 'text+y',
+                 text=df_line_chart_updated['DateText'],
+                 hoverinfo='text+y',
                  line=dict(
                     shape='spline',
                     color='rgb(26, 118, 255)'
                  ),
-                 showlegend = False
+                 showlegend=False
              )
          ],
         'layout': go.Layout(
             title=('Revenue Collected By Month'),
-            xaxis=dict(zeroline = False),
+            xaxis=dict(zeroline=False),
             yaxis=dict(
                 title='$',
                 hoverformat='4.0f',
-                range=[0, df_line_chart['Revenue Collected'].max() + (df_line_chart['Revenue Collected'].max() / 50)]
+                range=[0, df_line_chart_updated['Revenue Collected'].max() + (df_line_chart_updated['Revenue Collected'].max() / 50)]
             )
         )
     }
 
 @app.callback(
-    Output('slide2-indicator', 'children'),
-    [Input('slide2-my-date-picker-range', 'start_date'),
-     Input('slide2-my-date-picker-range', 'end_date'),
-     Input('slide2-jobtype-dropdown', 'value')])
+    Output('slide2BL-indicator', 'children'),
+    [Input('slide2BL-my-date-picker-range', 'start_date'),
+     Input('slide2BL-my-date-picker-range', 'end_date'),
+     Input('slide2BL-jobtype-dropdown', 'value')])
 def update_total_license_volume_indicator(start_date, end_date, jobtype):
-    total_revenue = update_total_revenue(start_date, end_date, jobtype)
-    return str(total_revenue)
+    total_revenue_updated = update_total_revenue(start_date, end_date, jobtype)
+    return str(total_revenue_updated)
 
 @app.callback(
-    Output('slide2-count-table', 'rows'),
-    [Input('slide2-my-date-picker-range', 'start_date'),
-     Input('slide2-my-date-picker-range', 'end_date'),
-     Input('slide2-jobtype-dropdown', 'value')])
+    Output('slide2BL-count-table', 'rows'),
+    [Input('slide2BL-my-date-picker-range', 'start_date'),
+     Input('slide2BL-my-date-picker-range', 'end_date'),
+     Input('slide2BL-jobtype-dropdown', 'value')])
 def update_count_table(start_date, end_date, jobtype):
-    df_counts = update_count_data(start_date, end_date, jobtype)
-    return df_counts.to_dict('records')
+    df_counts_updated = update_count_data(start_date, end_date, jobtype)
+    return df_counts_updated.to_dict('records')
 
 @app.callback(
-    Output('slide2-count-table-download-link', 'href'),
-    [Input('slide2-my-date-picker-range', 'start_date'),
-     Input('slide2-my-date-picker-range', 'end_date'),
-     Input('slide2-jobtype-dropdown', 'value')])
+    Output('slide2BL-count-table-download-link', 'href'),
+    [Input('slide2BL-my-date-picker-range', 'start_date'),
+     Input('slide2BL-my-date-picker-range', 'end_date'),
+     Input('slide2BL-jobtype-dropdown', 'value')])
 def update_count_table_download_link(start_date, end_date, jobtype):
-    df = update_count_data(start_date, end_date, jobtype)
-    csv_string = df.to_csv(index=False, encoding='utf-8')
+    df_updated = update_count_data(start_date, end_date, jobtype)
+    csv_string = df_updated.to_csv(index=False, encoding='utf-8')
     csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
     return csv_string

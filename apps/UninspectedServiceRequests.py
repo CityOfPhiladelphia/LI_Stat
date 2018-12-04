@@ -54,7 +54,7 @@ def update_sr_volume(selected_start, selected_end, selected_problem, selected_un
     if selected_district != "All":
         df_selected = df_selected[(df_selected['District'] == selected_district)]
 
-    df_selected = df_selected.loc[(df['Call Date'] >= selected_start) & (df_selected['Call Date'] <= selected_end)]
+    df_selected = df_selected.loc[(df_selected['Call Date'] >= selected_start) & (df_selected['Call Date'] <= selected_end)]
     total_sr_volume = df_selected['Service Request Num'].count()
     return '{:,.0f}'.format(total_sr_volume)
 
@@ -69,7 +69,7 @@ def update_within_sla(selected_start, selected_end, selected_problem, selected_u
     if selected_district != "All":
         df_selected = df_selected[(df_selected['District'] == selected_district)]
 
-    df_selected = df_selected.loc[(df['Call Date'] >= selected_start) & (df_selected['Call Date'] <= selected_end)]
+    df_selected = df_selected.loc[(df_selected['Call Date'] >= selected_start) & (df_selected['Call Date'] <= selected_end)]
     within_sla = len(df_selected[df_selected['Within SLA'] == 'Yes']) / len(df_selected) * 100
     return '{:,.0f}%'.format(within_sla)
 
@@ -84,7 +84,7 @@ def update_avg_days_out(selected_start, selected_end, selected_problem, selected
     if selected_district != "All":
         df_selected = df_selected[(df_selected['District'] == selected_district)]
 
-    df_selected = df_selected.loc[(df['Call Date'] >= selected_start) & (df_selected['Call Date'] <= selected_end)]
+    df_selected = df_selected.loc[(df_selected['Call Date'] >= selected_start) & (df_selected['Call Date'] <= selected_end)]
     avg_days_out = df_selected['Bus. Days Outstanding'].mean()
     return '{:,.0f}'.format(avg_days_out)
 
@@ -105,7 +105,7 @@ def update_summary_table_data(selected_start, selected_end, selected_problem, se
         if col in col_list:
             groupby_cols.append(col)
 
-    df_grouped = (df_selected.loc[(df['Call Date'] >= selected_start) & (df_selected['Call Date'] <= selected_end)]
+    df_grouped = (df_selected.loc[(df_selected['Call Date'] >= selected_start) & (df_selected['Call Date'] <= selected_end)]
                    .groupby(groupby_cols)
                    .agg({'Service Request Num': 'count',
                          'Within SLA': lambda x: df_selected.loc[x.index, 'Within SLA'][x=='Yes'].count(),
@@ -128,7 +128,7 @@ def update_table_data(selected_start, selected_end, selected_problem, selected_u
     if selected_district != "All":
         df_selected = df_selected[(df_selected['District'] == selected_district)]
 
-    df_selected = df_selected.loc[(df['Call Date'] >= selected_start) & (df_selected['Call Date'] <= selected_end)]
+    df_selected = df_selected.loc[(df_selected['Call Date'] >= selected_start) & (df_selected['Call Date'] <= selected_end)]
     return df_selected.drop(['Call Date (no time)', 'SLA'], axis=1)
 
 layout = html.Div(children=[

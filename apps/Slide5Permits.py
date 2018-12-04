@@ -56,7 +56,7 @@ def update_table_data(selected_start, selected_end, selected_permittype, selecte
     if selected_worktype != "All":
         df_selected = df_selected[(df_selected['Work Type'] == selected_worktype)]
 
-    df_selected_grouped = (df_selected.loc[(df['Permit Issue Date'] >= selected_start) & (df_selected['Permit Issue Date'] <= selected_end)]
+    df_selected_grouped = (df_selected.loc[(df_selected['Permit Issue Date'] >= selected_start) & (df_selected['Permit Issue Date'] <= selected_end)]
                             .groupby('SLA Compliance')
                             .agg({'Permit Number': 'count', 'HOURS': 'mean'})
                             .reset_index()
@@ -74,7 +74,7 @@ def update_footnote(selected_start, selected_end, selected_permittype, selected_
         df_selected = df_selected[(df_selected['Permit Type'] == selected_permittype)]
     if selected_worktype != "All":
         df_selected = df_selected[(df_selected['Work Type'] == selected_worktype)]
-    df_selected = df_selected.loc[(df['Permit Issue Date'] >= selected_start) & (df_selected['Permit Issue Date'] <= selected_end)]
+    df_selected = df_selected.loc[(df_selected['Permit Issue Date'] >= selected_start) & (df_selected['Permit Issue Date'] <= selected_end)]
 
     records = len(df_selected)
     if records > 0:
@@ -161,8 +161,8 @@ layout = html.Div(children=[
      Input('slide5-permits-permittype-dropdown', 'value'),
      Input('slide5-permits-worktype-dropdown', 'value')])
 def update_table(start_date, end_date, permittype, worktype):
-    df = update_table_data(start_date, end_date, permittype, worktype)
-    return df.to_dict('records')
+    df_updated = update_table_data(start_date, end_date, permittype, worktype)
+    return df_updated.to_dict('records')
 
 @app.callback(
     Output('slide5-permits-count-table-download-link', 'href'),
@@ -171,8 +171,8 @@ def update_table(start_date, end_date, permittype, worktype):
      Input('slide5-permits-permittype-dropdown', 'value'),
      Input('slide5-permits-worktype-dropdown', 'value')])
 def update_count_table_download_link(start_date, end_date, permittype, worktype):
-    df = update_table_data(start_date, end_date, permittype, worktype)
-    csv_string = df.to_csv(index=False, encoding='utf-8')
+    df_updated = update_table_data(start_date, end_date, permittype, worktype)
+    csv_string = df_updated.to_csv(index=False, encoding='utf-8')
     csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
     return csv_string
 

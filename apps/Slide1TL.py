@@ -40,7 +40,7 @@ def update_total_license_volume(selected_start, selected_end, selected_jobtype, 
     if selected_licensetype != "All":
         df_selected = df_selected[(df_selected['License Type']==selected_licensetype)]
 
-    df_selected = df_selected.loc[(df['Issue Date']>=selected_start)&(df_selected['Issue Date']<=selected_end)]
+    df_selected = df_selected.loc[(df_selected['Issue Date']>=selected_start)&(df_selected['Issue Date']<=selected_end)]
     total_license_volume = df_selected['Number of Licenses Issued'].sum()
     return '{:,.0f}'.format(total_license_volume)
 
@@ -52,7 +52,7 @@ def update_counts_graph_data(selected_start, selected_end, selected_jobtype, sel
     if selected_licensetype != "All":
         df_selected = df_selected[(df_selected['License Type']==selected_licensetype)]
 
-    df_selected = (df_selected.loc[(df['Issue Date']>=selected_start)&(df_selected['Issue Date']<=selected_end)]
+    df_selected = (df_selected.loc[(df_selected['Issue Date']>=selected_start)&(df_selected['Issue Date']<=selected_end)]
                               .groupby(by=['Issue Date', 'DateText'])['Number of Licenses Issued']
                               .sum()
                               .reset_index()
@@ -67,7 +67,7 @@ def update_counts_table_data(selected_start, selected_end, selected_jobtype, sel
     if selected_licensetype != "All":
         df_selected = df_selected[(df_selected['License Type'] == selected_licensetype)]
 
-    (df_selected.loc[(df['Issue Date']>=selected_start)&(df_selected['Issue Date']<=selected_end)]
+    (df_selected.loc[(df_selected['Issue Date']>=selected_start)&(df_selected['Issue Date']<=selected_end)]
                               .groupby(by=['Issue Date', 'License Type'])['Number of Licenses Issued']
                               .sum()
                               .reset_index()
@@ -166,15 +166,15 @@ layout = html.Div(children=[
      Input('slide1-TL-jobtype-dropdown', 'value'),
      Input('slide1-TL-licensetype-dropdown', 'value')])
 def update_graph(start_date, end_date, jobtype, licensetype):
-    df = update_counts_graph_data(start_date, end_date, jobtype, licensetype)
+    dfr = update_counts_graph_data(start_date, end_date, jobtype, licensetype)
     return {
         'data': [
              go.Scatter(
-                 x=df['Issue Date'],
-                 y=df['Number of Licenses Issued'],
+                 x=dfr['Issue Date'],
+                 y=dfr['Number of Licenses Issued'],
                  mode='lines',
-                 text=df['DateText'],
-                 hoverinfo = 'text+y',
+                 text=dfr['DateText'],
+                 hoverinfo='text+y',
                  line=dict(
                     shape='spline',
                     color='rgb(26, 118, 255)'
@@ -185,7 +185,7 @@ def update_graph(start_date, end_date, jobtype, licensetype):
             title='Number of Licenses Issued By Month',
             yaxis=dict(
                 title='Number of Trade Licenses Issued',
-                range=[0, df['Number of Licenses Issued'].max() + (df['Number of Licenses Issued'].max() / 50)]
+                range=[0, dfr['Number of Licenses Issued'].max() + (dfr['Number of Licenses Issued'].max() / 50)]
             )
         )
     }
@@ -197,8 +197,8 @@ def update_graph(start_date, end_date, jobtype, licensetype):
      Input('slide1-TL-jobtype-dropdown', 'value'),
      Input('slide1-TL-licensetype-dropdown', 'value')])
 def update_total_license_volume_indicator(start_date, end_date, jobtype, licensetype):
-    total_license_volume = update_total_license_volume(start_date, end_date, jobtype, licensetype)
-    return str(total_license_volume)
+    total_license_volume_updated = update_total_license_volume(start_date, end_date, jobtype, licensetype)
+    return str(total_license_volume_updated)
 
 @app.callback(
     Output('slide1-TL-count-table', 'rows'),
@@ -207,8 +207,8 @@ def update_total_license_volume_indicator(start_date, end_date, jobtype, license
      Input('slide1-TL-jobtype-dropdown', 'value'),
      Input('slide1-TL-licensetype-dropdown', 'value')])
 def update_count_table(start_date, end_date, jobtype, licensetype):
-    df = update_counts_table_data(start_date, end_date, jobtype, licensetype)
-    return df.to_dict('records')
+    df_counts = update_counts_table_data(start_date, end_date, jobtype, licensetype)
+    return df_counts.to_dict('records')
 
 @app.callback(
     Output('slide1-TL-count-table-download-link', 'href'),
@@ -217,7 +217,7 @@ def update_count_table(start_date, end_date, jobtype, licensetype):
      Input('slide1-TL-jobtype-dropdown', 'value'),
      Input('slide1-TL-licensetype-dropdown', 'value')])
 def update_count_table_download_link(start_date, end_date, jobtype, licensetype):
-    df = update_counts_table_data(start_date, end_date, jobtype, licensetype)
-    csv_string = df.to_csv(index=False, encoding='utf-8')
+    df_counts = update_counts_table_data(start_date, end_date, jobtype, licensetype)
+    csv_string = df_counts.to_csv(index=False, encoding='utf-8')
     csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
     return csv_string

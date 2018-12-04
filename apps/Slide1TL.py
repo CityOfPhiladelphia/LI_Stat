@@ -40,7 +40,7 @@ def update_total_license_volume(selected_start, selected_end, selected_jobtype, 
     if selected_licensetype != "All":
         df_selected = df_selected[(df_selected['License Type']==selected_licensetype)]
 
-    df_selected = df_selected.loc[(df['Issue Date']>=selected_start)&(df_selected['Issue Date']<=selected_end)]
+    df_selected = df_selected.loc[(df_selected['Issue Date']>=selected_start)&(df_selected['Issue Date']<=selected_end)]
     total_license_volume = df_selected['Number of Licenses Issued'].sum()
     return '{:,.0f}'.format(total_license_volume)
 
@@ -52,7 +52,7 @@ def update_counts_graph_data(selected_start, selected_end, selected_jobtype, sel
     if selected_licensetype != "All":
         df_selected = df_selected[(df_selected['License Type']==selected_licensetype)]
 
-    df_selected = (df_selected.loc[(df['Issue Date']>=selected_start)&(df_selected['Issue Date']<=selected_end)]
+    df_selected = (df_selected.loc[(df_selected['Issue Date']>=selected_start)&(df_selected['Issue Date']<=selected_end)]
                               .groupby(by=['Issue Date', 'DateText'])['Number of Licenses Issued']
                               .sum()
                               .reset_index()
@@ -67,7 +67,7 @@ def update_counts_table_data(selected_start, selected_end, selected_jobtype, sel
     if selected_licensetype != "All":
         df_selected = df_selected[(df_selected['License Type'] == selected_licensetype)]
 
-    (df_selected.loc[(df['Issue Date']>=selected_start)&(df_selected['Issue Date']<=selected_end)]
+    (df_selected.loc[(df_selected['Issue Date']>=selected_start)&(df_selected['Issue Date']<=selected_end)]
                               .groupby(by=['Issue Date', 'License Type'])['Number of Licenses Issued']
                               .sum()
                               .reset_index()

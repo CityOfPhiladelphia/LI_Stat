@@ -56,7 +56,7 @@ def update_table_data(selected_start, selected_end, selected_permittype, selecte
     if selected_worktype != "All":
         df_selected = df_selected[(df_selected['Work Type'] == selected_worktype)]
 
-    df_selected_grouped = (df_selected.loc[(df['Permit Issue Date'] >= selected_start) & (df_selected['Permit Issue Date'] <= selected_end)]
+    df_selected_grouped = (df_selected.loc[(df_selected['Permit Issue Date'] >= selected_start) & (df_selected['Permit Issue Date'] <= selected_end)]
                             .groupby('SLA Compliance')
                             .agg({'Permit Number': 'count', 'HOURS': 'mean'})
                             .reset_index()
@@ -74,7 +74,7 @@ def update_footnote(selected_start, selected_end, selected_permittype, selected_
         df_selected = df_selected[(df_selected['Permit Type'] == selected_permittype)]
     if selected_worktype != "All":
         df_selected = df_selected[(df_selected['Work Type'] == selected_worktype)]
-    df_selected = df_selected.loc[(df['Permit Issue Date'] >= selected_start) & (df_selected['Permit Issue Date'] <= selected_end)]
+    df_selected = df_selected.loc[(df_selected['Permit Issue Date'] >= selected_start) & (df_selected['Permit Issue Date'] <= selected_end)]
 
     records = len(df_selected)
     if records > 0:

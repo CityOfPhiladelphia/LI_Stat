@@ -53,7 +53,7 @@ def update_total_otc_permit_volume(selected_start, selected_end, selected_permit
     if selected_worktype != "All":
         df_selected = df_selected[(df_selected['Work Type'] == selected_worktype)]
 
-    df_selected = df_selected.loc[(df['Issue Date'] >= selected_start)&(df_selected['Issue Date'] <= selected_end)]
+    df_selected = df_selected.loc[(df_selected['Issue Date'] >= selected_start)&(df_selected['Issue Date'] <= selected_end)]
     total_otc_permit_volume = df_selected['OTC Permits Issued'].sum()
     return '{:,.0f}'.format(total_otc_permit_volume)
 
@@ -65,7 +65,7 @@ def update_total_review_permit_volume(selected_start, selected_end, selected_per
     if selected_worktype != "All":
         df_selected = df_selected[(df_selected['Work Type'] == selected_worktype)]
 
-    df_selected = df_selected.loc[(df['Issue Date'] >= selected_start)&(df_selected['Issue Date'] <= selected_end)]
+    df_selected = df_selected.loc[(df_selected['Issue Date'] >= selected_start)&(df_selected['Issue Date'] <= selected_end)]
     total_review_permit_volume = df_selected['Reviewed Permits Issued'].sum()
     return '{:,.0f}'.format(total_review_permit_volume)
 
@@ -77,7 +77,7 @@ def update_counts_graph_data(selected_start, selected_end, selected_permittype, 
     if selected_worktype != "All":
         df_selected = df_selected[(df_selected['Work Type'] == selected_worktype)]
 
-    df_selected = (df_selected.loc[(df['Issue Date'] >= selected_start) & (df_selected['Issue Date'] <= selected_end)]
+    df_selected = (df_selected.loc[(df_selected['Issue Date'] >= selected_start) & (df_selected['Issue Date'] <= selected_end)]
                               .groupby(by=['Issue Date', 'DateText'])['OTC Permits Issued', 'Reviewed Permits Issued']
                               .sum()
                               .reset_index()
@@ -92,7 +92,7 @@ def update_counts_table_data(selected_start, selected_end, selected_permittype, 
     if selected_worktype != "All":
         df_selected = df_selected[(df_selected['Work Type'] == selected_worktype)]
 
-    (df_selected.loc[(df['Issue Date']>=selected_start) & (df_selected['Issue Date']<=selected_end)]
+    (df_selected.loc[(df_selected['Issue Date']>=selected_start) & (df_selected['Issue Date']<=selected_end)]
                               .groupby(by=['Issue Date', 'Permit Type'])['OTC Permits Issued', 'Reviewed Permits Issued']
                               .sum()
                               .reset_index()

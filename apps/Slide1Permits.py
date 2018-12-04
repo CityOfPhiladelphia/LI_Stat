@@ -45,7 +45,7 @@ def update_total_permit_volume(selected_start, selected_end, selected_permittype
     if selected_permittype != "All":
         df_selected = df_selected[(df_selected['Permit Type'] == selected_permittype)]
 
-    df_selected = df_selected.loc[(df['Issue Date'] >= selected_start)&(df_selected['Issue Date'] <= selected_end)]
+    df_selected = df_selected.loc[(df_selected['Issue Date'] >= selected_start)&(df_selected['Issue Date'] <= selected_end)]
     total_permit_volume = df_selected['Permits Issued'].sum()
     return '{:,.0f}'.format(total_permit_volume)
 
@@ -55,7 +55,7 @@ def update_total_fees_paid(selected_start, selected_end, selected_permittype):
     if selected_permittype != "All":
         df_selected = df_selected[(df_selected['Permit Type'] == selected_permittype)]
 
-    df_selected = df_selected.loc[(df['Issue Date'] >= selected_start)&(df_selected['Issue Date'] <= selected_end)]
+    df_selected = df_selected.loc[(df_selected['Issue Date'] >= selected_start)&(df_selected['Issue Date'] <= selected_end)]
     total_fees_paid = df_selected['Fees Paid'].sum()
     return '${:,.0f}'.format(total_fees_paid)
 
@@ -65,7 +65,7 @@ def update_counts_graph_data(selected_start, selected_end, selected_permittype):
     if selected_permittype != "All":
         df_selected = df_selected[(df_selected['Permit Type'] == selected_permittype)]
 
-    df_selected = (df_selected.loc[(df['Issue Date'] >= selected_start) & (df_selected['Issue Date'] <= selected_end)]
+    df_selected = (df_selected.loc[(df_selected['Issue Date'] >= selected_start) & (df_selected['Issue Date'] <= selected_end)]
                               .groupby(by=['Issue Date', 'DateText'])['Permits Issued', 'Fees Paid']
                               .sum()
                               .reset_index()
@@ -78,7 +78,7 @@ def update_counts_table_data(selected_start, selected_end, selected_permittype):
     if selected_permittype != "All":
         df_selected = df_selected[(df_selected['Permit Type'] == selected_permittype)]
 
-    (df_selected.loc[(df['Issue Date']>=selected_start) & (df_selected['Issue Date']<=selected_end)]
+    (df_selected.loc[(df_selected['Issue Date']>=selected_start) & (df_selected['Issue Date']<=selected_end)]
                               .groupby(by=['Issue Date', 'Permit Type'])['Permits Issued', 'Fees Paid']
                               .sum()
                               .reset_index()

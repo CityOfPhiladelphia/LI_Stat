@@ -215,14 +215,14 @@ layout = html.Div(children=[
      Input('slide3-permits-permittype-dropdown', 'value'),
      Input('slide3-permits-worktype-dropdown', 'value')])
 def update_graph(start_date, end_date, permittype, worktype):
-    df = update_counts_graph_data(start_date, end_date, permittype, worktype)
+    df_updated = update_counts_graph_data(start_date, end_date, permittype, worktype)
     return {
         'data': [
             go.Scatter(
-                x=df['Issue Date'],
-                y=df['OTC Permits Issued'],
+                x=df_updated['Issue Date'],
+                y=df_updated['OTC Permits Issued'],
                 mode='lines',
-                text=df['DateText'],
+                text=df_updated['DateText'],
                 hoverinfo='text+y',
                 line=dict(
                     shape='spline',
@@ -231,10 +231,10 @@ def update_graph(start_date, end_date, permittype, worktype):
                 name='OTC'
             ),
             go.Scatter(
-                x=df['Issue Date'],
-                y=df['Reviewed Permits Issued'],
+                x=df_updated['Issue Date'],
+                y=df_updated['Reviewed Permits Issued'],
                 mode='lines',
-                text=df['DateText'],
+                text=df_updated['DateText'],
                 hoverinfo='text+y',
                 line=dict(
                     shape='spline',
@@ -247,7 +247,7 @@ def update_graph(start_date, end_date, permittype, worktype):
             title='Permits Issued: OTC vs Reviewed',
             yaxis=dict(
                 title='Permits Issued',
-                range=[0, (df['OTC Permits Issued'].max() + (df['OTC Permits Issued'].max()/50)) if (df['OTC Permits Issued'].max() > df['Reviewed Permits Issued'].max()) else (df['Reviewed Permits Issued'].max() + (df['Reviewed Permits Issued'].max()/50))]
+                range=[0, (df_updated['OTC Permits Issued'].max() + (df_updated['OTC Permits Issued'].max()/50)) if (df_updated['OTC Permits Issued'].max() > df_updated['Reviewed Permits Issued'].max()) else (df_updated['Reviewed Permits Issued'].max() + (df_updated['Reviewed Permits Issued'].max()/50))]
             )
         )
     }
@@ -279,8 +279,8 @@ def update_total_reviewpermits_indicator(start_date, end_date, permittype, workt
      Input('slide3-permits-permittype-dropdown', 'value'),
      Input('slide3-permits-worktype-dropdown', 'value')])
 def update_count_table(start_date, end_date, permittype, worktype):
-    df = update_counts_table_data(start_date, end_date, permittype, worktype)
-    return df.to_dict('records')
+    df_updated = update_counts_table_data(start_date, end_date, permittype, worktype)
+    return df_updated.to_dict('records')
 
 @app.callback(
     Output('slide3-permits-count-table-download-link', 'href'),
@@ -289,7 +289,7 @@ def update_count_table(start_date, end_date, permittype, worktype):
      Input('slide3-permits-permittype-dropdown', 'value'),
      Input('slide3-permits-worktype-dropdown', 'value')])
 def update_count_table_download_link(start_date, end_date, permittype, worktype):
-    df = update_counts_table_data(start_date, end_date, permittype, worktype)
-    csv_string = df.to_csv(index=False, encoding='utf-8')
+    df_updated = update_counts_table_data(start_date, end_date, permittype, worktype)
+    csv_string = df_updated.to_csv(index=False, encoding='utf-8')
     csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
     return csv_string

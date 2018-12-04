@@ -181,12 +181,12 @@ layout = html.Div(children=[
      Input('slide2TL-my-date-picker-range', 'end_date'),
      Input('slide2TL-jobtype-dropdown', 'value')])
 def update_pie_chart(start_date, end_date, jobtype):
-    df_pie_chart = update_pie_data(start_date, end_date, jobtype)
+    df_pie_chart_updated = update_pie_data(start_date, end_date, jobtype)
     return {
         'data': [
              go.Pie(
-                labels=df_pie_chart.index,
-                values=df_pie_chart.values,
+                labels=df_pie_chart_updated.index,
+                values=df_pie_chart_updated.values,
                 hoverinfo='label+value+percent', 
                 hole=0.4,
                 textfont=dict(color='#000000'),
@@ -207,30 +207,30 @@ def update_pie_chart(start_date, end_date, jobtype):
      Input('slide2TL-my-date-picker-range', 'end_date'),
      Input('slide2TL-jobtype-dropdown', 'value')])
 def update_line_chart(start_date, end_date, jobtype):
-    df_line_chart = update_line_chart_data(start_date, end_date, jobtype)
+    df_line_chart_updated = update_line_chart_data(start_date, end_date, jobtype)
     return {
         'data': [
              go.Scatter(
-                 x=df_line_chart['Date'],
-                 y=df_line_chart['Revenue Collected'],
+                 x=df_line_chart_updated['Date'],
+                 y=df_line_chart_updated['Revenue Collected'],
                  name='Revenue Collected',
                  mode='lines',
-                 text=df_line_chart['DateText'],
-                 hoverinfo = 'text+y',
+                 text=df_line_chart_updated['DateText'],
+                 hoverinfo='text+y',
                  line=dict(
                     shape='spline',
                     color='rgb(26, 118, 255)'
                  ),
-                 showlegend = False
+                 showlegend=False
              )
          ],
         'layout': go.Layout(
             title=('Revenue Collected By Month'),
-            xaxis=dict(zeroline = False),
+            xaxis=dict(zeroline=False),
             yaxis=dict(
                 title='$',
                 hoverformat='4.0f',
-                range=[0, df_line_chart['Revenue Collected'].max() + (df_line_chart['Revenue Collected'].max() / 50)]
+                range=[0, df_line_chart_updated['Revenue Collected'].max() + (df_line_chart_updated['Revenue Collected'].max() / 50)]
             )
         )
     }
@@ -241,8 +241,8 @@ def update_line_chart(start_date, end_date, jobtype):
      Input('slide2TL-my-date-picker-range', 'end_date'),
      Input('slide2TL-jobtype-dropdown', 'value')])
 def update_total_license_volume_indicator(start_date, end_date, jobtype):
-    total_revenue = update_total_revenue(start_date, end_date, jobtype)
-    return str(total_revenue)
+    total_revenue_updated = update_total_revenue(start_date, end_date, jobtype)
+    return str(total_revenue_updated)
 
 @app.callback(
     Output('slide2TL-count-table', 'rows'),
@@ -250,8 +250,8 @@ def update_total_license_volume_indicator(start_date, end_date, jobtype):
      Input('slide2TL-my-date-picker-range', 'end_date'),
      Input('slide2TL-jobtype-dropdown', 'value')])
 def update_count_table(start_date, end_date, jobtype):
-    df_counts = update_count_data(start_date, end_date, jobtype)
-    return df_counts.to_dict('records')
+    df_counts_updated = update_count_data(start_date, end_date, jobtype)
+    return df_counts_updated.to_dict('records')
 
 @app.callback(
     Output('slide2TL-count-table-download-link', 'href'),
@@ -259,7 +259,7 @@ def update_count_table(start_date, end_date, jobtype):
      Input('slide2TL-my-date-picker-range', 'end_date'),
      Input('slide2TL-jobtype-dropdown', 'value')])
 def update_count_table_download_link(start_date, end_date, jobtype):
-    df = update_count_data(start_date, end_date, jobtype)
-    csv_string = df.to_csv(index=False, encoding='utf-8')
+    df_updated = update_count_data(start_date, end_date, jobtype)
+    csv_string = df_updated.to_csv(index=False, encoding='utf-8')
     csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
     return csv_string

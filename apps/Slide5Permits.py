@@ -161,8 +161,8 @@ layout = html.Div(children=[
      Input('slide5-permits-permittype-dropdown', 'value'),
      Input('slide5-permits-worktype-dropdown', 'value')])
 def update_table(start_date, end_date, permittype, worktype):
-    df = update_table_data(start_date, end_date, permittype, worktype)
-    return df.to_dict('records')
+    df_updated = update_table_data(start_date, end_date, permittype, worktype)
+    return df_updated.to_dict('records')
 
 @app.callback(
     Output('slide5-permits-count-table-download-link', 'href'),
@@ -171,8 +171,8 @@ def update_table(start_date, end_date, permittype, worktype):
      Input('slide5-permits-permittype-dropdown', 'value'),
      Input('slide5-permits-worktype-dropdown', 'value')])
 def update_count_table_download_link(start_date, end_date, permittype, worktype):
-    df = update_table_data(start_date, end_date, permittype, worktype)
-    csv_string = df.to_csv(index=False, encoding='utf-8')
+    df_updated = update_table_data(start_date, end_date, permittype, worktype)
+    csv_string = df_updated.to_csv(index=False, encoding='utf-8')
     csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
     return csv_string
 

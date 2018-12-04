@@ -204,14 +204,14 @@ layout = html.Div(children=[
      Input('slide1-permits-date-picker-range', 'end_date'),
      Input('slide1-permits-permittype-dropdown', 'value')])
 def update_graph(start_date, end_date, permittype):
-    df = update_counts_graph_data(start_date, end_date, permittype)
+    dfr = update_counts_graph_data(start_date, end_date, permittype)
     return {
         'data': [
             go.Scatter(
-                x=df['Issue Date'],
-                y=df['Permits Issued'],
+                x=dfr['Issue Date'],
+                y=dfr['Permits Issued'],
                 mode='lines',
-                text=df['DateText'],
+                text=dfr['DateText'],
                 hoverinfo='text+y',
                 line=dict(
                     shape='spline',
@@ -220,10 +220,10 @@ def update_graph(start_date, end_date, permittype):
                 name='Permits Issued'
             ),
             go.Scatter(
-                x=df['Issue Date'],
-                y=df['Fees Paid'],
+                x=dfr['Issue Date'],
+                y=dfr['Fees Paid'],
                 mode='lines',
-                text=df['DateText'],
+                text=dfr['DateText'],
                 hoverinfo='text+y',
                 line=dict(
                     shape='spline',
@@ -237,11 +237,11 @@ def update_graph(start_date, end_date, permittype):
             title='Permits Issued vs Fees Paid',
             yaxis=dict(
                 title='Permits Issued',
-                range=[0, df['Permits Issued'].max() + (df['Permits Issued'].max() / 50)]
+                range=[0, dfr['Permits Issued'].max() + (dfr['Permits Issued'].max() / 50)]
             ),
             yaxis2=dict(
                 title='Fees Paid ($)',
-                range=[0, df['Fees Paid'].max() + (df['Fees Paid'].max() / 50)],
+                range=[0, dfr['Fees Paid'].max() + (dfr['Fees Paid'].max() / 50)],
                 titlefont=dict(
                     color='#ff7f0e'
                 ),
@@ -260,8 +260,8 @@ def update_graph(start_date, end_date, permittype):
      Input('slide1-permits-date-picker-range', 'end_date'),
      Input('slide1-permits-permittype-dropdown', 'value')])
 def update_total_permit_volume_indicator(start_date, end_date, permittype):
-    total_permit_volume = update_total_permit_volume(start_date, end_date, permittype)
-    return str(total_permit_volume)
+    total_permit_volume_updated = update_total_permit_volume(start_date, end_date, permittype)
+    return str(total_permit_volume_updated)
 
 @app.callback(
     Output('slide1-feespaid-indicator', 'children'),
@@ -278,8 +278,8 @@ def update_total_fees_paid_indicator(start_date, end_date, permittype):
      Input('slide1-permits-date-picker-range', 'end_date'),
      Input('slide1-permits-permittype-dropdown', 'value')])
 def update_count_table(start_date, end_date, permittype):
-    df = update_counts_table_data(start_date, end_date, permittype)
-    return df.to_dict('records')
+    df_counts = update_counts_table_data(start_date, end_date, permittype)
+    return df_counts.to_dict('records')
 
 @app.callback(
     Output('slide1-permits-count-table-download-link', 'href'),
@@ -287,7 +287,7 @@ def update_count_table(start_date, end_date, permittype):
      Input('slide1-permits-date-picker-range', 'end_date'),
      Input('slide1-permits-permittype-dropdown', 'value')])
 def update_count_table_download_link(start_date, end_date, permittype):
-    df = update_counts_table_data(start_date, end_date, permittype)
-    csv_string = df.to_csv(index=False, encoding='utf-8')
+    df_counts = update_counts_table_data(start_date, end_date, permittype)
+    csv_string = df_counts.to_csv(index=False, encoding='utf-8')
     csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
     return csv_string

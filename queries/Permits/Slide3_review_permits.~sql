@@ -1,21 +1,6 @@
 SELECT trim(b.apno) PermitNumber,
   b.APDTTM ProcessingDate,
-  nvl(act.issdttm, b.issdttm) PermitIssueDate,
-  aprec.addby,
-  aprec.adddttm,
-  aprec.apkey,
-  aprec.apreckey,
-  aprec.comments,
-  aprec.enteredby,
-  aprec.logtype,
-  aprec.modby,
-  aprec.moddttm,
-  aprec.startby,
-  aprec.startdttm,
-  aprec.stopdttm,
-  aprec.hours,
-  aprec.dectype,
-  aprec.certprt
+  nvl(nvl(aprec.stopdttm, aprec.startdttm), b.issdttm) PermitIssueDate,
   defn.aptype PermitType,
   b.worktype
 FROM imsv7.apbldg b,
@@ -28,25 +13,13 @@ AND b.APKEY                          = act.APKEY (+)
 AND b.APKEY                          = aprec.APKEY (+)
 AND b.APDTTM                        >= '01-JAN-2016'
 AND b.parentkey                      = '1'
+--and upper(a.comments) like '%ISSUE%'
+and aprec.logtype like 'RPTPER%'
+
 UNION
 SELECT trim(u.apno) PermitNumber,
   u.APDTTM ProcessingDate,
-  nvl(act.issdttm, u.issdttm) PermitIssueDate,
-  aprec.addby,
-  aprec.adddttm,
-  aprec.apkey,
-  aprec.apreckey,
-  aprec.comments,
-  aprec.enteredby,
-  aprec.logtype,
-  aprec.modby,
-  aprec.moddttm,
-  aprec.startby,
-  aprec.startdttm,
-  aprec.stopdttm,
-  aprec.hours,
-  aprec.dectype,
-  aprec.certprt
+  nvl(nvl(aprec.stopdttm, aprec.startdttm), u.issdttm) PermitIssueDate,
   defn.aptype PermitType,
   u.worktype
 FROM imsv7.apuse u,

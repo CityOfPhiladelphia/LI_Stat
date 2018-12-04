@@ -6,7 +6,7 @@ SELECT DISTINCT
     createdbytype,
     jobtype,
     licensetype,
-    COUNT(DISTINCT licensenumber) licensenumbercount
+    COUNT(DISTINCT jobnumber) jobnumbercount
 FROM
     (
         SELECT
@@ -18,7 +18,7 @@ FROM
             createdbytype,
             jobtype,
             licensetype,
-            licensenumber
+            jobnumber
         FROM
             (
                 SELECT
@@ -48,6 +48,7 @@ FROM
                             ) jobtype,
                             lt.name licensetype,
                             lic.externalfilenum licensenumber,
+                            ap.ExternalFileNum jobnumber,
                             EXTRACT(MONTH FROM ap.issuedate) issuemonth,
                             EXTRACT(YEAR FROM ap.issuedate) issueyear
                           FROM
@@ -60,12 +61,13 @@ FROM
                             AND lic.objectid = apl.licenseobjectid
                             AND apl.applicationobjectid = ap.jobid
                             AND ap.statusdescription LIKE 'Approved'
-                            AND lic.initialissuedate > '01-APR-16'
-                            AND lic.initialissuedate < SYSDATE
+                            AND ap.issuedate >= '01-JAN-16'
+                            AND ap.IssueDate <= sysdate
                             AND ap.applicationtype = 'Application'
+                            --and lt.Name not like 'Activity'
                         )
                         UNION
-                        ( SELECT DISTINCT
+                        (SELECT DISTINCT
                             (
                                 CASE
                                     WHEN ar.createdby LIKE '%2%' THEN 'Online'
@@ -88,6 +90,7 @@ FROM
                             ) jobtype,
                             lt.name licensetype,
                             lic.externalfilenum licensenumber,
+                            ar.ExternalFileNum  jobnumber,
                             EXTRACT(MONTH FROM ar.issuedate) issuemonth,
                             EXTRACT(YEAR FROM ar.issuedate) issueyear
                           FROM
@@ -100,10 +103,49 @@ FROM
                             AND lic.objectid = arl.licenseid
                             AND arl.amendrenewid = ar.jobid
                             AND ar.statusdescription LIKE 'Approved'
-                            AND ar.issuedate > '01-APR-16'
-                            AND ar.issuedate < SYSDATE
+                            AND ar.issuedate >= '01-JAN-16'
+                            AND ar.issuedate <= SYSDATE
                             AND ar.applicationtype LIKE 'Renewal'
+                           -- and lt.Name not like 'Activity'
                         )
+                    union
+                      (SELECT DISTINCT
+                            (
+                                CASE
+                                    WHEN ap.createdby LIKE '%2%' THEN 'Online'
+                                    WHEN ap.createdby LIKE '%3%' THEN 'Online'
+                                    WHEN ap.createdby LIKE '%4%' THEN 'Online'
+                                    WHEN ap.createdby LIKE '%5%' THEN 'Online'
+                                    WHEN ap.createdby LIKE '%6%' THEN 'Online'
+                                    WHEN ap.createdby LIKE '%7%' THEN 'Online'
+                                    WHEN ap.createdby LIKE '%7%' THEN 'Online'
+                                    WHEN ap.createdby LIKE '%9%' THEN 'Online'
+                                    WHEN ap.createdby = 'PPG User'                THEN 'Online'
+                                    WHEN ap.createdby = 'POSSE system power user' THEN 'Revenue'
+                                    ELSE 'Staff'
+                                END
+                            ) AS createdbytype,
+                            (
+                                CASE
+                                    WHEN ap.applicationtype LIKE 'Application' THEN 'Application'
+                                END
+                            ) jobtype,
+                            lt.name licensetype,
+                            lic.externalfilenum licensenumber,
+                            ap.ExternalFileNum  jobnumber,
+                            EXTRACT(MONTH FROM ap.issuedate) issuemonth,
+                            EXTRACT(YEAR FROM ap.issuedate) issueyear
+                 FROM
+                     query.o_bl_license lic,
+                     lmscorral.bl_licensetype lt, 
+                     query.j_bl_application ap
+                 WHERE
+                     lic.licensetypeid = lt.objectid
+                     AND lic.InitialIssueDate >= '01-JAN-16'
+                     and lic.InitialIssueDate <= sysdate
+                     and lt.Name like 'Activity'
+                     and ap.ActivityLicenseId = lic.ObjectId
+                     AND ap.statusdescription LIKE 'Approved')
                     )
             )
     )

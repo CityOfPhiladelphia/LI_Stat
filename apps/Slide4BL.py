@@ -25,28 +25,28 @@ else:
                     .sort_values(by='ISSUEDATE'))
 
 df_chart_createdbytype = (df.copy(deep=True)
-                            .groupby(['ISSUEDATE', 'CREATEDBYTYPE'])['LICENSENUMBERCOUNT']
+                            .groupby(['ISSUEDATE', 'CREATEDBYTYPE'])['JOBNUMBERCOUNT']
                             .sum()
                             .reset_index()
                             .sort_values(by='ISSUEDATE')
                             .assign(DateText=lambda x: x['ISSUEDATE'].dt.strftime('%b %Y')))
 
 df_chart_createdbytype_all = (df.copy(deep=True)
-                                .groupby(['ISSUEDATE'])['LICENSENUMBERCOUNT']
+                                .groupby(['ISSUEDATE'])['JOBNUMBERCOUNT']
                                 .sum()
                                 .reset_index()
                                 .sort_values(by='ISSUEDATE')
                                 .assign(DateText=lambda x: x['ISSUEDATE'].dt.strftime('%b %Y')))
 
 df_chart_jobtype = (df.copy(deep=True)
-                      .groupby(['ISSUEDATE', 'JOBTYPE'])['LICENSENUMBERCOUNT']
+                      .groupby(['ISSUEDATE', 'JOBTYPE'])['JOBNUMBERCOUNT']
                       .sum()
                       .reset_index()
                       .sort_values(by='ISSUEDATE')
                       .assign(DateText=lambda x: x['ISSUEDATE'].dt.strftime('%b %Y')))
 
 df_chart_jobtype_all = (df.copy(deep=True)
-                          .groupby(['ISSUEDATE'])['LICENSENUMBERCOUNT']
+                          .groupby(['ISSUEDATE'])['JOBNUMBERCOUNT']
                           .sum()
                           .reset_index()
                           .sort_values(by='ISSUEDATE')
@@ -54,21 +54,21 @@ df_chart_jobtype_all = (df.copy(deep=True)
 
 df_created_by_type = (df.copy(deep=True)
                         .loc[df['ISSUEDATE'] >= '2018-01-01']
-                        .groupby(['CREATEDBYTYPE'])['LICENSENUMBERCOUNT']
+                        .groupby(['CREATEDBYTYPE'])['JOBNUMBERCOUNT']
                         .sum())
 
 df_job_type = (df.copy(deep=True)
                  .loc[df['ISSUEDATE'] >= '2018-01-01']
-                 .groupby(['JOBTYPE'])['LICENSENUMBERCOUNT']
+                 .groupby(['JOBTYPE'])['JOBNUMBERCOUNT']
                  .sum())
 
 df_table = (df.copy(deep=True)
-              .groupby(['ISSUEDATE', 'LICENSETYPE', 'CREATEDBYTYPE'])['LICENSENUMBERCOUNT']
+              .groupby(['ISSUEDATE', 'LICENSETYPE', 'CREATEDBYTYPE'])['JOBNUMBERCOUNT']
               .sum()
               .reset_index()
               .sort_values(by='ISSUEDATE')
               .assign(ISSUEDATE=lambda x: x['ISSUEDATE'].dt.strftime('%b %Y'))
-              .rename(columns={'ISSUEDATE': 'Issue Date', 'LICENSETYPE': 'License Type', 'CREATEDBYTYPE': 'Submittal Type', 'LICENSENUMBERCOUNT': 'Number of Licenses Issued'}))
+              .rename(columns={'ISSUEDATE': 'Issue Date', 'LICENSETYPE': 'License Type', 'CREATEDBYTYPE': 'Submittal Type', 'JOBNUMBERCOUNT': 'Number of Jobs Completed'}))
 
 all_licenses = df.copy(deep=True)
 rentals = df.loc[(df['LICENSETYPE'] == 'Rental') & (df['CREATEDBYTYPE'] == 'Online') & (df['ISSUEDATE'] >= '2018-01-01')] 
@@ -77,8 +77,8 @@ food = df.loc[(df['LICENSETYPE'].str.contains('Food')) & (df['CREATEDBYTYPE'] ==
 cals = df.loc[(df['LICENSETYPE'].str.contains('Activity')) & (df['CREATEDBYTYPE'] == 'Online') & (df['ISSUEDATE'] >= '2018-01-01')]
 
 def percent_renewals(df):
-    count_new = df.loc[df['JOBTYPE'] == 'Application']['LICENSENUMBERCOUNT'].sum()
-    count_renewals = df.loc[df['JOBTYPE'] == 'Renewal']['LICENSENUMBERCOUNT'].sum()
+    count_new = df.loc[df['JOBTYPE'] == 'Application']['JOBNUMBERCOUNT'].sum()
+    count_renewals = df.loc[df['JOBTYPE'] == 'Renewal']['JOBNUMBERCOUNT'].sum()
     return round(count_renewals / (count_new + count_renewals) * 100, 1)
 
 df_table_2 = pd.DataFrame(data={
@@ -86,9 +86,9 @@ df_table_2 = pd.DataFrame(data={
     '% Online Renewals': [percent_renewals(license_type) for license_type in [all_licenses, rentals, vacant_properties, food]]
 })
 
-count_2016 = df.loc[(df['ISSUEDATE'] >= '2016-01-01') & (df['ISSUEDATE'] < '2016-08-01')]['LICENSENUMBERCOUNT'].sum()
-count_2017 = df.loc[(df['ISSUEDATE'] >= '2017-01-01') & (df['ISSUEDATE'] < '2017-08-01')]['LICENSENUMBERCOUNT'].sum()
-count_2018 = df.loc[(df['ISSUEDATE'] >= '2018-01-01')  & (df['ISSUEDATE'] < '2018-08-01')]['LICENSENUMBERCOUNT'].sum()
+count_2016 = df.loc[(df['ISSUEDATE'] >= '2016-01-01') & (df['ISSUEDATE'] < '2016-08-01')]['JOBNUMBERCOUNT'].sum()
+count_2017 = df.loc[(df['ISSUEDATE'] >= '2017-01-01') & (df['ISSUEDATE'] < '2017-08-01')]['JOBNUMBERCOUNT'].sum()
+count_2018 = df.loc[(df['ISSUEDATE'] >= '2018-01-01')  & (df['ISSUEDATE'] < '2018-08-01')]['JOBNUMBERCOUNT'].sum()
 count_all = count_2016 + count_2017 + count_2018
 
 df_table_3 = pd.DataFrame(data={
@@ -107,7 +107,7 @@ layout = html.Div([
                     data=[
                         go.Scatter(
                             x=df_chart_createdbytype_all['ISSUEDATE'],
-                            y=df_chart_createdbytype_all['LICENSENUMBERCOUNT'],
+                            y=df_chart_createdbytype_all['JOBNUMBERCOUNT'],
                             name='All',
                             mode='lines',
                             text=df_chart_createdbytype_all['DateText'],
@@ -119,7 +119,7 @@ layout = html.Div([
                         ),
                         go.Scatter(
                             x=df_chart_createdbytype.loc[df_chart_createdbytype['CREATEDBYTYPE'] == 'Online']['ISSUEDATE'],
-                            y=df_chart_createdbytype.loc[df_chart_createdbytype['CREATEDBYTYPE'] == 'Online']['LICENSENUMBERCOUNT'],
+                            y=df_chart_createdbytype.loc[df_chart_createdbytype['CREATEDBYTYPE'] == 'Online']['JOBNUMBERCOUNT'],
                             name='Online',
                             mode='lines',
                             text=df_chart_createdbytype.loc[df_chart_createdbytype['CREATEDBYTYPE'] == 'Online']['DateText'],
@@ -131,7 +131,7 @@ layout = html.Div([
                         ),
                         go.Scatter(
                             x=df_chart_createdbytype.loc[df_chart_createdbytype['CREATEDBYTYPE'] == 'Staff']['ISSUEDATE'],
-                            y=df_chart_createdbytype.loc[df_chart_createdbytype['CREATEDBYTYPE'] == 'Staff']['LICENSENUMBERCOUNT'],
+                            y=df_chart_createdbytype.loc[df_chart_createdbytype['CREATEDBYTYPE'] == 'Staff']['JOBNUMBERCOUNT'],
                             name='Staff',
                             mode='lines',
                             text=df_chart_createdbytype.loc[df_chart_createdbytype['CREATEDBYTYPE'] == 'Staff']['DateText'],
@@ -144,7 +144,7 @@ layout = html.Div([
                     ],
                     layout=go.Layout(
                         title=('Submittal Type Activity By Month'),
-                        yaxis=dict(title='Number of Licenses Issued')
+                        yaxis=dict(title='Number of Jobs Completed')
                     )
                 )
             ),
@@ -175,7 +175,7 @@ layout = html.Div([
                     data=[
                         go.Scatter(
                             x=df_chart_jobtype_all['ISSUEDATE'],
-                            y=df_chart_jobtype_all['LICENSENUMBERCOUNT'],
+                            y=df_chart_jobtype_all['JOBNUMBERCOUNT'],
                             name='All',
                             mode='lines',
                             text=df_chart_jobtype_all['DateText'],
@@ -187,7 +187,7 @@ layout = html.Div([
                         ),
                         go.Scatter(
                             x=df_chart_jobtype.loc[df_chart_jobtype['JOBTYPE'] == 'Renewal']['ISSUEDATE'],
-                            y=df_chart_jobtype.loc[df_chart_jobtype['JOBTYPE'] == 'Renewal']['LICENSENUMBERCOUNT'],
+                            y=df_chart_jobtype.loc[df_chart_jobtype['JOBTYPE'] == 'Renewal']['JOBNUMBERCOUNT'],
                             name='Renewal',
                             mode='lines',
                             text=df_chart_jobtype.loc[df_chart_jobtype['JOBTYPE'] == 'Renewal']['DateText'],
@@ -199,7 +199,7 @@ layout = html.Div([
                         ),
                         go.Scatter(
                             x=df_chart_jobtype.loc[df_chart_jobtype['JOBTYPE'] == 'Application']['ISSUEDATE'],
-                            y=df_chart_jobtype.loc[df_chart_jobtype['JOBTYPE'] == 'Application']['LICENSENUMBERCOUNT'],
+                            y=df_chart_jobtype.loc[df_chart_jobtype['JOBTYPE'] == 'Application']['JOBNUMBERCOUNT'],
                             name='Application',
                             mode='lines',
                             text=df_chart_jobtype.loc[df_chart_jobtype['JOBTYPE'] == 'Application']['DateText'],
@@ -212,7 +212,7 @@ layout = html.Div([
                     ],
                     layout=go.Layout(
                         title=('Application and Renewal Activity By Month'),
-                        yaxis=dict(title='Number of Licenses Issued')
+                        yaxis=dict(title='Number of Jobs Completed')
                     )
                 )
             )
@@ -237,7 +237,7 @@ layout = html.Div([
         ], className='four columns')
     ], className='dashrow'),
     html.Div([
-        html.H3('Volume of Licenses Issued from January to July', style={'text-align': 'center'}),
+        html.H3('Volume of Jobs Completed from January to July', style={'text-align': 'center'}),
         html.Div([
             dt.DataTable(
                 rows=df_table_3.to_dict('records'),

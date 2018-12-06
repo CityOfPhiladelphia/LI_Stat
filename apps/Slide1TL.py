@@ -67,7 +67,7 @@ def update_counts_table_data(selected_start, selected_end, selected_jobtype, sel
     if selected_licensetype != "All":
         df_selected = df_selected[(df_selected['License Type'] == selected_licensetype)]
 
-    (df_selected.loc[(df_selected['Issue Date']>=selected_start)&(df_selected['Issue Date']<=selected_end)]
+    df_selected = (df_selected.loc[(df_selected['Issue Date']>=selected_start)&(df_selected['Issue Date']<=selected_end)]
                               .groupby(by=['Issue Date', 'License Type'])['Number of Licenses Issued']
                               .sum()
                               .reset_index()

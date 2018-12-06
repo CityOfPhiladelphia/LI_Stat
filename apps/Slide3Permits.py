@@ -92,7 +92,7 @@ def update_counts_table_data(selected_start, selected_end, selected_permittype, 
     if selected_worktype != "All":
         df_selected = df_selected[(df_selected['Work Type'] == selected_worktype)]
 
-    (df_selected.loc[(df_selected['Issue Date']>=selected_start) & (df_selected['Issue Date']<=selected_end)]
+    df_selected = (df_selected.loc[(df_selected['Issue Date']>=selected_start) & (df_selected['Issue Date']<=selected_end)]
                               .groupby(by=['Issue Date', 'Permit Type'])['OTC Permits Issued', 'Reviewed Permits Issued']
                               .sum()
                               .reset_index()

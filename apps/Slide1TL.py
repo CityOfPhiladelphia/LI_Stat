@@ -10,17 +10,11 @@ import urllib.parse
 
 from app import app, con
 
-testing_mode = False
 print('slide1_TL.py')
-print('Testing mode: ' + str(testing_mode))
 
-if testing_mode:
-    df = pd.read_csv('test_data/Slide1_TL.csv', parse_dates=['ISSUEDATE'])
-
-else:
-    with con() as con:
-        with open(r'queries/licenses/slide1_license_volumes_TL.sql') as sql:
-            df = pd.read_sql_query(sql=sql.read(), con=con, parse_dates=['ISSUEDATE'])
+with con() as con:
+    sql = 'SELECT * FROM li_stat_licensevolumes_tl'
+    df = pd.read_sql_query(sql=sql, con=con, parse_dates=['ISSUEDATE'])
 
 # Rename the columns to be more readable
 # Make a DateText Column to display on the graph            

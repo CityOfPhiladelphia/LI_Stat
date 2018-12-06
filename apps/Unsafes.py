@@ -9,8 +9,7 @@ import urllib.parse
 from datetime import datetime
 from dash.dependencies import Input, Output
 
-from app import app, con_GISLNI
-
+from app import app, con
 
 def update_data(start_date, end_date):
     df_results = df.loc[(df['Violation Month'] >= start_date) & (df['Violation Month'] <= end_date)]\
@@ -19,9 +18,9 @@ def update_data(start_date, end_date):
 
 print('Unsafes.py')
 
-with con_GISLNI() as con:
-    with open(r'queries/Unsafes.sql') as sql:
-        df = pd.read_sql_query(sql=sql.read(), con=con, parse_dates=['VIOLATIONDATE'])
+with con() as con:
+    sql = 'SELECT * FROM li_stat_unsafes'
+    df = pd.read_sql_query(sql=sql, con=con, parse_dates=['VIOLATIONDATE'])
 
 # Rename the columns to be more readable
 df.rename(columns=

@@ -8,19 +8,13 @@ from datetime import datetime
 import numpy as np
 import urllib.parse
 
-from app import app, con_DataBridge
+from app import app, con
 
-testing_mode = False
 print('PublicDemos.py')
-print('Testing mode: ' + str(testing_mode))
 
-if testing_mode:
-    df = pd.read_csv('test_data/PublicDemos.csv', parse_dates=['DEMODATE'])
-
-else:
-    with con_DataBridge() as con_DataBridge:
-        with open(r'queries/PublicDemos.sql') as sql:
-            df = pd.read_sql_query(sql=sql.read(), con=con_DataBridge, parse_dates=['DEMODATE'])
+with con() as con:
+    sql = 'SELECT * FROM li_stat_publicdemos'
+    df = pd.read_sql_query(sql=sql, con=con, parse_dates=['DEMODATE'])
 
 # Rename the columns to be more readable
 # Make a DateText Column to display on the graph

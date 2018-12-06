@@ -10,17 +10,11 @@ import urllib.parse
 
 from app import app, con
 
-testing_mode = False
 print('Slide2BL.py')
-print('Testing mode: ' + str(testing_mode))
 
-if testing_mode:
-    df = pd.read_csv(r'test_data/Slide2.csv', parse_dates=['PAYMENTDATE'])
-    
-else:
-    with con() as con:
-        with open(r'queries/licenses/slide2_PaymentsbyMonth_BL.sql') as sql:
-            df = pd.read_sql_query(sql=sql.read(), con=con, parse_dates=['PAYMENTDATE'])
+with con() as con:
+    sql = 'SELECT * FROM li_stat_licenserevenue_bl'
+    df = pd.read_sql_query(sql=sql, con=con, parse_dates=['PAYMENTDATE'])
 
 df.rename(columns={'JOBTYPE': 'Job Type', 'PAYMENTDATE': 'Date', 'TOTALAMOUNT': 'Revenue Collected'}, inplace=True)
 

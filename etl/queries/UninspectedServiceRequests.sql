@@ -1,8 +1,8 @@
-SELECT DISTINCT sub.SERVNO "Service Request Num",
-  sub.address "Address",
-  sub.sr_problemdesc "Problem Description",
-  sub.sr_calldate "Call Date",
-  sub.unit "Unit",
+SELECT DISTINCT sub.SERVNO servreqno,
+  sub.address address,
+  sub.sr_problemdesc problemdescription,
+  sub.sr_calldate calldate,
+  sub.unit unit,
   (
   CASE
     WHEN sub.unit = 'Ops'
@@ -11,8 +11,8 @@ SELECT DISTINCT sub.SERVNO "Service Request Num",
     THEN addr.building_district
     WHEN sub.unit = 'CSU'
     THEN addr.ops_district
-  END) "District",
-  s.sla "SLA"
+  END) district,
+  s.sla SLA
 FROM
   (SELECT sr.SERVNO,
     sr.addresskey,

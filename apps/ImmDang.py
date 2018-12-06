@@ -9,7 +9,7 @@ import urllib.parse
 from datetime import datetime
 from dash.dependencies import Input, Output
 
-from app import app, con_GISLNI
+from app import app, con
 
 
 def update_data(start_date, end_date):
@@ -19,9 +19,9 @@ def update_data(start_date, end_date):
 
 print('ImmDang.py')
 
-with con_GISLNI() as con:
-    with open(r'queries/ImmDang.sql') as sql:
-        df = pd.read_sql_query(sql=sql.read(), con=con, parse_dates=['VIOLATIONDATE'])
+with con() as con:
+    sql = 'SELECT * FROM li_stat_immdang'
+    df = pd.read_sql_query(sql=sql, con=con, parse_dates=['VIOLATIONDATE'])
 
 # Rename the columns to be more readable
 df.rename(columns=

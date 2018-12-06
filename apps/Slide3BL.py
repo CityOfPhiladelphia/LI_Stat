@@ -10,18 +10,11 @@ import urllib.parse
 
 from app import app, con
     
-
-testing_mode = False
 print('slide3BL.py')
-print('Testing mode: ' + str(testing_mode))
 
-if testing_mode:
-    df = pd.read_csv('test_data/Slide3_BL.csv', parse_dates=['ISSUEDATE'])
-
-else:
-    with con() as con:
-        with open(r'queries/licenses/slide3_license_trends_BL.sql') as sql:
-            df = pd.read_sql_query(sql=sql.read(), con=con, parse_dates=['ISSUEDATE'])
+with con() as con:
+    sql = 'SELECT * FROM li_stat_licensetrends_bl'
+    df = pd.read_sql_query(sql=sql, con=con, parse_dates=['ISSUEDATE'])
 
 # Select only Jan-June 2017 and 2018, then group them by year, job and licensetype
 licenses = (df.loc[(df['ISSUEDATE'] >= '2017-01-01') 

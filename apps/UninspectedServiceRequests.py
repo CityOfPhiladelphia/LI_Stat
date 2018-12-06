@@ -10,19 +10,21 @@ import urllib.parse
 from pandas.tseries.holiday import USFederalHolidayCalendar
 from pandas.tseries.offsets import CustomBusinessDay
 
-from app import app, con_GISLNI
+from app import app, con
 
-testing_mode = False
 print('UninspectedServiceRequests.py')
-print('Testing mode: ' + str(testing_mode))
 
-if testing_mode:
-    df = pd.read_csv('test_data/UninspectedServiceRequests.csv', parse_dates=['Call Date'])
+with con() as con:
+    sql = 'SELECT * FROM li_stat_uninspectedservreq'
+    df = pd.read_sql_query(sql=sql, con=con, parse_dates=['CALLDATE'])
 
-else:
-    with con_GISLNI() as con_GISLNI:
-        with open(r'queries/UninspectedServiceRequests.sql') as sql:
-            df = pd.read_sql_query(sql=sql.read(), con=con_GISLNI, parse_dates=['Call Date'])
+df.rename(columns=
+            {'SERVREQNO': 'Service Request Num',
+             'CALLDATE': 'Call Date',
+             'PROBLEMDESCRIPTION': 'Problem Description',
+             'UNIT': 'Unit',
+             'DISTRICT': 'District'},
+        inplace=True)
 
 #Determine which service requests are within SLA and how long they've been outstanding
 df['Call Date (no time)'] = df['Call Date'].dt.date

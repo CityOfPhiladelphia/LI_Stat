@@ -8,19 +8,13 @@ from datetime import datetime
 import numpy as np
 import urllib.parse
 
-from app import app, con_LIDB
+from app import app, con
 
-testing_mode = False
 print('slide1Permits.py')
-print('Testing mode: ' + str(testing_mode))
 
-if testing_mode:
-    df = pd.read_csv('test_data/Slide1Permits.csv', parse_dates=['ISSUEDATE'])
-
-else:
-    with con_LIDB() as con_LIDB:
-        with open(r'queries/permits/slide1_MonthlyPermitsSubmittedwithPaidFees.sql') as sql:
-            df = pd.read_sql_query(sql=sql.read(), con=con_LIDB, parse_dates=['ISSUEDATE'])
+with con() as con:
+    sql = 'SELECT * FROM li_stat_permitsfees'
+    df = pd.read_sql_query(sql=sql, con=con, parse_dates=['ISSUEDATE'])
 
 # Rename the columns to be more readable
 # Make a DateText Column to display on the graph

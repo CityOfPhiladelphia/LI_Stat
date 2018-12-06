@@ -10,17 +10,12 @@ import urllib.parse
 
 from app import app, con
 
-testing_mode = False
 print('slide1_BL.py')
-print('Testing mode: ' + str(testing_mode))
 
-if testing_mode:
-    df = pd.read_csv('test_data/Slide1_BL.csv', parse_dates=['ISSUEDATE'])
+with con() as con:
+    sql = 'SELECT * FROM li_stat_licensevolumes_bl'
+    df = pd.read_sql_query(sql=sql, con=con, parse_dates=['ISSUEDATE'])
 
-else:
-    with con() as con:
-        with open(r'queries/licenses/slide1_license_volumes_BL.sql') as sql:
-            df = pd.read_sql_query(sql=sql.read(), con=con, parse_dates=['ISSUEDATE'])
 
 # Strip 'BL_' from JOBTYPE
 # Rename the columns to be more readable

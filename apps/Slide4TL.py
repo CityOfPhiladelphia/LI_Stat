@@ -9,19 +9,12 @@ import datetime
 
 from app import app, con
 
-
-testing_mode = False
 print('slide4_TL.py')
-print('Testing mode: ' + str(testing_mode))
 
-if testing_mode:
-    df = pd.read_csv('test_data/Slide4_TL.csv', parse_dates=['ISSUEDATE'])
-    
-else:
-    with con() as con:
-        with open(r'queries/licenses/slide4_submittal_volumes_TL.sql') as sql:
-            df = (pd.read_sql(sql=sql.read(), con=con, parse_dates=['ISSUEDATE'])
-                    .sort_values(by='ISSUEDATE'))
+with con() as con:
+    sql = 'SELECT * FROM li_stat_submittalvolumes_tl'
+    df = (pd.read_sql_query(sql=sql, con=con, parse_dates=['ISSUEDATE'])
+          .sort_values(by='ISSUEDATE'))
 
 df_chart_createdbytype = (df.copy(deep=True)
                             .groupby(['ISSUEDATE', 'CREATEDBYTYPE'])['LICENSENUMBERCOUNT']

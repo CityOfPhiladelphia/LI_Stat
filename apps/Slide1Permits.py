@@ -86,7 +86,7 @@ layout = html.Div(children=[
                 html.H1('Permit Volumes and Revenues', style={'text-align': 'center'}),
                 html.Div([
                     html.Div([
-                        html.P('Filter by Date Range'),
+                        html.P('Filter by Issue Date'),
                         dcc.DatePickerRange(
                             display_format='MMM Y',
                             id='slide1-permits-date-picker-range',

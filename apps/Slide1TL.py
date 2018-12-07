@@ -73,7 +73,7 @@ layout = html.Div(children=[
                 html.H1('Trade License Volumes', style={'text-align': 'center'}),
                 html.Div([
                     html.Div([
-                        html.P('Filter by Date Range'),
+                        html.P('Filter by Issue Date'),
                         dcc.DatePickerRange(
                             display_format='MMM Y',
                             id='slide1-TL-my-date-picker-range',

@@ -100,7 +100,7 @@ layout = html.Div(children=[
                 html.H1('Permits Issued: Over the Counter (OTC) vs Back Office (Reviewed)', style={'text-align': 'center'}),
                 html.Div([
                     html.Div([
-                        html.P('Filter by Date Range'),
+                        html.P('Filter by Issue Date'),
                         dcc.DatePickerRange(
                             display_format='MMM Y',
                             id='slide3-permits-date-picker-range',

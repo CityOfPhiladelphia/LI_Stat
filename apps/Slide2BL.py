@@ -73,7 +73,7 @@ layout = html.Div(children=[
                 html.H1('Business License Revenue', style={'text-align': 'center'}),
                 html.Div([
                     html.Div([
-                        html.P('Filter by Date Range'),
+                        html.P('Filter by Payment Date'),
                         dcc.DatePickerRange(
                             display_format='MMM Y',
                             id='slide2BL-my-date-picker-range',

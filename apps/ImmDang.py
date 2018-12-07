@@ -36,7 +36,7 @@ layout = html.Div(children=[
                 html.H1('Immenently Dangerous Buildings', style={'text-align': 'center'}),
                 html.Div([
                     html.Div([
-                        html.P('Filter by Date Range'),
+                        html.P('Filter by Violation Date'),
                         dcc.DatePickerRange(
                             display_format='MMM Y',
                             id='imm-dang-date-picker-range',

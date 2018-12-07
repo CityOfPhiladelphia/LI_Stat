@@ -24,6 +24,7 @@ df = (df.rename(columns={'ISSUEDATE': 'Issue Date', 'LICENSETYPE': 'License Type
         .assign(DateText=lambda x: x['Issue Date'].dt.strftime('%b %Y')))
 
 unique_licensetypes = df['License Type'].unique()
+unique_licensetypes.sort()
 unique_licensetypes = np.append(['All'], unique_licensetypes)
 
 total_license_volume = '{:,.0f}'.format(df['Number of Licenses Issued'].sum())

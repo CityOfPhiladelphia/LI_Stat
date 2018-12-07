@@ -14,10 +14,12 @@ The dashboards are as follows (Needs to be Updated):
     - Slide 5: Accelerated Reviews
     - Slide 7: Application Completeness
     
-
 ## Usage
-Copy the li_dbs folder from G:\PythonModules and paste it into the ..\Lib\site-packages folder of your Python installation.
-
-Get the config.py file from one of us containing usernames and password logins and put it in your LI_dashboards folder.
-
-Run index.py to launch the application and copy and paste the address of the server shown in the python command prompt into your web browser
+- Install dependencies and grab phila_mail and li_dbs from G:/PythonModules and paste into the  ..\Lib\site-packages folder of your Python installation.
+- Get the config.py file from one of us containing usernames and password logins and put it in your LI_dashboards folder.
+- `python index.py` to launch the application
+- `python etl/etl.py` to run the etl process for all queries
+- `python etl/etl.py -n dashboard_table_name` to run the etl process for one dashboard
+    - Ex: `python etl/etl.py -n li_dash_indworkloads_bl`
+- `python etl/etl.py -n dashboard_table_name1 -n dashboard_table_name2` to run the etl process for multiple specified dashboards
+    - Ex: `python etl/etl.py -n li_dash_indworkloads_bl -n li_dash_activejobs_bl_counts`

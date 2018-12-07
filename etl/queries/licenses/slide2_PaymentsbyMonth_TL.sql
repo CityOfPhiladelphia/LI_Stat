@@ -6,8 +6,8 @@ SELECT
      (
          SELECT
              ( CASE
-                 WHEN jobtype LIKE 'Trade License Amend/Renew' THEN 'Trade License Amend/Renew'
-                 WHEN jobtype LIKE 'Trade License Application' THEN 'Trade License Application'
+                 WHEN jobtype LIKE 'Trade License Amend/Renew' THEN 'Amend/Renew'
+                 WHEN jobtype LIKE 'Trade License Application' THEN 'Application'
              END ) AS jobtype,
              TO_DATE(paymentyear
                        || '/'

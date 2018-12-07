@@ -82,14 +82,14 @@ layout = html.Div(children=[
                         )
                     ], className='four columns'),
                     html.Div([
-                        html.P('Filter by Job Type'),
+                        html.P('Job Type'),
                         dcc.Dropdown(
                             id='slide2BL-jobtype-dropdown',
                             options=job_type_options,
                             multi=True,
                             value=unique_job_types
                         )
-                    ], className='eight columns')  
+                    ], className='five columns')
                 ], className='dashrow'),
                 html.Div([
                     html.Div(

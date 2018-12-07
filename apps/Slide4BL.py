@@ -60,7 +60,7 @@ df_table = (df.copy(deep=True)
               .reset_index()
               .sort_values(by='ISSUEDATE')
               .assign(ISSUEDATE=lambda x: x['ISSUEDATE'].dt.strftime('%b %Y'))
-              .rename(columns={'ISSUEDATE': 'Issue Date', 'LICENSETYPE': 'License Type', 'CREATEDBYTYPE': 'Submittal Type', 'JOBNUMBERCOUNT': 'Number of Jobs Completed'}))
+              .rename(columns={'ISSUEDATE': 'Issue Date', 'LICENSETYPE': 'License Type', 'CREATEDBYTYPE': 'Submittal Type', 'JOBNUMBERCOUNT': 'Jobs Completed'}))
 
 all_licenses = df.copy(deep=True)
 rentals = df.loc[(df['LICENSETYPE'] == 'Rental') & (df['CREATEDBYTYPE'] == 'Online') & (df['ISSUEDATE'] >= '2018-01-01')] 
@@ -91,7 +91,9 @@ df_table_3 = pd.DataFrame(data={
 })
 
 layout = html.Div([
-    html.H1('Business Licenses Mode of Submittal', style={'text-align': 'center'}),
+    html.H1('Submittal Type', style={'text-align': 'center'}),
+    html.H2('(Business Licenses)', style={'text-align': 'center', 'margin-bottom': '20px'}
+    ),
     html.Div([
         html.Div([
             dcc.Graph(id='slide4BL-createdbytype-chart',
@@ -135,8 +137,8 @@ layout = html.Div([
                         )
                     ],
                     layout=go.Layout(
-                        title=('Submittal Type Activity By Month'),
-                        yaxis=dict(title='Number of Jobs Completed')
+                        title=('Jobs Completed by Submittal Type'),
+                        yaxis=dict(title='Jobs Completed')
                     )
                 )
             ),
@@ -203,8 +205,8 @@ layout = html.Div([
                         )
                     ],
                     layout=go.Layout(
-                        title=('Application and Renewal Activity By Month'),
-                        yaxis=dict(title='Number of Jobs Completed')
+                        title=('Jobs Completed by Job Type'),
+                        yaxis=dict(title='Jobs Completed')
                     )
                 )
             )
@@ -229,7 +231,7 @@ layout = html.Div([
         ], className='four columns')
     ], className='dashrow'),
     html.Div([
-        html.H3('Volume of Jobs Completed from January to July', style={'text-align': 'center'}),
+        html.H3('Jobs Completed from January to July', style={'text-align': 'center'}),
         html.Div([
             dt.DataTable(
                 rows=df_table_3.to_dict('records'),
@@ -238,7 +240,7 @@ layout = html.Div([
                 id='slide4-BL-table-3'
             )
         ], style={'text-align': 'center'})
-    ], style={'width': '30%', 'margin-left': 'auto', 'margin-right': 'auto', 'margin-top': '45px', 'margin-bottom': '45px'}),
+    ], style={'width': '40%', 'margin-left': 'auto', 'margin-right': 'auto', 'margin-top': '45px', 'margin-bottom': '45px'}),
     html.Div([
         html.H3('Percent of Online Transactions Which Were Renewals (2018)', style={'text-align': 'center'}),
         html.Div([
@@ -251,7 +253,7 @@ layout = html.Div([
         ], style={'text-align': 'center'})
     ], style={'width': '40%', 'margin-left': 'auto', 'margin-right': 'auto', 'margin-top': '45px', 'margin-bottom': '45px'}),
     html.Div([
-        html.H3('No. of Monthly Online and Staff Transactions Per License Type', style={'text-align': 'center'}),
+        html.H3('Jobs Completed by Month, License Type, and Submittal Type', style={'text-align': 'center'}),
         html.Div([
             html.Div([
                 dt.DataTable(
@@ -273,5 +275,5 @@ layout = html.Div([
                 target='_blank',
             )
         ], style={'text-align': 'right'}),
-    ], style={'width': '55%', 'margin-left': 'auto', 'margin-right': 'auto', 'margin-top': '45px', 'margin-bottom': '45px'})
+    ], style={'width': '65%', 'margin-left': 'auto', 'margin-right': 'auto', 'margin-top': '45px', 'margin-bottom': '45px'})
 ])

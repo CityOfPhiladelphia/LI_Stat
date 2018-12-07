@@ -60,7 +60,7 @@ df_table = (df.copy(deep=True)
               .reset_index()
               .sort_values(by='ISSUEDATE')
               .assign(ISSUEDATE=lambda x: x['ISSUEDATE'].dt.strftime('%b-%Y'))
-              .rename(columns={'ISSUEDATE': 'Issue Date', 'LICENSETYPE': 'License Type', 'CREATEDBYTYPE': 'Submittal Type', 'LICENSENUMBERCOUNT': 'Number of Licenses Issued'}))
+              .rename(columns={'ISSUEDATE': 'Issue Date', 'LICENSETYPE': 'License Type', 'CREATEDBYTYPE': 'Submittal Type', 'LICENSENUMBERCOUNT': 'Licenses Issued'}))
 
 all_licenses = df.copy(deep=True)
 contractors = df.loc[(df['LICENSETYPE'] == 'Contractor') & (df['CREATEDBYTYPE'] == 'Online') & (df['ISSUEDATE'] >= '2018-01-01')] 
@@ -88,7 +88,8 @@ df_table_3 = pd.DataFrame(data={
 })
 
 layout = html.Div([
-    html.H1('Trade Licenses Mode of Submittal', style={'text-align': 'center'}),
+    html.H1('Submittal Type', style={'text-align': 'center'}),
+    html.H2('(Trade Licenses)', style={'text-align': 'center', 'margin-bottom': '20px'}),
     html.Div([
         html.Div([
             dcc.Graph(id='slide4TL-createdbytype-chart',
@@ -132,8 +133,8 @@ layout = html.Div([
                         )
                     ],
                     layout=go.Layout(
-                        title=('Submittal Type Activity By Month'),
-                        yaxis=dict(title='Number of Licenses Issued')
+                        title=('Licenses Issued by Submittal Type'),
+                        yaxis=dict(title='Licenses Issued')
                     )
                 )
             ),
@@ -200,8 +201,8 @@ layout = html.Div([
                         )
                     ],
                     layout=go.Layout(
-                        title=('Application and Renewal Activity By Month'),
-                        yaxis=dict(title='Number of Licenses Issued')
+                        title=('Licenses Issued by Job Type'),
+                        yaxis=dict(title='Licenses Issued')
                     )
                 )
             )
@@ -226,7 +227,7 @@ layout = html.Div([
         ], className='four columns')
     ], className='dashrow'),
     html.Div([
-        html.H3('Volume of Licenses Issued from January to July', style={'text-align': 'center'}),
+        html.H3('Licenses Issued from January to July', style={'text-align': 'center'}),
         html.Div([
             dt.DataTable(
                 rows=df_table_3.to_dict('records'),
@@ -248,7 +249,7 @@ layout = html.Div([
         ], style={'text-align': 'center'})
     ], style={'width': '40%', 'margin-left': 'auto', 'margin-right': 'auto', 'margin-top': '45px', 'margin-bottom': '45px'}),
     html.Div([
-        html.H3('No. of Monthly Online and Staff Transactions Per License Type', style={'text-align': 'center'}),
+        html.H3('Licenses Issued by Month, License Type, and Submittal Type', style={'text-align': 'center'}),
         html.Div([
             html.Div([
                 dt.DataTable(
@@ -270,7 +271,7 @@ layout = html.Div([
                 target='_blank',
             )
         ], style={'text-align': 'right'}),
-    ], style={'width': '55%', 'margin-left': 'auto', 'margin-right': 'auto', 'margin-top': '45px', 'margin-bottom': '45px'})
+    ], style={'width': '65%', 'margin-left': 'auto', 'margin-right': 'auto', 'margin-top': '45px', 'margin-bottom': '45px'})
 ])
 
 # @app.callback(

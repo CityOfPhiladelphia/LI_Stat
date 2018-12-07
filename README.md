@@ -20,6 +20,6 @@ The dashboards are as follows (Needs to be Updated):
 - `python index.py` to launch the application
 - `python etl/etl.py` to run the etl process for all queries
 - `python etl/etl.py -n dashboard_table_name` to run the etl process for one dashboard
-    - Ex: `python etl/etl.py -n li_dash_indworkloads_bl`
+    - Ex: `python etl/etl_cli.py -n li_dash_indworkloads_bl`
 - `python etl/etl.py -n dashboard_table_name1 -n dashboard_table_name2` to run the etl process for multiple specified dashboards
-    - Ex: `python etl/etl.py -n li_dash_indworkloads_bl -n li_dash_activejobs_bl_counts`
+    - Ex: `python etl/etl_cli.py -n li_dash_indworkloads_bl -n li_dash_activejobs_bl_counts`

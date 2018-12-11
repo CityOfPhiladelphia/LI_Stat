@@ -10,27 +10,35 @@ from datetime import datetime
 from dash.dependencies import Input, Output
 
 from app import app, con
+from config import MAPBOX_ACCESS_TOKEN
 
 
-def update_data(start_date, end_date):
-    df_results = df.loc[(df['Violation Month'] >= start_date) & (df['Violation Month'] <= end_date)]\
-                   .sort_values(by=['Violation Month'])
+def update_counts_data(start_date, end_date):
+    df_results = df_counts.loc[(df_counts['Violation Month'] >= start_date) & (df_counts['Violation Month'] <= end_date)]\
+                          .sort_values(by=['Violation Month'])
+    return df_results
+
+def update_ind_data(start_date, end_date):
+    df_results = df_ind.loc[(df_ind['VIOLATIONDATE'] >= start_date) & (df_ind['VIOLATIONDATE'] <= end_date)]\
+                       .sort_values(by=['VIOLATIONDATE'])
     return df_results
 
 print('ImmDang.py')
 
 with con() as con:
-    sql = 'SELECT * FROM li_stat_immdang'
-    df = pd.read_sql_query(sql=sql, con=con, parse_dates=['VIOLATIONDATE'])
+    sql_ind = 'SELECT * FROM li_stat_immdang_ind'
+    df_ind = pd.read_sql_query(sql=sql_ind, con=con, parse_dates=['VIOLATIONDATE'])
+    sql_counts = 'SELECT * FROM li_stat_immdang_counts'
+    df_counts = pd.read_sql_query(sql=sql_counts, con=con, parse_dates=['VIOLATIONDATE'])
 
 # Rename the columns to be more readable
-df.rename(columns=
+df_counts.rename(columns=
             {'VIOLATIONDATE': 'Violation Month', 
              'NUMBEROFVIOLATIONS': 'Number of Violations'}, 
           inplace=True)
 
 # Make a DateText Column to display on the graph
-df = df.assign(DateText=lambda x: x['Violation Month'].dt.strftime('%b %Y'))
+df_counts = df_counts.assign(DateText=lambda x: x['Violation Month'].dt.strftime('%b %Y'))
 
 layout = html.Div(children=[
                 html.H1('Immenently Dangerous Buildings', style={'text-align': 'center'}),
@@ -51,10 +59,10 @@ layout = html.Div(children=[
                             figure=go.Figure(
                                 data=[
                                     go.Scatter(
-                                        x=df['Violation Month'],
-                                        y=df['Number of Violations'],
+                                        x=df_counts['Violation Month'],
+                                        y=df_counts['Number of Violations'],
                                         mode='lines',
-                                        text=df['DateText'],
+                                        text=df_counts['DateText'],
                                         hoverinfo='text+y',
                                         line=dict(
                                             shape='spline',
@@ -72,6 +80,46 @@ layout = html.Div(children=[
                             )
                         )
                     ], className='twelve columns'),
+                ], className='dashrow'),
+                html.Div([
+                    html.Div([
+                        dcc.Graph(id='imm-dang-map',
+                            figure=go.Figure(
+                                data=[
+                                    go.Scattermapbox(
+                                        lon=df_ind['LON'],
+                                        lat=df_ind['LAT'],
+                                        mode='markers',
+                                        marker=dict(
+                                            size=14
+                                        ),
+                                        text='Address: ' + df_ind['ADDRESS'].map(str) + 
+                                             '<br>' + 
+                                             'Status: '+ df_ind['STATUS'].map(str) +
+                                             '<br>' +
+                                             'Case Status: ' + df_ind['CASESTATUS'].map(str) +
+                                             '<br>' +
+                                             'Violation Date: '+ df_ind['VIOLATIONDATE'].dt.date.map(str),
+                                        hoverinfo='text'
+                                    )
+                                ],
+                                layout=go.Layout(
+                                    autosize=True,
+                                    hovermode='closest',
+                                    mapbox=dict(
+                                        accesstoken=MAPBOX_ACCESS_TOKEN,
+                                        bearing=0,
+                                        center=dict(
+                                            lon=-75.1652,
+                                            lat=39.9526
+                                        ),
+                                        pitch=0,
+                                        zoom=10
+                                    ),
+                                )
+                            )
+                        , style={'height': '700px'})
+                    ], className='twelve columns')
                 ], className='dashrow'),
                 html.Div([
                     html.Div([
@@ -105,7 +153,7 @@ layout = html.Div(children=[
     [Input('imm-dang-date-picker-range', 'start_date'),
      Input('imm-dang-date-picker-range', 'end_date')])
 def update_graph(start_date, end_date):
-    df_results = update_data(start_date, end_date)
+    df_results = update_counts_data(start_date, end_date)
     return {
         'data': [
             go.Scatter(
@@ -131,11 +179,52 @@ def update_graph(start_date, end_date):
     }
 
 @app.callback(
+    Output('imm-dang-map', 'figure'),
+    [Input('imm-dang-date-picker-range', 'start_date'),
+     Input('imm-dang-date-picker-range', 'end_date')])
+def update_map(start_date, end_date):
+    df_results = update_ind_data(start_date, end_date)
+    return {
+        'data': [
+            go.Scattermapbox(
+                lon=df_results['LON'],
+                lat=df_results['LAT'],
+                mode='markers',
+                marker=dict(
+                    size=14
+                ),
+                text='Address: ' + df_results['ADDRESS'].map(str) + 
+                     '<br>' + 
+                     'Status: ' + df_ind['STATUS'].map(str) +
+                     '<br>' +
+                     'Case Status: ' + df_ind['CASESTATUS'].map(str) +
+                     '<br>' +
+                     'Violation Date: ' + df_results['VIOLATIONDATE'].dt.date.map(str),
+                hoverinfo='text'
+            )
+        ],
+        'layout': go.Layout(
+                    autosize=True,
+                    hovermode='closest',
+                    mapbox=dict(
+                        accesstoken=MAPBOX_ACCESS_TOKEN,
+                        bearing=0,
+                        center=dict(
+                            lon=-75.1652,
+                            lat=39.9526
+                        ),
+                        pitch=0,
+                        zoom=10
+                    ),
+        )
+    }
+
+@app.callback(
     Output('imm-dang-table', 'rows'),
     [Input('imm-dang-date-picker-range', 'start_date'),
      Input('imm-dang-date-picker-range', 'end_date')])
 def update_table(start_date, end_date):
-    df_results = update_data(start_date, end_date)[['DateText', 'Number of Violations']]
+    df_results = update_counts_data(start_date, end_date)[['DateText', 'Number of Violations']]
     df_results.rename(columns={'DateText': 'Violation Month',
                                'Number of Violations': 'Number of ID Violations'}, inplace=True)
     return df_results.to_dict('records')
@@ -145,7 +234,7 @@ def update_table(start_date, end_date):
     [Input('imm-dang-date-picker-range', 'start_date'),
      Input('imm-dang-date-picker-range', 'end_date')])
 def update_download_link(start_date, end_date):
-    df_results = update_data(start_date, end_date)
+    df_results = update_counts_data(start_date, end_date)
     csv_string = df_results.to_csv(index=False, encoding='utf-8')
     csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
     return csv_string

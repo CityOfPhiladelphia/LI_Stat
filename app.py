@@ -1,10 +1,10 @@
+import datetime
 import dash
 import dash_auth
 import cx_Oracle
 from flask import Flask
 from li_dbs import GISLICLD
 from config import USERNAME_PASSWORD_PAIRS
-import datetime
 
 
 con = GISLICLD.GISLICLD

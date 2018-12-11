@@ -16,7 +16,10 @@ class SqlQuery():
                           FROM 
                               all_tab_cols
                           WHERE 
-                              table_name = '{self.target_table.upper()}'"""
+                              table_name = '{self.target_table.upper()}'
+                          ORDER BY
+                              column_id
+                        """
                 cursor.execute(sql)
                 cols = cursor.fetchall()
                 cols = [col[0] for col in cols]
@@ -90,15 +93,21 @@ PermitsAccelReview = SqlQuery(
     target_table = 'li_stat_permits_accelreview'
 )
 
-ImmDang = SqlQuery(
-    extract_query_file = 'ImmDang.sql',
+ImmDangCounts = SqlQuery(
+    extract_query_file = 'ImmDangCounts.sql',
     source_db = 'GISLNI',
-    target_table = 'li_stat_immdang'
+    target_table = 'li_stat_immdang_counts'
+)
+
+ImmDangInd = SqlQuery(
+    extract_query_file = 'ImmDangInd.sql',
+    source_db = 'GISLNI',
+    target_table = 'li_stat_immdang_ind'
 )
 
 Unsafes = SqlQuery(
     extract_query_file = 'Unsafes.sql',
-   source_db = 'GISLNI',
+    source_db = 'GISLNI',
     target_table = 'li_stat_unsafes'
 )
 
@@ -125,7 +134,8 @@ queries = [
     PermitsFees,
     PermitsOTCvsReview,
     PermitsAccelReview,
-    ImmDang,
+    ImmDangCounts,
+    ImmDangInd,
     Unsafes,
     PublicDemos,
     UninspectedServiceRequests

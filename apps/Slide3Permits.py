@@ -87,10 +87,10 @@ def update_counts_table_data(selected_start, selected_end, selected_permittype, 
         df_selected = df_selected[(df_selected['Work Type'] == selected_worktype)]
 
     df_selected = (df_selected.loc[(df_selected['Issue Date']>=selected_start) & (df_selected['Issue Date']<=selected_end)]
-                              .groupby(by=['Issue Date', 'Permit Type'])['OTC Permits Issued', 'Reviewed Permits Issued']
+                              .groupby(by=['Issue Date', 'Permit Type', 'Work Type'])['OTC Permits Issued', 'Reviewed Permits Issued']
                               .sum()
                               .reset_index()
-                              .sort_values(by=['Issue Date', 'Permit Type']))
+                              .sort_values(by=['Issue Date', 'Permit Type', 'Work Type']))
     df_selected['Issue Date'] = df_selected['Issue Date'].apply(lambda x: datetime.strftime(x, '%b %Y'))
     df_selected['OTC Permits Issued'] = df_selected['OTC Permits Issued'].map('{:,.0f}'.format)
     df_selected['Reviewed Permits Issued'] = df_selected['Reviewed Permits Issued'].map('{:,.0f}'.format)
@@ -198,7 +198,7 @@ layout = html.Div(children=[
                                 target='_blank',
                             )
                         ], style={'text-align': 'right'})
-                    ], style={'width': '75%', 'margin-left': 'auto', 'margin-right': 'auto','margin-top': '50px', 'margin-bottom': '50px'})
+                    ], style={'width': '80%', 'margin-left': 'auto', 'margin-right': 'auto','margin-top': '50px', 'margin-bottom': '50px'})
                 ], className='dashrow')
             ])
 

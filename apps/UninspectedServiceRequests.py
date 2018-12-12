@@ -132,7 +132,20 @@ def update_table_data(selected_start, selected_end, selected_problem, selected_u
         df_selected = df_selected[(df_selected['District'] == selected_district)]
 
     df_selected = df_selected.loc[(df_selected['Call Date'] >= selected_start) & (df_selected['Call Date'] <= selected_end)]
-    return df_selected.drop(['Call Date (no time)', 'SLA'], axis=1)
+    return df_selected.drop(['Call Date (no time)', 'SLA', 'LON', 'LAT'], axis=1)
+
+def update_map_data(selected_start, selected_end, selected_problem, selected_unit, selected_district):
+    df_selected = df.copy(deep=True)
+
+    if selected_problem != "All":
+        df_selected = df_selected[(df_selected['Problem Description'] == selected_problem)]
+    if selected_unit != "All":
+        df_selected = df_selected[(df_selected['Unit'] == selected_unit)]
+    if selected_district != "All":
+        df_selected = df_selected[(df_selected['District'] == selected_district)]
+
+    df_selected = df_selected.loc[(df_selected['Call Date'] >= selected_start) & (df_selected['Call Date'] <= selected_end)]
+    return df_selected
 
 layout = html.Div(children=[
                 html.H1('Uninspected Service Requests', style={'text-align': 'center'}),
@@ -347,7 +360,7 @@ def update_summary_table_download_link(start_date, end_date, selected_problem, s
      Input('unit-dropdown', 'value'),
      Input('district-dropdown', 'value')])
 def update_map(start_date, end_date, selected_problem, selected_unit, selected_district):
-    df_results = update_table_data(start_date, end_date, selected_problem, selected_unit, selected_district)
+    df_results = update_map_data(start_date, end_date, selected_problem, selected_unit, selected_district)
     return {
         'data': [
             go.Scattermapbox(

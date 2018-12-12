@@ -12,7 +12,9 @@ SELECT DISTINCT sub.SERVNO servreqno,
     WHEN sub.unit = 'CSU'
     THEN addr.ops_district
   END) district,
-  s.sla SLA
+  s.sla SLA,
+  SDO_CS.TRANSFORM(SDO_GEOMETRY(2001,2272,SDO_POINT_TYPE(addr.geocode_x, addr.geocode_y,NULL),NULL,NULL), 4326).sdo_point.X lon,
+  SDO_CS.TRANSFORM(SDO_GEOMETRY(2001,2272,SDO_POINT_TYPE(addr.geocode_x, addr.geocode_y,NULL),NULL,NULL), 4326).sdo_point.Y lat
 FROM
   (SELECT sr.SERVNO,
     sr.addresskey,

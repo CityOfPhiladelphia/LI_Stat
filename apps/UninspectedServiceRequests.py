@@ -11,6 +11,7 @@ from pandas.tseries.holiday import USFederalHolidayCalendar
 from pandas.tseries.offsets import CustomBusinessDay
 
 from app import app, con
+from config import MAPBOX_ACCESS_TOKEN
 
 print('UninspectedServiceRequests.py')
 
@@ -212,6 +213,50 @@ layout = html.Div(children=[
                 ], className='dashrow'),
                 html.Div([
                     html.Div([
+                        dcc.Graph(id='uninspected-sr-map',
+                                  figure=go.Figure(
+                                      data=[
+                                          go.Scattermapbox(
+                                              lon=df['LON'],
+                                              lat=df['LAT'],
+                                              mode='markers',
+                                              marker=dict(
+                                                  size=14
+                                              ),
+                                              text='Address: ' + df['ADDRESS'].map(str) +
+                                                   '<br>' +
+                                                   'Problem: ' + df['Problem Description'].map(str) +
+                                                   '<br>' +
+                                                   'Call Date: ' + df['Call Date'].dt.date.map(str) +
+                                                   '<br>' +
+                                                   'Unit: ' + df['Unit'].map(str) +
+                                                   '<br>' +
+                                                   'District: ' + df['District'].map(str) +
+                                                   '<br>' +
+                                                   'Within SLA: ' + df['Within SLA'].map(str),
+                                              hoverinfo='text'
+                                          )
+                                      ],
+                                      layout=go.Layout(
+                                          autosize=True,
+                                          hovermode='closest',
+                                          mapbox=dict(
+                                              accesstoken=MAPBOX_ACCESS_TOKEN,
+                                              bearing=0,
+                                              center=dict(
+                                                  lon=-75.1652,
+                                                  lat=39.9526
+                                              ),
+                                              pitch=0,
+                                              zoom=10
+                                          ),
+                                      )
+                                  )
+                                  , style={'height': '700px'})
+                    ], className='twelve columns')
+                ], className='dashrow'),
+                html.Div([
+                    html.Div([
                         html.H3('Individual Service Requests', style={'text-align': 'center'}),
                         html.Div([
                             table.DataTable(
@@ -293,6 +338,55 @@ def update_summary_table_download_link(start_date, end_date, selected_problem, s
     csv_string = df_table.to_csv(index=False, encoding='utf-8')
     csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
     return csv_string
+
+@app.callback(
+    Output('uninspected-sr-map', 'figure'),
+    [Input('uninspected-sr-call-date-picker-range', 'start_date'),
+     Input('uninspected-sr-call-date-picker-range', 'end_date'),
+     Input('problem-dropdown', 'value'),
+     Input('unit-dropdown', 'value'),
+     Input('district-dropdown', 'value')])
+def update_map(start_date, end_date, selected_problem, selected_unit, selected_district):
+    df_results = update_table_data(start_date, end_date, selected_problem, selected_unit, selected_district)
+    return {
+        'data': [
+            go.Scattermapbox(
+                lon=df_results['LON'],
+                lat=df_results['LAT'],
+                mode='markers',
+                marker=dict(
+                    size=14
+                ),
+                text='Address: ' + df_results['ADDRESS'].map(str) +
+                     '<br>' +
+                     'Problem: ' + df_results['Problem Description'].map(str) +
+                     '<br>' +
+                     'Call Date: ' + df_results['Call Date'].dt.date.map(str) +
+                     '<br>' +
+                     'Unit: ' + df_results['Unit'].map(str) +
+                     '<br>' +
+                     'District: ' + df_results['District'].map(str) +
+                     '<br>' +
+                     'Within SLA: ' + df_results['Within SLA'].map(str),
+                hoverinfo='text'
+            )
+        ],
+        'layout': go.Layout(
+                      autosize=True,
+                      hovermode='closest',
+                      mapbox=dict(
+                          accesstoken=MAPBOX_ACCESS_TOKEN,
+                          bearing=0,
+                          center=dict(
+                              lon=-75.1652,
+                              lat=39.9526
+                          ),
+                          pitch=0,
+                          zoom=10
+                      ),
+                  )
+    }
+
 
 @app.callback(
     Output('uninspected-sr-table', 'rows'),

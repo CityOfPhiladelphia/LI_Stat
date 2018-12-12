@@ -47,7 +47,10 @@ unique_units = np.append(['All'], unique_units)
 unique_districts = df['District'].unique()
 unique_districts = np.append(['All'], unique_districts)
 
-def update_sr_volume(selected_start, selected_end, selected_problem, selected_unit, selected_district):
+unique_within_sla = df['Within SLA'].unique()
+unique_within_sla = np.append(['All'], unique_within_sla)
+
+def update_sr_volume(selected_start, selected_end, selected_problem, selected_unit, selected_district, selected_within_sla):
     df_selected = df.copy(deep=True)
 
     if selected_problem != "All":
@@ -56,13 +59,15 @@ def update_sr_volume(selected_start, selected_end, selected_problem, selected_un
         df_selected = df_selected[(df_selected['Unit'] == selected_unit)]
     if selected_district != "All":
         df_selected = df_selected[(df_selected['District'] == selected_district)]
+    if selected_within_sla != "All":
+        df_selected = df_selected[(df_selected['Within SLA'] == selected_within_sla)]
 
     df_selected = df_selected.loc[(df_selected['Call Date'] >= selected_start) & (df_selected['Call Date'] <= selected_end)]
     total_sr_volume = df_selected['Service Request Num'].count()
     return '{:,.0f}'.format(total_sr_volume)
 
 
-def update_within_sla(selected_start, selected_end, selected_problem, selected_unit, selected_district):
+def update_within_sla(selected_start, selected_end, selected_problem, selected_unit, selected_district, selected_within_sla):
     df_selected = df.copy(deep=True)
 
     if selected_problem != "All":
@@ -71,13 +76,15 @@ def update_within_sla(selected_start, selected_end, selected_problem, selected_u
         df_selected = df_selected[(df_selected['Unit'] == selected_unit)]
     if selected_district != "All":
         df_selected = df_selected[(df_selected['District'] == selected_district)]
+    if selected_within_sla != "All":
+        df_selected = df_selected[(df_selected['Within SLA'] == selected_within_sla)]
 
     df_selected = df_selected.loc[(df_selected['Call Date'] >= selected_start) & (df_selected['Call Date'] <= selected_end)]
     within_sla = len(df_selected[df_selected['Within SLA'] == 'Yes']) / len(df_selected) * 100
     return '{:,.0f}%'.format(within_sla)
 
 
-def update_avg_days_out(selected_start, selected_end, selected_problem, selected_unit, selected_district):
+def update_avg_days_out(selected_start, selected_end, selected_problem, selected_unit, selected_district, selected_within_sla):
     df_selected = df.copy(deep=True)
 
     if selected_problem != "All":
@@ -86,12 +93,14 @@ def update_avg_days_out(selected_start, selected_end, selected_problem, selected
         df_selected = df_selected[(df_selected['Unit'] == selected_unit)]
     if selected_district != "All":
         df_selected = df_selected[(df_selected['District'] == selected_district)]
+    if selected_within_sla != "All":
+        df_selected = df_selected[(df_selected['Within SLA'] == selected_within_sla)]
 
     df_selected = df_selected.loc[(df_selected['Call Date'] >= selected_start) & (df_selected['Call Date'] <= selected_end)]
     avg_days_out = df_selected['Bus. Days Outstanding'].mean()
     return '{:,.0f}'.format(avg_days_out)
 
-def update_summary_table_data(selected_start, selected_end, selected_problem, selected_unit, selected_district):
+def update_summary_table_data(selected_start, selected_end, selected_problem, selected_unit, selected_district, selected_within_sla):
     df_selected = df.copy(deep=True)
 
     if selected_problem != "All":
@@ -100,6 +109,8 @@ def update_summary_table_data(selected_start, selected_end, selected_problem, se
         df_selected = df_selected[(df_selected['Unit'] == selected_unit)].drop(['Unit'], axis=1)
     if selected_district != "All":
         df_selected = df_selected[(df_selected['District'] == selected_district)].drop(['District'], axis=1)
+    if selected_within_sla != "All":
+        df_selected = df_selected[(df_selected['Within SLA'] == selected_within_sla)]
 
     possible_groupby_cols = ['Problem Description', 'Unit', 'District']
     col_list = list(df_selected.columns.values)
@@ -121,7 +132,7 @@ def update_summary_table_data(selected_start, selected_end, selected_problem, se
     df_grouped['Avg. Bus. Days Outstanding'] = df_grouped['Avg. Bus. Days Outstanding'].map('{:,.0f}'.format)
     return df_grouped.drop('# Within SLA', axis=1)
 
-def update_table_data(selected_start, selected_end, selected_problem, selected_unit, selected_district):
+def update_table_data(selected_start, selected_end, selected_problem, selected_unit, selected_district, selected_within_sla):
     df_selected = df.copy(deep=True)
 
     if selected_problem != "All":
@@ -130,11 +141,13 @@ def update_table_data(selected_start, selected_end, selected_problem, selected_u
         df_selected = df_selected[(df_selected['Unit'] == selected_unit)]
     if selected_district != "All":
         df_selected = df_selected[(df_selected['District'] == selected_district)]
+    if selected_within_sla != "All":
+        df_selected = df_selected[(df_selected['Within SLA'] == selected_within_sla)]
 
     df_selected = df_selected.loc[(df_selected['Call Date'] >= selected_start) & (df_selected['Call Date'] <= selected_end)]
     return df_selected.drop(['Call Date (no time)', 'SLA', 'LON', 'LAT'], axis=1)
 
-def update_map_data(selected_start, selected_end, selected_problem, selected_unit, selected_district):
+def update_map_data(selected_start, selected_end, selected_problem, selected_unit, selected_district, selected_within_sla):
     df_selected = df.copy(deep=True)
 
     if selected_problem != "All":
@@ -143,6 +156,8 @@ def update_map_data(selected_start, selected_end, selected_problem, selected_uni
         df_selected = df_selected[(df_selected['Unit'] == selected_unit)]
     if selected_district != "All":
         df_selected = df_selected[(df_selected['District'] == selected_district)]
+    if selected_within_sla != "All":
+        df_selected = df_selected[(df_selected['Within SLA'] == selected_within_sla)]
 
     df_selected = df_selected.loc[(df_selected['Call Date'] >= selected_start) & (df_selected['Call Date'] <= selected_end)]
     return df_selected
@@ -176,7 +191,7 @@ layout = html.Div(children=[
                             options=[{'label': k, 'value': k} for k in unique_units],
                             value='All'
                         ),
-                    ], className='five columns'),
+                    ], className='four columns'),
                     html.Div([
                         html.P('District'),
                         dcc.Dropdown(
@@ -184,7 +199,15 @@ layout = html.Div(children=[
                             options=[{'label': k, 'value': k} for k in unique_districts],
                             value='All'
                         ),
-                    ], className='five columns'),
+                    ], className='four columns'),
+                    html.Div([
+                        html.P('Within SLA'),
+                        dcc.Dropdown(
+                            id='within-sla-dropdown',
+                            options=[{'label': k, 'value': k} for k in unique_within_sla],
+                            value='All'
+                        ),
+                    ], className='four columns'),
                 ], className='dashrow filters'),
                 html.Div([
                     html.Div([
@@ -240,11 +263,11 @@ layout = html.Div(children=[
                                                    '<br>' +
                                                    'Problem: ' + df['Problem Description'].map(str) +
                                                    '<br>' +
-                                                   'Call Date: ' + df['Call Date'].dt.date.map(str) +
-                                                   '<br>' +
                                                    'Unit: ' + df['Unit'].map(str) +
                                                    '<br>' +
                                                    'District: ' + df['District'].map(str) +
+                                                   '<br>' +
+                                                   'Call Date: ' + df['Call Date (no time)'].map(str) +
                                                    '<br>' +
                                                    'Within SLA: ' + df['Within SLA'].map(str),
                                               hoverinfo='text'
@@ -301,9 +324,10 @@ layout = html.Div(children=[
      Input('uninspected-sr-call-date-picker-range', 'end_date'),
      Input('problem-dropdown', 'value'),
      Input('unit-dropdown', 'value'),
-     Input('district-dropdown', 'value')])
-def update_sr_indicator(start_date, end_date, selected_problem, selected_unit, selected_district):
-    total_sr_volume = update_sr_volume(start_date, end_date, selected_problem, selected_unit, selected_district)
+     Input('district-dropdown', 'value'),
+     Input('within-sla-dropdown', 'value')])
+def update_sr_indicator(start_date, end_date, selected_problem, selected_unit, selected_district, selected_within_sla):
+    total_sr_volume = update_sr_volume(start_date, end_date, selected_problem, selected_unit, selected_district, selected_within_sla)
     return str(total_sr_volume)
 
 @app.callback(
@@ -312,9 +336,10 @@ def update_sr_indicator(start_date, end_date, selected_problem, selected_unit, s
      Input('uninspected-sr-call-date-picker-range', 'end_date'),
      Input('problem-dropdown', 'value'),
      Input('unit-dropdown', 'value'),
-     Input('district-dropdown', 'value')])
-def update_within_sla_indicator(start_date, end_date, selected_problem, selected_unit, selected_district):
-    within_sla = update_within_sla(start_date, end_date, selected_problem, selected_unit, selected_district)
+     Input('district-dropdown', 'value'),
+     Input('within-sla-dropdown', 'value')])
+def update_within_sla_indicator(start_date, end_date, selected_problem, selected_unit, selected_district, selected_within_sla):
+    within_sla = update_within_sla(start_date, end_date, selected_problem, selected_unit, selected_district, selected_within_sla)
     return str(within_sla)
 
 @app.callback(
@@ -323,9 +348,10 @@ def update_within_sla_indicator(start_date, end_date, selected_problem, selected
      Input('uninspected-sr-call-date-picker-range', 'end_date'),
      Input('problem-dropdown', 'value'),
      Input('unit-dropdown', 'value'),
-     Input('district-dropdown', 'value')])
-def update_avg_days_out_indicator(start_date, end_date, selected_problem, selected_unit, selected_district):
-    avg_days_out = update_avg_days_out(start_date, end_date, selected_problem, selected_unit, selected_district)
+     Input('district-dropdown', 'value'),
+     Input('within-sla-dropdown', 'value')])
+def update_avg_days_out_indicator(start_date, end_date, selected_problem, selected_unit, selected_district, selected_within_sla):
+    avg_days_out = update_avg_days_out(start_date, end_date, selected_problem, selected_unit, selected_district, selected_within_sla)
     return str(avg_days_out)
 
 @app.callback(
@@ -334,9 +360,10 @@ def update_avg_days_out_indicator(start_date, end_date, selected_problem, select
      Input('uninspected-sr-call-date-picker-range', 'end_date'),
      Input('problem-dropdown', 'value'),
      Input('unit-dropdown', 'value'),
-     Input('district-dropdown', 'value')])
-def update_summary_table(start_date, end_date, selected_problem, selected_unit, selected_district):
-    df_table = update_summary_table_data(start_date, end_date, selected_problem, selected_unit, selected_district)
+     Input('district-dropdown', 'value'),
+     Input('within-sla-dropdown', 'value')])
+def update_summary_table(start_date, end_date, selected_problem, selected_unit, selected_district, selected_within_sla):
+    df_table = update_summary_table_data(start_date, end_date, selected_problem, selected_unit, selected_district, selected_within_sla)
     return df_table.to_dict('records')
 
 @app.callback(
@@ -345,9 +372,10 @@ def update_summary_table(start_date, end_date, selected_problem, selected_unit, 
      Input('uninspected-sr-call-date-picker-range', 'end_date'),
      Input('problem-dropdown', 'value'),
      Input('unit-dropdown', 'value'),
-     Input('district-dropdown', 'value')])
-def update_summary_table_download_link(start_date, end_date, selected_problem, selected_unit, selected_district):
-    df_table = update_summary_table_data(start_date, end_date, selected_problem, selected_unit, selected_district)
+     Input('district-dropdown', 'value'),
+     Input('within-sla-dropdown', 'value')])
+def update_summary_table_download_link(start_date, end_date, selected_problem, selected_unit, selected_district, selected_within_sla):
+    df_table = update_summary_table_data(start_date, end_date, selected_problem, selected_unit, selected_district, selected_within_sla)
     csv_string = df_table.to_csv(index=False, encoding='utf-8')
     csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
     return csv_string
@@ -358,9 +386,10 @@ def update_summary_table_download_link(start_date, end_date, selected_problem, s
      Input('uninspected-sr-call-date-picker-range', 'end_date'),
      Input('problem-dropdown', 'value'),
      Input('unit-dropdown', 'value'),
-     Input('district-dropdown', 'value')])
-def update_map(start_date, end_date, selected_problem, selected_unit, selected_district):
-    df_results = update_map_data(start_date, end_date, selected_problem, selected_unit, selected_district)
+     Input('district-dropdown', 'value'),
+     Input('within-sla-dropdown', 'value')])
+def update_map(start_date, end_date, selected_problem, selected_unit, selected_district, selected_within_sla):
+    df_results = update_map_data(start_date, end_date, selected_problem, selected_unit, selected_district, selected_within_sla)
     return {
         'data': [
             go.Scattermapbox(
@@ -374,11 +403,11 @@ def update_map(start_date, end_date, selected_problem, selected_unit, selected_d
                      '<br>' +
                      'Problem: ' + df_results['Problem Description'].map(str) +
                      '<br>' +
-                     'Call Date: ' + df_results['Call Date'].dt.date.map(str) +
-                     '<br>' +
                      'Unit: ' + df_results['Unit'].map(str) +
                      '<br>' +
                      'District: ' + df_results['District'].map(str) +
+                     '<br>' +
+                     'Call Date: ' + df_results['Call Date (no time)'].map(str) +
                      '<br>' +
                      'Within SLA: ' + df_results['Within SLA'].map(str),
                 hoverinfo='text'
@@ -407,9 +436,10 @@ def update_map(start_date, end_date, selected_problem, selected_unit, selected_d
      Input('uninspected-sr-call-date-picker-range', 'end_date'),
      Input('problem-dropdown', 'value'),
      Input('unit-dropdown', 'value'),
-     Input('district-dropdown', 'value')])
-def update_table(start_date, end_date, selected_problem, selected_unit, selected_district):
-    df_table = update_table_data(start_date, end_date, selected_problem, selected_unit, selected_district)
+     Input('district-dropdown', 'value'),
+     Input('within-sla-dropdown', 'value')])
+def update_table(start_date, end_date, selected_problem, selected_unit, selected_district, selected_within_sla):
+    df_table = update_table_data(start_date, end_date, selected_problem, selected_unit, selected_district, selected_within_sla)
     return df_table.to_dict('records')
 
 @app.callback(
@@ -418,9 +448,10 @@ def update_table(start_date, end_date, selected_problem, selected_unit, selected
      Input('uninspected-sr-call-date-picker-range', 'end_date'),
      Input('problem-dropdown', 'value'),
      Input('unit-dropdown', 'value'),
-     Input('district-dropdown', 'value')])
-def update_table_download_link(start_date, end_date, selected_problem, selected_unit, selected_district):
-    df_table = update_table_data(start_date, end_date, selected_problem, selected_unit, selected_district)
+     Input('district-dropdown', 'value'),
+     Input('within-sla-dropdown', 'value')])
+def update_table_download_link(start_date, end_date, selected_problem, selected_unit, selected_district, selected_within_sla):
+    df_table = update_table_data(start_date, end_date, selected_problem, selected_unit, selected_district, selected_within_sla)
     csv_string = df_table.to_csv(index=False, encoding='utf-8')
     csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
     return csv_string

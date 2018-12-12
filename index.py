@@ -56,7 +56,14 @@ app.layout = html.Div([
                     html.Div(dt.DataTable(rows=[{}]), style={'display': 'none'})
                 ], className='container', style={'margin': 'auto'}),
                 html.Nav([
-                    html.A('Questions? Click Here to Contact LI GIS Team', href='mailto:ligisteam@phila.gov')
+                    html.Div([
+                        html.A('Contact LI GIS Team',
+                               href='mailto:ligisteam@phila.gov',
+                               style={'color': '#f2f2f2', 'float': 'left', 'margin-right': '10px'}),
+                        html.A('GitHub',
+                               href='https://github.com/CityOfPhiladelphia/LI_Stat',
+                               style={'color': '#f2f2f2', 'float': 'left', 'margin-left': '10px'})
+                    ], style={'width': '500px', 'margin-left': 'auto', 'margin-right': 'auto'})
                 ], className='footer-navbar')
             ])
 

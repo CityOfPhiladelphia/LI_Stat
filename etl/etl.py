@@ -1,5 +1,6 @@
 from li_dbs import ECLIPSE_PROD, LIDB, GISLNI, DataBridge, GISLICLD
-
+import sys
+import datetime
 
 def etl(query):
     # extract data from source db
@@ -42,6 +43,7 @@ def etl(query):
         print(f'{len(data)} rows loaded into GISLICLD.{query.target_table}.')
 
 def etl_process(queries):
+    print('ETL process initialized: ' + str(datetime.datetime.now()))
     # loop through sql queries
     for query in queries:
         try:
@@ -49,4 +51,7 @@ def etl_process(queries):
         except Exception as e:
             # send_email()
             print(f'ETL Process into GISLICLD.{query.target_table} failed.')
+            exc_type, exc_obj, tb = sys.exc_info()
+            lineno = tb.tb_lineno
+            print('Exception on line {}'.format(lineno))
             print(f'Error Message: {e}')

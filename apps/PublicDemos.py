@@ -71,14 +71,10 @@ layout = html.Div(children=[
                         ),
                     ], className='four columns'),
                     html.Div([
-                        html.P('Compare Dates?'),
-                        dcc.RadioItems(
-                            options=[{'label': k, 'value': k} for k in ['Yes', 'No']],
-                            value='No',
-                            labelStyle={'display': 'block'},
-                            id='public-demos-date-comparison-radio'
-                        )
-                    ], className='three columns'),
+                        html.Button('Compare Date Ranges',
+                                    id='public-demos-date-comparison-button',
+                                    style={'background-color': '#444', 'color': 'white', 'padding': '15px'})
+                    ], className='columns', style={'width': '33%', 'text-align': 'center', 'transform': 'translateY(92%)'}),
                     html.Div(id='comparison-date-range-div', children=[
                         html.P('Comparison Date Range'),
                         dcc.DatePickerRange(
@@ -87,7 +83,7 @@ layout = html.Div(children=[
                             start_date=datetime(2017, 1, 1),
                             end_date=datetime(2017, 12, 31),
                         )
-                    ], className='four columns'),
+                    ], className='four columns', style={'display': 'none'}),
                 ], className='dashrow', style={'margin-top': '75px', 'margin-bottom': '100px'}),
                 html.Div([
                     html.Div([
@@ -160,19 +156,19 @@ def update_public_demos(start_date, end_date):
 
 @app.callback(
     Output('public-demos-indicator2-div', 'style'),
-    [Input('public-demos-date-comparison-radio', 'value')])
-def show_indicator2(value):
-    if value == 'No':
+    [Input('public-demos-date-comparison-button', 'n_clicks')])
+def show_indicator2(n_clicks):
+    if n_clicks is None or (n_clicks % 2) == 0:
         return {'display': 'none'}
     else:
-        return {'width': '15%', 'display': 'inline'}
+        return {'width': '15%', 'display': 'block'}
 
 
 @app.callback(
     Output('comparison-date-range-div', 'style'),
-    [Input('public-demos-date-comparison-radio', 'value')])
-def show_comparison_date_range_picker(value):
-    if value == 'No':
+    [Input('public-demos-date-comparison-button', 'n_clicks')])
+def show_comparison_date_range_picker(n_clicks):
+    if n_clicks is None or (n_clicks % 2) == 0:
         return {'display': 'none'}
     else:
         return {'display': 'block'}
@@ -181,11 +177,11 @@ def show_comparison_date_range_picker(value):
     Output('public-demos-graph', 'figure'),
     [Input('public-demos-date-picker-range', 'start_date'),
      Input('public-demos-date-picker-range', 'end_date'),
-     Input('public-demos-date-comparison-radio', 'value'),
+     Input('public-demos-date-comparison-button', 'n_clicks'),
      Input('public-demos-comparison-date-picker-range', 'start_date'),
      Input('public-demos-comparison-date-picker-range', 'end_date')])
-def update_graph(start_date1, end_date1, value, start_date2, end_date2):
-    if value == "No":
+def update_graph(start_date1, end_date1, n_clicks, start_date2, end_date2):
+    if n_clicks is None or (n_clicks % 2) == 0:
         df_results = update_counts_graph_data(start_date1, end_date1)
         return {
             'data': [
@@ -208,7 +204,7 @@ def update_graph(start_date1, end_date1, value, start_date2, end_date2):
                 ),
                 yaxis=dict(
                     title='Completed Public Demos',
-                    range=[0, df_results['Count of Demos'].max() + (df_results['Count of Demos'].max() / 50)]
+                    range=[0, df_results['Count of Demos'].max() + (df_results['Count of Demos'].max() / 25)]
                 )
             )
         }

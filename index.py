@@ -54,7 +54,7 @@ app.layout = html.Div([
                     dcc.Location(id='url', refresh=False),
                     html.Div(id='page-content'),
                     html.Div(dt.DataTable(rows=[{}]), style={'display': 'none'})
-                ], className='container', style={'margin': 'auto'}),
+                ], className='container', style={'margin': 'auto', 'margin-bottom': '45px'}),
                 html.Nav([
                     html.Div([
                         html.A('Contact LI GIS Team',

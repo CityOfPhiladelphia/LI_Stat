@@ -143,7 +143,19 @@ layout = html.Div(children=[
                         id='footnote'
                     )
                 ]),
-
+                html.Details([
+                    html.Summary('Query Description'),
+                    html.Div([
+                        html.P(
+                            'Permits applied for since 1/1/16 that have been issued and have paid an accelerated fee.'),
+                        html.P(
+                            'Within SLA: When the permit was issued within 10 days or less of when it was applied for.'),
+                        html.P(
+                            'Outside SLA: When the permit was issued 10 days or longer from when it was applied for.'),
+                        html.P(
+                            'Avg. Hours Per Review: This data comes from the Hours field in the Supplementary -> Log tab in Hansen.'),
+                    ])
+                ])
 ])
 
 

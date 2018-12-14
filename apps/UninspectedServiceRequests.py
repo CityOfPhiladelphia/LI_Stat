@@ -19,6 +19,13 @@ with con() as con:
     sql = 'SELECT * FROM li_stat_uninspectedservreq'
     df = pd.read_sql_query(sql=sql, con=con, parse_dates=['CALLDATE'])
 
+#Create df of just the SLA lengths for each problem description. Just for documentation/help purposes.
+df_sla_records = (df.drop(['SERVREQNO', 'ADDRESS', 'CALLDATE', 'UNIT', 'DISTRICT', 'LON', 'LAT'], axis=1)
+                  .drop_duplicates()
+                  .rename(columns={'PROBLEMDESCRIPTION': 'Problem Description', 'SLA': 'SLA Length(days)'})
+                  .sort_values('Problem Description', ascending=True)
+                  .to_dict('records'))
+
 df.rename(columns=
             {'SERVREQNO': 'Service Request Num',
              'CALLDATE': 'Call Date',
@@ -49,6 +56,7 @@ unique_districts = np.append(['All'], unique_districts)
 
 unique_within_sla = df['Within SLA'].unique()
 unique_within_sla = np.append(['All'], unique_within_sla)
+
 
 def update_sr_volume(selected_start, selected_end, selected_problem, selected_unit, selected_district, selected_within_sla):
     df_selected = df.copy(deep=True)
@@ -315,7 +323,48 @@ layout = html.Div(children=[
                             )
                         ], style={'text-align': 'right'})
                     ], className='twelve columns', style={'margin-top': '50px', 'margin-bottom': '50px'})
-                ], className='dashrow')
+                ], className='dashrow'),
+                html.Details([
+                    html.Summary('Query Description'),
+                    html.Div([
+                        html.P(
+                            'Ops, Building, and CSU service requests with call dates since 1/1/16 that haven\'t been '
+                            'inspected or resolved.'),
+                        html.P('Problem codes by unit: '),
+                        html.Ul(children=[
+                            html.Li("Ops: 'BRH', 'DCC', 'DCR', 'DRGMR', 'FC', 'FR', 'HM', "
+                            "'IR', 'LB', 'LR', 'LVCIP', 'MC', 'MR', 'NH', 'NPU', 'SMR', 'VC', 'VH', 'VRS', 'ZB', 'ZR'"),
+                            html.Li("Building: 'BC', 'BLK', 'COMP', 'EC', 'LC', 'PC', 'SPC', 'SR311', 'X', 'ZC', 'ZM'"),
+                            html.Li("District: 'BD', 'BDH', 'BDO'")
+                        ]),
+                        html.P(),
+                        html.P(
+                            "Avg. Days Outstanding: The average number of business days between call date and today."),
+                        html.P(
+                            "Business days: weekdays that aren't US Federal holidays."),
+                        html.P(
+                            "Within SLA: A service request is considered Within SLA if the number of business days it's "
+                            "been outstanding is less than or equal to the SLA length for that type of problem. "),
+                        html.P(),
+                        html.Div([
+                            html.Div([
+                                html.H3('SLA Lengths', style={'text-align': 'center'}),
+                                html.Div([
+                                    table.DataTable(
+                                        rows=df_sla_records,
+                                        editable=False,
+                                        sortable=True,
+                                        filterable=True,
+                                        min_width=500,
+                                        id='sla-lengths-table'
+                                    ),
+                                ], style={'text-align': 'center'},
+                                   id='sla-lengths-table-div'
+                                ),
+                            ], className='six columns'),
+                        ], className='dashrow')
+                    ])
+                ])
             ])
 
 @app.callback(

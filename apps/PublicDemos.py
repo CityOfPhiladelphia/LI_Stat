@@ -129,7 +129,14 @@ layout = html.Div(children=[
                             )
                         )
                     ], className='twelve columns'),
-                ], className='dashrow')
+                ], className='dashrow'),
+                html.Details([
+                    html.Summary('Query Description'),
+                    html.Div([
+                        html.P(
+                            'Public Demolitions since Jan 2008. Demo Date is the demo completion date.')
+                    ])
+                ])
 ])
 
 

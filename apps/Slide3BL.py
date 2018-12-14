@@ -129,5 +129,22 @@ layout = html.Div([
                     )
                 ], style={'text-align': 'center', 'width': '70%', 'margin-left': 'auto', 'margin-right': 'auto', 'margin-top': '45px', 'margin-bottom': '45px'}),
                 html.P('[1] License Types with less than 100 licenses issued in a year were not included.', style={'text-align': 'center'}),
-                html.P('[2] License Types generating less than $10000 in a year were not included.', style={'text-align': 'center'})
+                html.P('[2] License Types generating less than $10000 in a year were not included.', style={'text-align': 'center'}),
+                html.Details([
+                    html.Summary('Query Description'),
+                    html.Div([
+                        html.P(
+                            'Approved business licenses issued Jan-July 2018 vs Jan-July 2017. Grouped by job type '
+                            '(application or renewal) and license type.'
+                            'Filtered to only include the 10 with the largest % change.'),
+                        html.P(
+                            '[1] License Types with less than 100 licenses issued in a year were not included.'),
+                        html.P(
+                            'Fees paid (aka revenue collected) from all business licenses issued Jan-July 2018 vs '
+                            'Jan-July 2017. Grouped by job type (application or renewal) and license type. '
+                            'Filtered to only include the 10 with the largest % change.'),
+                        html.P(
+                            '[2] License Types generating less than $10000 in a year were not included.')
+                    ])
+                ])
             ])

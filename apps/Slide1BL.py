@@ -153,7 +153,14 @@ layout = html.Div(children=[
                             )
                         ], style={'text-align': 'right'})
                     ], style={'width': '55%', 'margin-left': 'auto', 'margin-right': 'auto','margin-top': '45px', 'margin-bottom': '45px'})
-                ], className='dashrow')
+                ], className='dashrow'),
+                html.Details([
+                    html.Summary('Query Description'),
+                    html.Div([
+                        html.P(
+                            'Approved business licenses (inc. activity licenses) issued between 1/1/16 and today.')
+                    ])
+                ])
             ])
 
 @app.callback(

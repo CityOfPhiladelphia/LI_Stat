@@ -166,7 +166,15 @@ layout = html.Div(children=[
                             )
                         ], style={'text-align': 'right'})
                     ], className='six columns')
-                ], className='dashrow')
+                ], className='dashrow'),
+                html.Details([
+                    html.Summary('Query Description'),
+                    html.Div([
+                        html.P(
+                            'Fees paid (aka revenue collected) since 1/1/16 from all trade license amend/renew and '
+                            'application jobs.')
+                    ])
+                ])
             ])
 
 @app.callback(

@@ -113,5 +113,20 @@ layout = html.Div([
                 ], style={'text-align': 'center', 'width': '65%', 'margin-left': 'auto', 'margin-right': 'auto', 'margin-top': '45px', 'margin-bottom': '45px'},
                    id='slide2permits_payment_changes_table'),
                 html.P('[1] Permit Types with less than 100 permits issued in a year were not included.', style={'text-align': 'center'}),
-                html.P('[2] Permit Types generating less than $10,000 in a year were not included.', style={'text-align': 'center'})
+                html.P('[2] Permit Types generating less than $10,000 in a year were not included.', style={'text-align': 'center'}),
+                html.Details([
+                    html.Summary('Query Description'),
+                    html.Div([
+                        html.P(
+                            'Permits (with paid fees) issued Jun-Nov 2017 vs Jun-Nov 2016. Grouped by Permit Type.'
+                            'Filtered to only include the 10 with the largest % change.'),
+                        html.P(
+                            '[1] Permit Types with less than 100 permits issued in a year were not included.'),
+                        html.P(
+                            'Fees paid from all permits issued Jun-Nov 2017 vs Jun-Nov 2016. Grouped by Permit Type. '
+                            'Filtered to only include the 10 with the largest % change.'),
+                        html.P(
+                            '[2] Permit Types generating less than $10,000 in a year were not included.')
+                    ])
+                ])
             ])

@@ -199,7 +199,20 @@ layout = html.Div(children=[
                             )
                         ], style={'text-align': 'right'})
                     ], style={'width': '80%', 'margin-left': 'auto', 'margin-right': 'auto','margin-top': '50px', 'margin-bottom': '50px'})
-                ], className='dashrow')
+                ], className='dashrow'),
+                html.Details([
+                    html.Summary('Query Description'),
+                    html.Div([
+                        html.P(
+                            'Permits applied for since 1/1/16 that don\'t have a parent-child relationship. Grouped by '
+                            'whether they were processed OTC (over-the-counter) or went back for Review:'),
+                        html.P(
+                            'OTC: When the processing date equals the issue date'),
+                        html.P(
+                            'Review: All the other permits, i.e. ones where the application/processing date does not '
+                            'equal the issue date.')
+                    ])
+                ])
             ])
 
 @app.callback(

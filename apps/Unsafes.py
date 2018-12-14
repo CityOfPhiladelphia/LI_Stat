@@ -97,6 +97,13 @@ layout = html.Div(children=[
                         ], style={'text-align': 'right'})
                     ], style={'width': '50%', 'margin-left': 'auto', 'margin-right': 'auto','margin-top': '50px', 'margin-bottom': '50px'})
                 ], className='dashrow'),
+                html.Details([
+                    html.Summary('Query Description'),
+                    html.Div([
+                        html.P(
+                            'Unsafe violations since 1/1/2016.')
+                    ])
+                ])
             ])
 
 @app.callback(

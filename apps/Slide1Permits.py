@@ -189,7 +189,14 @@ layout = html.Div(children=[
                             )
                         ], style={'text-align': 'right'})
                     ], style={'width': '65%', 'margin-left': 'auto', 'margin-right': 'auto','margin-top': '50px', 'margin-bottom': '50px'})
-                ], className='dashrow')
+                ], className='dashrow'),
+                html.Details([
+                    html.Summary('Query Description'),
+                    html.Div([
+                        html.P(
+                            'Permits (with paid fees) issued since 1/1/2016.'),
+                    ])
+                ])
             ])
 
 @app.callback(

@@ -271,7 +271,22 @@ layout = html.Div([
                 target='_blank',
             )
         ], style={'text-align': 'right'}),
-    ], style={'width': '65%', 'margin-left': 'auto', 'margin-right': 'auto', 'margin-top': '45px', 'margin-bottom': '45px'})
+    ], style={'width': '65%', 'margin-left': 'auto', 'margin-right': 'auto', 'margin-top': '45px', 'margin-bottom': '45px'}),
+    html.Details([
+        html.Summary('Query Description'),
+        html.Div([
+            html.P(
+                'Approved trade licenses issued since 2016 and how their amend/renew and application jobs were submitted (online, '
+                'revenue, or staff).'),
+            html.P(
+                'We determine how a job was submitted (online, revenue, or staff) based on the username who created it:'),
+            html.Ul(children=[
+                html.Li('Online: If the username contains a number or equals "PPG User"'),
+                html.Li('Revenue: If the username equals "POSSE system power user"'),
+                html.Li('Staff: If the username doesn\'t meet one of the other two conditions')
+            ])
+        ])
+    ])
 ])
 
 # @app.callback(

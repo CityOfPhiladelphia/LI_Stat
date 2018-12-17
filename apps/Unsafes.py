@@ -5,6 +5,7 @@ import plotly.graph_objs as go
 import pandas as pd
 import numpy as np
 import urllib.parse
+import os
 
 from datetime import datetime
 from dash.dependencies import Input, Output
@@ -16,7 +17,7 @@ def update_data(start_date, end_date):
                    .sort_values(by=['Violation Month'])
     return df_results
 
-print('Unsafes.py')
+print(os.path.basename(__file__))
 
 with con() as con:
     sql = 'SELECT * FROM li_stat_unsafes'

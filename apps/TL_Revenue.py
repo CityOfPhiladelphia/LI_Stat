@@ -7,15 +7,16 @@ from dash.dependencies import Input, Output
 from datetime import datetime
 import numpy as np
 import urllib.parse
+import os
 
 from app import app, con
 
-print('Slide2BL.py')
+print(os.path.basename(__file__))
 
 with con() as con:
-    sql = 'SELECT * FROM li_stat_licenserevenue_bl'
+    sql = 'SELECT * FROM li_stat_licenserevenue_tl'
     df = pd.read_sql_query(sql=sql, con=con, parse_dates=['PAYMENTDATE'])
-    sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_LICENSEREVENUE_BL'"
+    sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_LICENSEREVENUE_TL'"
     last_ddl_time = pd.read_sql_query(sql=sql, con=con)
 
 df.rename(columns={'JOBTYPE': 'Job Type', 'PAYMENTDATE': 'Date', 'TOTALAMOUNT': 'Revenue Collected'}, inplace=True)
@@ -72,22 +73,22 @@ def update_total_revenue(selected_start, selected_end, selected_jobtype):
     return '${:,.0f}'.format(total_license_volume)
 
 layout = html.Div(children=[
-                html.H1('Business License Revenue', style={'text-align': 'center'}),
+                html.H1('Trade License Revenue', style={'text-align': 'center'}),
                 html.P(f"Data last updated {last_ddl_time['LAST_DDL_TIME'].iloc[0]}", style = {'text-align': 'center'}),
                 html.Div([
                     html.Div([
                         html.P('Filter by Payment Date'),
                         dcc.DatePickerRange(
                             display_format='MMM Y',
-                            id='slide2BL-my-date-picker-range',
-                            start_date=datetime(2016, 1, 1),
+                            id='slide2TL-my-date-picker-range',
+                            start_date=df['Date'].min(),
                             end_date=datetime.now()
                         )
                     ], className='four columns'),
                     html.Div([
                         html.P('Job Type'),
                         dcc.Dropdown(
-                            id='slide2BL-jobtype-dropdown',
+                            id='slide2TL-jobtype-dropdown',
                             options=job_type_options,
                             multi=True,
                             value=unique_job_types
@@ -97,7 +98,7 @@ layout = html.Div(children=[
                 html.Div([
                     html.Div(
                         [
-                            dcc.Graph(id='slide2BL-my-graph',
+                            dcc.Graph(id='slide2TL-my-graph',
                                 figure=go.Figure(
                                     data=[
                                         go.Scatter(
@@ -123,13 +124,13 @@ layout = html.Div(children=[
                             )
                         ], className='nine columns'),
                     html.Div([
-                        html.H1('', id='slide2BL-indicator', style={'font-size': '45pt'}),
+                        html.H1('', id='slide2TL-indicator', style={'font-size': '45pt'}),
                         html.H2('Collected', style={'font-size': '40pt'})
                     ], className='three columns', style={'text-align': 'center', 'margin': 'auto', 'padding': '150px 0'})
                 ], className='dashrow'),
                 html.Div([
                     html.Div([
-                        dcc.Graph(id='slide2BL-piechart',
+                        dcc.Graph(id='slide2TL-piechart',
                             figure=go.Figure(
                                 data=[
                                     go.Pie(
@@ -156,14 +157,14 @@ layout = html.Div(children=[
                                 columns=["Date", "Job Type", "Revenue Collected"],
                                 editable=False,
                                 sortable=True,
-                                id='slide2BL-count-table'
+                                id='slide2TL-count-table'
                             )
                         ], style={'text-align': 'center'}),
                         html.Div([
                             html.A(
                                 'Download Data',
-                                id='slide2BL-count-table-download-link',
-                                download='slide2BL.csv',
+                                id='slide2TL-count-table-download-link',
+                                download='slide2TL.csv',
                                 href='',
                                 target='_blank',
                             )
@@ -174,17 +175,17 @@ layout = html.Div(children=[
                     html.Summary('Query Description'),
                     html.Div([
                         html.P(
-                            'Fees paid (aka revenue collected) since 1/1/16 from all business license amend/renew and '
+                            'Fees paid (aka revenue collected) since 1/1/16 from all trade license amend/renew and '
                             'application jobs.')
                     ])
                 ])
             ])
 
 @app.callback(
-    Output('slide2BL-piechart', 'figure'),
-    [Input('slide2BL-my-date-picker-range', 'start_date'),
-     Input('slide2BL-my-date-picker-range', 'end_date'),
-     Input('slide2BL-jobtype-dropdown', 'value')])
+    Output('slide2TL-piechart', 'figure'),
+    [Input('slide2TL-my-date-picker-range', 'start_date'),
+     Input('slide2TL-my-date-picker-range', 'end_date'),
+     Input('slide2TL-jobtype-dropdown', 'value')])
 def update_pie_chart(start_date, end_date, jobtype):
     df_pie_chart_updated = update_pie_data(start_date, end_date, jobtype)
     return {
@@ -207,10 +208,10 @@ def update_pie_chart(start_date, end_date, jobtype):
     }
 
 @app.callback(
-    Output('slide2BL-my-graph', 'figure'),
-    [Input('slide2BL-my-date-picker-range', 'start_date'),
-     Input('slide2BL-my-date-picker-range', 'end_date'),
-     Input('slide2BL-jobtype-dropdown', 'value')])
+    Output('slide2TL-my-graph', 'figure'),
+    [Input('slide2TL-my-date-picker-range', 'start_date'),
+     Input('slide2TL-my-date-picker-range', 'end_date'),
+     Input('slide2TL-jobtype-dropdown', 'value')])
 def update_line_chart(start_date, end_date, jobtype):
     df_line_chart_updated = update_line_chart_data(start_date, end_date, jobtype)
     return {
@@ -241,28 +242,28 @@ def update_line_chart(start_date, end_date, jobtype):
     }
 
 @app.callback(
-    Output('slide2BL-indicator', 'children'),
-    [Input('slide2BL-my-date-picker-range', 'start_date'),
-     Input('slide2BL-my-date-picker-range', 'end_date'),
-     Input('slide2BL-jobtype-dropdown', 'value')])
+    Output('slide2TL-indicator', 'children'),
+    [Input('slide2TL-my-date-picker-range', 'start_date'),
+     Input('slide2TL-my-date-picker-range', 'end_date'),
+     Input('slide2TL-jobtype-dropdown', 'value')])
 def update_total_license_volume_indicator(start_date, end_date, jobtype):
     total_revenue_updated = update_total_revenue(start_date, end_date, jobtype)
     return str(total_revenue_updated)
 
 @app.callback(
-    Output('slide2BL-count-table', 'rows'),
-    [Input('slide2BL-my-date-picker-range', 'start_date'),
-     Input('slide2BL-my-date-picker-range', 'end_date'),
-     Input('slide2BL-jobtype-dropdown', 'value')])
+    Output('slide2TL-count-table', 'rows'),
+    [Input('slide2TL-my-date-picker-range', 'start_date'),
+     Input('slide2TL-my-date-picker-range', 'end_date'),
+     Input('slide2TL-jobtype-dropdown', 'value')])
 def update_count_table(start_date, end_date, jobtype):
     df_counts_updated = update_count_data(start_date, end_date, jobtype)
     return df_counts_updated.to_dict('records')
 
 @app.callback(
-    Output('slide2BL-count-table-download-link', 'href'),
-    [Input('slide2BL-my-date-picker-range', 'start_date'),
-     Input('slide2BL-my-date-picker-range', 'end_date'),
-     Input('slide2BL-jobtype-dropdown', 'value')])
+    Output('slide2TL-count-table-download-link', 'href'),
+    [Input('slide2TL-my-date-picker-range', 'start_date'),
+     Input('slide2TL-my-date-picker-range', 'end_date'),
+     Input('slide2TL-jobtype-dropdown', 'value')])
 def update_count_table_download_link(start_date, end_date, jobtype):
     df_updated = update_count_data(start_date, end_date, jobtype)
     csv_string = df_updated.to_csv(index=False, encoding='utf-8')

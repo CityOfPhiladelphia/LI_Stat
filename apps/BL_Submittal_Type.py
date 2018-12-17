@@ -6,84 +6,88 @@ import pandas as pd
 from dash.dependencies import Input, Output
 import urllib.parse
 import datetime
+import os
 
 from app import app, con
 
-print('slide4_TL.py')
+print(os.path.basename(__file__))
 
 with con() as con:
-    sql = 'SELECT * FROM li_stat_submittalvolumes_tl'
+    sql = 'SELECT * FROM li_stat_submittalvolumes_bl'
     df = (pd.read_sql_query(sql=sql, con=con, parse_dates=['ISSUEDATE'])
           .sort_values(by='ISSUEDATE'))
-    sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_SUBMITTALVOLUMES_TL'"
+    sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_SUBMITTALVOLUMES_BL'"
     last_ddl_time = pd.read_sql_query(sql=sql, con=con)
 
 df_chart_createdbytype = (df.copy(deep=True)
-                            .groupby(['ISSUEDATE', 'CREATEDBYTYPE'])['LICENSENUMBERCOUNT']
+                            .groupby(['ISSUEDATE', 'CREATEDBYTYPE'])['JOBNUMBERCOUNT']
                             .sum()
                             .reset_index()
                             .sort_values(by='ISSUEDATE')
-                            .assign(DateText=lambda x: x['ISSUEDATE'].dt.strftime('%b-%Y')))
+                            .assign(DateText=lambda x: x['ISSUEDATE'].dt.strftime('%b %Y')))
 
 df_chart_createdbytype_all = (df.copy(deep=True)
-                                .groupby(['ISSUEDATE'])['LICENSENUMBERCOUNT']
+                                .groupby(['ISSUEDATE'])['JOBNUMBERCOUNT']
                                 .sum()
                                 .reset_index()
                                 .sort_values(by='ISSUEDATE')
-                                .assign(DateText=lambda x: x['ISSUEDATE'].dt.strftime('%b-%Y')))
+                                .assign(DateText=lambda x: x['ISSUEDATE'].dt.strftime('%b %Y')))
 
 df_chart_jobtype = (df.copy(deep=True)
-                      .groupby(['ISSUEDATE', 'JOBTYPE'])['LICENSENUMBERCOUNT']
+                      .groupby(['ISSUEDATE', 'JOBTYPE'])['JOBNUMBERCOUNT']
                       .sum()
                       .reset_index()
                       .sort_values(by='ISSUEDATE')
-                      .assign(DateText=lambda x: x['ISSUEDATE'].dt.strftime('%b-%Y')))
+                      .assign(DateText=lambda x: x['ISSUEDATE'].dt.strftime('%b %Y')))
 
 df_chart_jobtype_all = (df.copy(deep=True)
-                          .groupby(['ISSUEDATE'])['LICENSENUMBERCOUNT']
+                          .groupby(['ISSUEDATE'])['JOBNUMBERCOUNT']
                           .sum()
                           .reset_index()
                           .sort_values(by='ISSUEDATE')
-                          .assign(DateText=lambda x: x['ISSUEDATE'].dt.strftime('%b-%Y')))
+                          .assign(DateText=lambda x: x['ISSUEDATE'].dt.strftime('%b %Y')))
 
 df_created_by_type = (df.copy(deep=True)
                         .loc[df['ISSUEDATE'] >= '2018-01-01']
-                        .groupby(['CREATEDBYTYPE'])['LICENSENUMBERCOUNT']
+                        .groupby(['CREATEDBYTYPE'])['JOBNUMBERCOUNT']
                         .sum())
 
 df_job_type = (df.copy(deep=True)
                  .loc[df['ISSUEDATE'] >= '2018-01-01']
-                 .groupby(['JOBTYPE'])['LICENSENUMBERCOUNT']
+                 .groupby(['JOBTYPE'])['JOBNUMBERCOUNT']
                  .sum())
 
 df_table = (df.copy(deep=True)
-              .groupby(['ISSUEDATE', 'LICENSETYPE', 'CREATEDBYTYPE'])['LICENSENUMBERCOUNT']
+              .groupby(['ISSUEDATE', 'LICENSETYPE', 'CREATEDBYTYPE'])['JOBNUMBERCOUNT']
               .sum()
               .reset_index()
               .sort_values(by='ISSUEDATE')
-              .assign(ISSUEDATE=lambda x: x['ISSUEDATE'].dt.strftime('%b-%Y'))
-              .rename(columns={'ISSUEDATE': 'Issue Date', 'LICENSETYPE': 'License Type', 'CREATEDBYTYPE': 'Submittal Type', 'LICENSENUMBERCOUNT': 'Licenses Issued'}))
+              .assign(ISSUEDATE=lambda x: x['ISSUEDATE'].dt.strftime('%b %Y'))
+              .rename(columns={'ISSUEDATE': 'Issue Date', 'LICENSETYPE': 'License Type', 'CREATEDBYTYPE': 'Submittal Type', 'JOBNUMBERCOUNT': 'Jobs Completed'}))
 
 all_licenses = df.copy(deep=True)
-contractors = df.loc[(df['LICENSETYPE'] == 'Contractor') & (df['CREATEDBYTYPE'] == 'Online') & (df['ISSUEDATE'] >= '2018-01-01')] 
-plumbing = df.loc[(df['LICENSETYPE'].str.contains('Plumber')) & (df['CREATEDBYTYPE'] == 'Online') & (df['ISSUEDATE'] >= '2018-01-01')]
-electrical = df.loc[(df['LICENSETYPE'].str.contains('Electrical')) & (df['CREATEDBYTYPE'] == 'Online') & (df['ISSUEDATE'] >= '2018-01-01')]
+rentals = df.loc[(df['LICENSETYPE'] == 'Rental') & (df['CREATEDBYTYPE'] == 'Online') & (df['ISSUEDATE'] >= '2018-01-01')] 
+vacant_properties = df.loc[(df['LICENSETYPE'].str.contains('Vacant')) & (df['CREATEDBYTYPE'] == 'Online') & (df['ISSUEDATE'] >= '2018-01-01')]
+food = df.loc[(df['LICENSETYPE'].str.contains('Food')) & (df['CREATEDBYTYPE'] == 'Online') & (df['ISSUEDATE'] >= '2018-01-01')]
+cals = df.loc[(df['LICENSETYPE'].str.contains('Activity')) & (df['CREATEDBYTYPE'] == 'Online') & (df['ISSUEDATE'] >= '2018-01-01')]
 
 def percent_renewals(df):
-    count_new = df.loc[df['JOBTYPE'] == 'Application']['LICENSENUMBERCOUNT'].sum()
-    count_renewals = df.loc[df['JOBTYPE'] == 'Renewal']['LICENSENUMBERCOUNT'].sum()
+    count_new = df.loc[df['JOBTYPE'] == 'Application']['JOBNUMBERCOUNT'].sum()
+    count_renewals = df.loc[df['JOBTYPE'] == 'Renewal']['JOBNUMBERCOUNT'].sum()
     return round(count_renewals / (count_new + count_renewals) * 100, 1)
 
 df_table_2 = pd.DataFrame(data={
-    'License Type': ['All Licenses', 'Contractor', 'Plumbing', 'Electrical'],
-    '% Online Renewals': [percent_renewals(license_type) for license_type in [all_licenses, contractors, plumbing, electrical]]
+    'License Type': ['All Licenses', 'Rentals', 'Vacant Properties', 'Food'],
+    '% Online Renewals': [percent_renewals(license_type) for license_type in [all_licenses, rentals, vacant_properties, food]]
 })
 
-count_2017 = df.loc[(df['ISSUEDATE'] >= '2017-01-01') & (df['ISSUEDATE'] < '2017-08-01')]['LICENSENUMBERCOUNT'].sum()
-count_2018 = df.loc[(df['ISSUEDATE'] >= '2018-01-01') & (df['ISSUEDATE'] < '2018-08-01')]['LICENSENUMBERCOUNT'].sum()
-count_all = count_2017 + count_2018
+count_2016 = df.loc[(df['ISSUEDATE'] >= '2016-01-01') & (df['ISSUEDATE'] < '2016-08-01')]['JOBNUMBERCOUNT'].sum()
+count_2017 = df.loc[(df['ISSUEDATE'] >= '2017-01-01') & (df['ISSUEDATE'] < '2017-08-01')]['JOBNUMBERCOUNT'].sum()
+count_2018 = df.loc[(df['ISSUEDATE'] >= '2018-01-01')  & (df['ISSUEDATE'] < '2018-08-01')]['JOBNUMBERCOUNT'].sum()
+count_all = count_2016 + count_2017 + count_2018
 
 df_table_3 = pd.DataFrame(data={
+    '2016': [count_2016],
     '2017': [count_2017],
     '2018': [count_2018],
     'All': [count_all]
@@ -91,16 +95,16 @@ df_table_3 = pd.DataFrame(data={
 
 layout = html.Div([
     html.H1('Submittal Type', style={'text-align': 'center'}),
-    html.H2('(Trade Licenses)', style={'text-align': 'center', 'margin-bottom': '20px'}),
+    html.H2('(Business Licenses)', style={'text-align': 'center', 'margin-bottom': '20px'}),
     html.P(f"Data last updated {last_ddl_time['LAST_DDL_TIME'].iloc[0]}", style = {'text-align': 'center', 'margin-bottom': '50px'}),
     html.Div([
         html.Div([
-            dcc.Graph(id='slide4TL-createdbytype-chart',
+            dcc.Graph(id='slide4BL-createdbytype-chart',
                 figure=go.Figure(
                     data=[
                         go.Scatter(
                             x=df_chart_createdbytype_all['ISSUEDATE'],
-                            y=df_chart_createdbytype_all['LICENSENUMBERCOUNT'],
+                            y=df_chart_createdbytype_all['JOBNUMBERCOUNT'],
                             name='All',
                             mode='lines',
                             text=df_chart_createdbytype_all['DateText'],
@@ -112,7 +116,7 @@ layout = html.Div([
                         ),
                         go.Scatter(
                             x=df_chart_createdbytype.loc[df_chart_createdbytype['CREATEDBYTYPE'] == 'Online']['ISSUEDATE'],
-                            y=df_chart_createdbytype.loc[df_chart_createdbytype['CREATEDBYTYPE'] == 'Online']['LICENSENUMBERCOUNT'],
+                            y=df_chart_createdbytype.loc[df_chart_createdbytype['CREATEDBYTYPE'] == 'Online']['JOBNUMBERCOUNT'],
                             name='Online',
                             mode='lines',
                             text=df_chart_createdbytype.loc[df_chart_createdbytype['CREATEDBYTYPE'] == 'Online']['DateText'],
@@ -124,7 +128,7 @@ layout = html.Div([
                         ),
                         go.Scatter(
                             x=df_chart_createdbytype.loc[df_chart_createdbytype['CREATEDBYTYPE'] == 'Staff']['ISSUEDATE'],
-                            y=df_chart_createdbytype.loc[df_chart_createdbytype['CREATEDBYTYPE'] == 'Staff']['LICENSENUMBERCOUNT'],
+                            y=df_chart_createdbytype.loc[df_chart_createdbytype['CREATEDBYTYPE'] == 'Staff']['JOBNUMBERCOUNT'],
                             name='Staff',
                             mode='lines',
                             text=df_chart_createdbytype.loc[df_chart_createdbytype['CREATEDBYTYPE'] == 'Staff']['DateText'],
@@ -136,14 +140,14 @@ layout = html.Div([
                         )
                     ],
                     layout=go.Layout(
-                        title=('Licenses Issued by Submittal Type'),
-                        yaxis=dict(title='Licenses Issued')
+                        title=('Jobs Completed by Submittal Type'),
+                        yaxis=dict(title='Jobs Completed')
                     )
                 )
             ),
         ], className='eight columns'),
         html.Div([
-            dcc.Graph(id='slide4TL-createdbytype-piechart',
+            dcc.Graph(id='slide4BL-createdbytype-piechart',
                 figure=go.Figure(
                     data=[
                         go.Pie(
@@ -163,12 +167,12 @@ layout = html.Div([
     ], className='dashrow'),
     html.Div([
         html.Div([
-            dcc.Graph(id='slide4TL-jobtype-chart',
+            dcc.Graph(id='slide4BL-jobtype-chart',
                 figure=go.Figure(
                     data=[
                         go.Scatter(
                             x=df_chart_jobtype_all['ISSUEDATE'],
-                            y=df_chart_jobtype_all['LICENSENUMBERCOUNT'],
+                            y=df_chart_jobtype_all['JOBNUMBERCOUNT'],
                             name='All',
                             mode='lines',
                             text=df_chart_jobtype_all['DateText'],
@@ -180,7 +184,7 @@ layout = html.Div([
                         ),
                         go.Scatter(
                             x=df_chart_jobtype.loc[df_chart_jobtype['JOBTYPE'] == 'Renewal']['ISSUEDATE'],
-                            y=df_chart_jobtype.loc[df_chart_jobtype['JOBTYPE'] == 'Renewal']['LICENSENUMBERCOUNT'],
+                            y=df_chart_jobtype.loc[df_chart_jobtype['JOBTYPE'] == 'Renewal']['JOBNUMBERCOUNT'],
                             name='Renewal',
                             mode='lines',
                             text=df_chart_jobtype.loc[df_chart_jobtype['JOBTYPE'] == 'Renewal']['DateText'],
@@ -192,7 +196,7 @@ layout = html.Div([
                         ),
                         go.Scatter(
                             x=df_chart_jobtype.loc[df_chart_jobtype['JOBTYPE'] == 'Application']['ISSUEDATE'],
-                            y=df_chart_jobtype.loc[df_chart_jobtype['JOBTYPE'] == 'Application']['LICENSENUMBERCOUNT'],
+                            y=df_chart_jobtype.loc[df_chart_jobtype['JOBTYPE'] == 'Application']['JOBNUMBERCOUNT'],
                             name='Application',
                             mode='lines',
                             text=df_chart_jobtype.loc[df_chart_jobtype['JOBTYPE'] == 'Application']['DateText'],
@@ -204,14 +208,14 @@ layout = html.Div([
                         )
                     ],
                     layout=go.Layout(
-                        title=('Licenses Issued by Job Type'),
-                        yaxis=dict(title='Licenses Issued')
+                        title=('Jobs Completed by Job Type'),
+                        yaxis=dict(title='Jobs Completed')
                     )
                 )
             )
         ], className='eight columns'),
         html.Div([
-            dcc.Graph(id='slide4TL-jobtype-piechart',
+            dcc.Graph(id='slide4BL-jobtype-piechart',
                 figure=go.Figure(
                     data=[
                         go.Pie(
@@ -230,7 +234,7 @@ layout = html.Div([
         ], className='four columns')
     ], className='dashrow'),
     html.Div([
-        html.H3('Licenses Issued from January to July', style={'text-align': 'center'}),
+        html.H3('Jobs Completed from January to July', style={'text-align': 'center'}),
         html.Div([
             dt.DataTable(
                 rows=df_table_3.to_dict('records'),
@@ -239,7 +243,7 @@ layout = html.Div([
                 id='slide4-BL-table-3'
             )
         ], style={'text-align': 'center'})
-    ], style={'width': '25%', 'margin-left': 'auto', 'margin-right': 'auto', 'margin-top': '45px', 'margin-bottom': '45px'}),
+    ], style={'width': '40%', 'margin-left': 'auto', 'margin-right': 'auto', 'margin-top': '45px', 'margin-bottom': '45px'}),
     html.Div([
         html.H3('Percent of Online Transactions Which Were Renewals (2018)', style={'text-align': 'center'}),
         html.Div([
@@ -247,12 +251,12 @@ layout = html.Div([
                 rows=df_table_2.to_dict('records'),
                 columns=df_table_2.columns,
                 editable=False,
-                id='slide4-TL-table-2'
+                id='slide4-BL-table-2'
             )
         ], style={'text-align': 'center'})
     ], style={'width': '40%', 'margin-left': 'auto', 'margin-right': 'auto', 'margin-top': '45px', 'margin-bottom': '45px'}),
     html.Div([
-        html.H3('Licenses Issued by Month, License Type, and Submittal Type', style={'text-align': 'center'}),
+        html.H3('Jobs Completed by Month, License Type, and Submittal Type', style={'text-align': 'center'}),
         html.Div([
             html.Div([
                 dt.DataTable(
@@ -261,15 +265,15 @@ layout = html.Div([
                     filterable=True,
                     sortable=True,
                     editable=False,
-                    id='slide4-TL-table-1'
+                    id='slide4-BL-table-1'
                 )
             ], style={'text-align': 'center'})
         ]),
         html.Div([
             html.A(
                 'Download Data',
-                id='Slide4TL-download-link',
-                download='Slide4TL.csv',
+                id='Slide4BL-download-link',
+                download='Slide4BL.csv',
                 href='',
                 target='_blank',
             )
@@ -278,9 +282,8 @@ layout = html.Div([
     html.Details([
         html.Summary('Query Description'),
         html.Div([
-            html.P(
-                'Approved trade licenses issued since 2016 and how their amend/renew and application jobs were submitted (online, '
-                'revenue, or staff).'),
+            html.P('Approved business licenses issued since 2016 and how their amend/renew and application jobs were submitted (online, '
+                   'revenue, or staff).'),
             html.P(
                 'We determine how a job was submitted (online, revenue, or staff) based on the username who created it:'),
             html.Ul(children=[
@@ -291,15 +294,3 @@ layout = html.Div([
         ])
     ])
 ])
-
-# @app.callback(
-#     Output('Slide4TL-download-link', 'href'),
-#     [Input('field-dropdown', 'value')])
-# def update_download_link(user_selection):
-#     df = get_data_object(user_selection)
-#     csv_string = df.to_csv(index=False, encoding='utf-8')
-#     csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
-#     return csv_string
-
-if __name__ == '__main__':
-    app.run_server(host='127.0.0.1', port=5001)

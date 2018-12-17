@@ -5,9 +5,9 @@ from dash.dependencies import Input, Output
 from gevent.pywsgi import WSGIServer
 
 from app import app, server
-from apps import (Slide1BL, Slide1TL, Slide2BL, Slide2TL, Slide3BL, Slide4BL, Slide4TL,
-                  Slide1Permits, Slide2Permits, Slide3Permits, Slide5Permits,
-                  ImmDang, Unsafes, PublicDemos, UninspectedServiceRequests)
+from apps import (BL_Volumes, TL_Volumes, BL_Revenue, TL_Revenue, BL_Trends, BL_Submittal_Type, TL_Submittal_Type,
+                  Permits_Volumes_Revenues, Permits_Trends, Permits_OTC_Review, Permits_Accel_Review,
+                  Imm_Dang, Unsafes, Public_Demos, Uninspected_Service_Requests)
 from send_email import send_email
 
 app.layout = html.Div([
@@ -72,37 +72,37 @@ app.layout = html.Div([
               [Input('url', 'pathname')])
 def display_page(pathname):
     if pathname == '/business-license-volumes':
-        return Slide1BL.layout
+        return BL_Volumes.layout
     elif pathname == '/trade-license-volumes':
-        return Slide1TL.layout
+        return TL_Volumes.layout
     elif pathname == '/business-license-revenue':
-        return Slide2BL.layout
+        return BL_Revenue.layout
     elif pathname == '/trade-license-revenue':
-        return Slide2TL.layout
+        return TL_Revenue.layout
     elif pathname == '/business-license-trends':
-        return Slide3BL.layout
+        return BL_Trends.layout
     elif pathname == '/business-license-submittal-types':
-        return Slide4BL.layout
+        return BL_Submittal_Type.layout
     elif pathname == '/trade-license-submittal-types':
-        return Slide4TL.layout
+        return TL_Submittal_Type.layout
     elif pathname == '/permit-volumes-and-revenues':
-        return Slide1Permits.layout
+        return Permits_Volumes_Revenues.layout
     elif pathname == '/permit-trends':
-        return Slide2Permits.layout
+        return Permits_Trends.layout
     elif pathname == '/permits-otc-vs-review':
-        return Slide3Permits.layout
+        return Permits_OTC_Review.layout
     elif pathname == '/permits-accelerated-review':
-        return Slide5Permits.layout
+        return Permits_Accel_Review.layout
     elif pathname == '/public-demos':
-        return PublicDemos.layout
+        return Public_Demos.layout
     elif pathname == '/imminently-dangerous':
-        return ImmDang.layout
+        return Imm_Dang.layout
     elif pathname == '/unsafes':
         return Unsafes.layout
     elif pathname == '/uninspected-service-requests':
-        return UninspectedServiceRequests.layout
+        return Uninspected_Service_Requests.layout
     else:
-        return Slide1BL.layout
+        return BL_Volumes.layout
 
 if __name__ == '__main__':
     #app.run_server(host='127.0.0.1', port=5001)

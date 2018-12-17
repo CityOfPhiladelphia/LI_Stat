@@ -5,6 +5,7 @@ import plotly.graph_objs as go
 import pandas as pd
 import numpy as np
 import urllib.parse
+import os
 
 from datetime import datetime
 from dash.dependencies import Input, Output
@@ -23,7 +24,7 @@ def update_ind_data(start_date, end_date):
                        .sort_values(by=['VIOLATIONDATE'])
     return df_results
 
-print('ImmDang.py')
+print(os.path.basename(__file__))
 
 with con() as con:
     sql_ind = 'SELECT * FROM li_stat_immdang_ind'

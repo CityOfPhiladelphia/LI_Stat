@@ -9,11 +9,12 @@ import numpy as np
 import urllib.parse
 from pandas.tseries.holiday import USFederalHolidayCalendar
 from pandas.tseries.offsets import CustomBusinessDay
+import os
 
 from app import app, con
 from config import MAPBOX_ACCESS_TOKEN
 
-print('UninspectedServiceRequests.py')
+print(os.path.basename(__file__))
 
 with con() as con:
     sql = 'SELECT * FROM li_stat_uninspectedservreq'

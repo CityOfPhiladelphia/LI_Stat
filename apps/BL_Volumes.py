@@ -7,19 +7,21 @@ from dash.dependencies import Input, Output
 from datetime import datetime
 import numpy as np
 import urllib.parse
+import os
 
 from app import app, con
 
-print('slide1_TL.py')
+print(os.path.basename(__file__))
 
 with con() as con:
-    sql = 'SELECT * FROM li_stat_licensevolumes_tl'
+    sql = 'SELECT * FROM li_stat_licensevolumes_bl'
     df = pd.read_sql_query(sql=sql, con=con, parse_dates=['ISSUEDATE'])
-    sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_LICENSEVOLUMES_TL'"
+    sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_LICENSEVOLUMES_BL'"
     last_ddl_time = pd.read_sql_query(sql=sql, con=con)
 
+# Strip 'BL_' from JOBTYPE
 # Rename the columns to be more readable
-# Make a DateText Column to display on the graph            
+# Make a DateText Column to display on the graph
 df = (df.rename(columns={'ISSUEDATE': 'Issue Date', 'LICENSETYPE': 'License Type', 'COUNTJOBS': 'Number of Licenses Issued'})
         .assign(DateText=lambda x: x['Issue Date'].dt.strftime('%b %Y')))
 
@@ -73,14 +75,14 @@ def update_counts_table_data(selected_start, selected_end, selected_jobtype, sel
     return df_selected
 
 layout = html.Div(children=[
-                html.H1('Trade License Volumes', style={'text-align': 'center'}),
+                html.H1('Business License Volumes', style={'text-align': 'center'}),
                 html.P(f"Data last updated {last_ddl_time['LAST_DDL_TIME'].iloc[0]}", style = {'text-align': 'center'}),
                 html.Div([
                     html.Div([
                         html.P('Filter by Issue Date'),
                         dcc.DatePickerRange(
                             display_format='MMM Y',
-                            id='slide1-TL-my-date-picker-range',
+                            id='slide1-BL-my-date-picker-range',
                             start_date=datetime(2016, 1, 1),
                             end_date=datetime.now()
                         ),
@@ -88,11 +90,11 @@ layout = html.Div(children=[
                     html.Div([
                         html.P('Filter by Job Type'),
                         dcc.Dropdown(
-                            id='slide1-TL-jobtype-dropdown',
+                            id='slide1-BL-jobtype-dropdown',
                             options=[
                                 {'label': 'All', 'value': 'All'},
-                                {'label': 'Application', 'value': 'Application'},
-                                {'label': 'Renewal', 'value': 'Renewal'}
+                                {'label': 'Application', 'value': 'BL_Application'},
+                                {'label': 'Renewal', 'value': 'BL_Renewal'}
                             ],
                             value='All'
                         ),
@@ -100,7 +102,7 @@ layout = html.Div(children=[
                     html.Div([
                         html.P('Filter by License Type'),
                         dcc.Dropdown(
-                                id='slide1-TL-licensetype-dropdown',
+                                id='slide1-BL-licensetype-dropdown',
                                 options=[{'label': k, 'value': k} for k in unique_licensetypes],
                                 value='All'
                         ),
@@ -108,7 +110,7 @@ layout = html.Div(children=[
                 ], className='dashrow filters'),
                 html.Div([
                     html.Div([
-                        dcc.Graph(id='slide1-TL-my-graph',
+                        dcc.Graph(id='slide1-BL-my-graph',
                             figure=go.Figure(
                                 data=[
                                     go.Scatter(
@@ -123,11 +125,11 @@ layout = html.Div(children=[
                                         )
                                     )
                                 ],
-                            )
-                        )
+                            ),
+                        ),
                     ], className='nine columns'),
                     html.Div([
-                        html.H1('', id='slide1-TL-indicator', style={'font-size': '45pt'}),
+                        html.H1('', id='slide1-BL-indicator', style={'font-size': '45pt'}),
                         html.H2('Licenses Issued', style={'font-size': '40pt'})
                     ], className='three columns', style={'text-align': 'center', 'margin': 'auto', 'padding': '75px 0'})
                 ], className='dashrow'),
@@ -141,44 +143,44 @@ layout = html.Div(children=[
                                 columns=['Issue Date', 'License Type', 'Number of Licenses Issued'],
                                 editable=False,
                                 sortable=True,
-                                id='slide1-TL-count-table'
+                                id='slide1-BL-count-table'
                             ),
                         ], style={'text-align': 'center'}),
                         html.Div([
                             html.A(
                                 'Download Data',
-                                id='slide1-TL-count-table-download-link',
-                                download='slide1_TL_license_volumes_counts.csv',
+                                id='slide1-BL-count-table-download-link',
+                                download='slide1_BL_license_volumes_counts.csv',
                                 href='',
                                 target='_blank',
                             )
                         ], style={'text-align': 'right'})
-                    ], style={'width': '40%', 'margin-left': 'auto', 'margin-right': 'auto','margin-top': '45px', 'margin-bottom': '45px'})
+                    ], style={'width': '55%', 'margin-left': 'auto', 'margin-right': 'auto','margin-top': '45px', 'margin-bottom': '45px'})
                 ], className='dashrow'),
                 html.Details([
                     html.Summary('Query Description'),
                     html.Div([
                         html.P(
-                            'Approved trade licenses (inc. activity licenses) issued between 1/1/16 and today.')
+                            'Approved business licenses (inc. activity licenses) issued between 1/1/16 and today.')
                     ])
                 ])
             ])
 
 @app.callback(
-    Output('slide1-TL-my-graph', 'figure'),
-    [Input('slide1-TL-my-date-picker-range', 'start_date'),
-     Input('slide1-TL-my-date-picker-range', 'end_date'),
-     Input('slide1-TL-jobtype-dropdown', 'value'),
-     Input('slide1-TL-licensetype-dropdown', 'value')])
+    Output('slide1-BL-my-graph', 'figure'),
+    [Input('slide1-BL-my-date-picker-range', 'start_date'),
+     Input('slide1-BL-my-date-picker-range', 'end_date'),
+     Input('slide1-BL-jobtype-dropdown', 'value'),
+     Input('slide1-BL-licensetype-dropdown', 'value')])
 def update_graph(start_date, end_date, jobtype, licensetype):
-    dfr = update_counts_graph_data(start_date, end_date, jobtype, licensetype)
+    df_results = update_counts_graph_data(start_date, end_date, jobtype, licensetype)
     return {
         'data': [
              go.Scatter(
-                 x=dfr['Issue Date'],
-                 y=dfr['Number of Licenses Issued'],
+                 x=df_results['Issue Date'],
+                 y=df_results['Number of Licenses Issued'],
                  mode='lines',
-                 text=dfr['DateText'],
+                 text=df_results['DateText'],
                  hoverinfo='text+y',
                  line=dict(
                     shape='spline',
@@ -189,38 +191,38 @@ def update_graph(start_date, end_date, jobtype, licensetype):
         'layout': go.Layout(
             title='Number of Licenses Issued By Month',
             yaxis=dict(
-                title='Number of Trade Licenses Issued',
-                range=[0, dfr['Number of Licenses Issued'].max() + (dfr['Number of Licenses Issued'].max() / 50)]
+                title='Number of Business Licenses Issued',
+                range=[0, df_results['Number of Licenses Issued'].max() + (df_results['Number of Licenses Issued'].max() / 50)]
             )
         )
     }
 
 @app.callback(
-    Output('slide1-TL-indicator', 'children'),
-    [Input('slide1-TL-my-date-picker-range', 'start_date'),
-     Input('slide1-TL-my-date-picker-range', 'end_date'),
-     Input('slide1-TL-jobtype-dropdown', 'value'),
-     Input('slide1-TL-licensetype-dropdown', 'value')])
+    Output('slide1-BL-indicator', 'children'),
+    [Input('slide1-BL-my-date-picker-range', 'start_date'),
+     Input('slide1-BL-my-date-picker-range', 'end_date'),
+     Input('slide1-BL-jobtype-dropdown', 'value'),
+     Input('slide1-BL-licensetype-dropdown', 'value')])
 def update_total_license_volume_indicator(start_date, end_date, jobtype, licensetype):
     total_license_volume_updated = update_total_license_volume(start_date, end_date, jobtype, licensetype)
     return str(total_license_volume_updated)
 
 @app.callback(
-    Output('slide1-TL-count-table', 'rows'),
-    [Input('slide1-TL-my-date-picker-range', 'start_date'),
-     Input('slide1-TL-my-date-picker-range', 'end_date'),
-     Input('slide1-TL-jobtype-dropdown', 'value'),
-     Input('slide1-TL-licensetype-dropdown', 'value')])
+    Output('slide1-BL-count-table', 'rows'),
+    [Input('slide1-BL-my-date-picker-range', 'start_date'),
+     Input('slide1-BL-my-date-picker-range', 'end_date'),
+     Input('slide1-BL-jobtype-dropdown', 'value'),
+     Input('slide1-BL-licensetype-dropdown', 'value')])
 def update_count_table(start_date, end_date, jobtype, licensetype):
     df_counts = update_counts_table_data(start_date, end_date, jobtype, licensetype)
     return df_counts.to_dict('records')
 
 @app.callback(
-    Output('slide1-TL-count-table-download-link', 'href'),
-    [Input('slide1-TL-my-date-picker-range', 'start_date'),
-     Input('slide1-TL-my-date-picker-range', 'end_date'),
-     Input('slide1-TL-jobtype-dropdown', 'value'),
-     Input('slide1-TL-licensetype-dropdown', 'value')])
+    Output('slide1-BL-count-table-download-link', 'href'),
+    [Input('slide1-BL-my-date-picker-range', 'start_date'),
+     Input('slide1-BL-my-date-picker-range', 'end_date'),
+     Input('slide1-BL-jobtype-dropdown', 'value'),
+     Input('slide1-BL-licensetype-dropdown', 'value')])
 def update_count_table_download_link(start_date, end_date, jobtype, licensetype):
     df_counts = update_counts_table_data(start_date, end_date, jobtype, licensetype)
     csv_string = df_counts.to_csv(index=False, encoding='utf-8')

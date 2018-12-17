@@ -30,6 +30,10 @@ with con() as con:
     df_ind = pd.read_sql_query(sql=sql_ind, con=con, parse_dates=['VIOLATIONDATE'])
     sql_counts = 'SELECT * FROM li_stat_immdang_counts'
     df_counts = pd.read_sql_query(sql=sql_counts, con=con, parse_dates=['VIOLATIONDATE'])
+    sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_IMMDANG_IND'"
+    ind_last_ddl_time = pd.read_sql_query(sql=sql, con=con)
+    sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_IMMDANG_COUNTS'"
+    counts_last_ddl_time = pd.read_sql_query(sql=sql, con=con)
 
 # Rename the columns to be more readable
 df_counts.rename(columns=
@@ -81,6 +85,7 @@ layout = html.Div(children=[
                         )
                     ], className='twelve columns'),
                 ], className='dashrow'),
+                html.P(f"Data last updated {counts_last_ddl_time['LAST_DDL_TIME'].iloc[0]}", className = 'timestamp', style = {'text-align': 'center'}),
                 html.Div([
                     html.Div([
                         dcc.Graph(id='imm-dang-map',
@@ -121,6 +126,7 @@ layout = html.Div(children=[
                         , style={'height': '700px'})
                     ], className='twelve columns')
                 ], className='dashrow'),
+                html.P(f"Data last updated {ind_last_ddl_time['LAST_DDL_TIME'].iloc[0]}", className = 'timestamp', style = {'text-align': 'center'}),
                 html.Div([
                     html.Div([
                         html.H3('Number of ID Violations by Month', style={'text-align': 'center'}),
@@ -146,6 +152,7 @@ layout = html.Div(children=[
                         ], style={'text-align': 'right'})
                     ], style={'width': '50%', 'margin-left': 'auto', 'margin-right': 'auto','margin-top': '50px', 'margin-bottom': '50px'})
                 ], className='dashrow'),
+                html.P(f"Data last updated {counts_last_ddl_time['LAST_DDL_TIME'].iloc[0]}", className = 'timestamp', style = {'text-align': 'center'}),
                 html.Details([
                     html.Summary('Query Description'),
                     html.Div([

@@ -15,6 +15,8 @@ print('PublicDemos.py')
 with con() as con:
     sql = 'SELECT * FROM li_stat_publicdemos'
     df = pd.read_sql_query(sql=sql, con=con, parse_dates=['DEMODATE'])
+    sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_PUBLICDEMOS'"
+    last_ddl_time = pd.read_sql_query(sql=sql, con=con)
 
 # Rename the columns to be more readable
 # Make a DateText Column to display on the graph
@@ -60,6 +62,7 @@ def update_counts_graph_data_compare(selected_start, selected_end, compare_date_
 
 layout = html.Div(children=[
                 html.H1('Public Demolitions', style={'text-align': 'center', 'margin-bottom': '20px'}),
+                html.P(f"Data last updated {last_ddl_time['LAST_DDL_TIME'].iloc[0]}", style = {'text-align': 'center'}),
                 html.Div([
                     html.Div([
                         html.P('Filter by Demolition Date'),

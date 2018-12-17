@@ -16,6 +16,8 @@ with con() as con:
     sql = 'SELECT * FROM li_stat_permits_accelreview'
     df = pd.read_sql_query(sql=sql, con=con, parse_dates=['PERMITAPPLICATIONDATE', 'PERMITISSUEDATE',
                                                                   'REVIEWISSUEDATE', 'PAIDDTTM'])
+    sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_PERMITS_ACCELREVIEW'"
+    last_ddl_time = pd.read_sql_query(sql=sql, con=con)
 
 # Rename the columns to be more readable
 df = (df.rename(columns={'APNO': 'Permit Number', 'PERMITAPPLICATIONDATE': 'Permit Application Date',
@@ -85,6 +87,7 @@ def update_footnote(selected_start, selected_end, selected_permittype, selected_
 
 layout = html.Div(children=[
                 html.H1('Accelerated Reviews', style={'text-align': 'center'}),
+                html.P(f"Data last updated {last_ddl_time['LAST_DDL_TIME'].iloc[0]}", style = {'text-align': 'center'}),
                 html.Div([
                     html.Div([
                         html.P('Filter by Permit Application Date'),

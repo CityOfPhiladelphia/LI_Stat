@@ -15,6 +15,8 @@ with con() as con:
     sql = 'SELECT * FROM li_stat_submittalvolumes_tl'
     df = (pd.read_sql_query(sql=sql, con=con, parse_dates=['ISSUEDATE'])
           .sort_values(by='ISSUEDATE'))
+    sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_SUBMITTALVOLUMES_TL'"
+    last_ddl_time = pd.read_sql_query(sql=sql, con=con)
 
 df_chart_createdbytype = (df.copy(deep=True)
                             .groupby(['ISSUEDATE', 'CREATEDBYTYPE'])['LICENSENUMBERCOUNT']
@@ -90,6 +92,7 @@ df_table_3 = pd.DataFrame(data={
 layout = html.Div([
     html.H1('Submittal Type', style={'text-align': 'center'}),
     html.H2('(Trade Licenses)', style={'text-align': 'center', 'margin-bottom': '20px'}),
+    html.P(f"Data last updated {last_ddl_time['LAST_DDL_TIME'].iloc[0]}", style = {'text-align': 'center', 'margin-bottom': '50px'}),
     html.Div([
         html.Div([
             dcc.Graph(id='slide4TL-createdbytype-chart',

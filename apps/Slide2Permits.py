@@ -16,6 +16,8 @@ print('slide2Permits.py')
 with con() as con:
     sql = 'SELECT * FROM li_stat_permitsfees'
     df = pd.read_sql_query(sql=sql, con=con, parse_dates=['ISSUEDATE'])
+    sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_PERMITSFEES'"
+    last_ddl_time = pd.read_sql_query(sql=sql, con=con)
 
 df['PERMITDESCRIPTION'] = df['PERMITDESCRIPTION'].map(lambda x: x.replace(" PERMIT", ""))
 df['PERMITDESCRIPTION'] = df['PERMITDESCRIPTION'].str.lower()
@@ -90,6 +92,7 @@ top_ten_payments['% Change'] = top_ten_payments['% Change'].map('{:,.1f}'.format
 layout = html.Div([
                 html.H1('Permit Trends', style={'text-align': 'center'}),
                 html.H2('June - November', style={'text-align': 'center'}),
+                html.P(f"Data last updated {last_ddl_time['LAST_DDL_TIME'].iloc[0]}", style = {'text-align': 'center', 'margin-bottom': '75px'}),
                 html.Div([
                     html.H3('Top Significant Changes in Permits Issued [1]'),
                     table.DataTable(

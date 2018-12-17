@@ -15,6 +15,8 @@ print('slide3BL.py')
 with con() as con:
     sql = 'SELECT * FROM li_stat_licensetrends_bl'
     df = pd.read_sql_query(sql=sql, con=con, parse_dates=['ISSUEDATE'])
+    sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_LICENSETRENDS_BL'"
+    last_ddl_time = pd.read_sql_query(sql=sql, con=con)
 
 # Select only Jan-June 2017 and 2018, then group them by year, job and licensetype
 licenses = (df.loc[(df['ISSUEDATE'] >= '2017-01-01') 
@@ -88,6 +90,7 @@ top_ten_applications_payments = (select_top_ten_absolute_changes(applications_pa
 layout = html.Div([
                 html.H1('Business License Trends', style={'text-align': 'center'}),
                 html.H2('From January - July', style={'text-align': 'center'}),
+                html.P(f"Data last updated {last_ddl_time['LAST_DDL_TIME'].iloc[0]}", style = {'text-align': 'center', 'margin-bottom': '75px'}),
                 html.Div([
                     html.H3('Top Significant Changes in Application Volumes [1]'),
                     table.DataTable(

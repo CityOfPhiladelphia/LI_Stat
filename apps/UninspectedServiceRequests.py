@@ -18,6 +18,8 @@ print('UninspectedServiceRequests.py')
 with con() as con:
     sql = 'SELECT * FROM li_stat_uninspectedservreq'
     df = pd.read_sql_query(sql=sql, con=con, parse_dates=['CALLDATE'])
+    sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_UNINSPECTEDSERVREQ'"
+    last_ddl_time = pd.read_sql_query(sql=sql, con=con)
 
 #Create df of just the SLA lengths for each problem description. Just for documentation/help purposes.
 df_sla_records = (df.drop(['SERVREQNO', 'ADDRESS', 'CALLDATE', 'UNIT', 'DISTRICT', 'LON', 'LAT'], axis=1)
@@ -172,6 +174,7 @@ def update_map_data(selected_start, selected_end, selected_problem, selected_uni
 
 layout = html.Div(children=[
                 html.H1('Uninspected Service Requests', style={'text-align': 'center'}),
+                html.P(f"Data last updated {last_ddl_time['LAST_DDL_TIME'].iloc[0]}", style = {'text-align': 'center'}),
                 html.Div([
                     html.Div([
                         html.P('Call Date'),

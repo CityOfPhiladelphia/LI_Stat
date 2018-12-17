@@ -198,6 +198,10 @@
   font-size: 17px;
 }
 
+.timestamp{
+	font-size: 9pt;
+}
+
 div#slide1-permits-count-table-div div.react-grid-Cell:nth-child(2) {
    text-align: left;
 }

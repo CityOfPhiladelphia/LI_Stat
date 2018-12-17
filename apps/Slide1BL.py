@@ -15,7 +15,8 @@ print('slide1_BL.py')
 with con() as con:
     sql = 'SELECT * FROM li_stat_licensevolumes_bl'
     df = pd.read_sql_query(sql=sql, con=con, parse_dates=['ISSUEDATE'])
-
+    sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_LICENSEVOLUMES_BL'"
+    last_ddl_time = pd.read_sql_query(sql=sql, con=con)
 
 # Strip 'BL_' from JOBTYPE
 # Rename the columns to be more readable
@@ -74,6 +75,7 @@ def update_counts_table_data(selected_start, selected_end, selected_jobtype, sel
 
 layout = html.Div(children=[
                 html.H1('Business License Volumes', style={'text-align': 'center'}),
+                html.P(f"Data last updated {last_ddl_time['LAST_DDL_TIME'].iloc[0]}", style = {'text-align': 'center'}),
                 html.Div([
                     html.Div([
                         html.P('Filter by Issue Date'),
@@ -104,7 +106,7 @@ layout = html.Div(children=[
                                 value='All'
                         ),
                     ], className='four columns'),
-                ], className='dashrow'),
+                ], className='dashrow filters'),
                 html.Div([
                     html.Div([
                         dcc.Graph(id='slide1-BL-my-graph',

@@ -21,6 +21,8 @@ print('Unsafes.py')
 with con() as con:
     sql = 'SELECT * FROM li_stat_unsafes'
     df = pd.read_sql_query(sql=sql, con=con, parse_dates=['VIOLATIONDATE'])
+    sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_UNSAFES'"
+    last_ddl_time = pd.read_sql_query(sql=sql, con=con)
 
 # Rename the columns to be more readable
 df.rename(columns=
@@ -33,6 +35,7 @@ df = df.assign(DateText=lambda x: x['Violation Month'].dt.strftime('%b %Y'))
 
 layout = html.Div(children=[
                 html.H1('Unsafe Violations', style={'text-align': 'center'}),
+                html.P(f"Data last updated {last_ddl_time['LAST_DDL_TIME'].iloc[0]}", style = {'text-align': 'center'}),
                 html.Div([
                     html.Div([
                         html.P('Filter by Violation Date'),

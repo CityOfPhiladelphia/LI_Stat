@@ -15,6 +15,8 @@ print('Slide2BL.py')
 with con() as con:
     sql = 'SELECT * FROM li_stat_licenserevenue_bl'
     df = pd.read_sql_query(sql=sql, con=con, parse_dates=['PAYMENTDATE'])
+    sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_LICENSEREVENUE_BL'"
+    last_ddl_time = pd.read_sql_query(sql=sql, con=con)
 
 df.rename(columns={'JOBTYPE': 'Job Type', 'PAYMENTDATE': 'Date', 'TOTALAMOUNT': 'Revenue Collected'}, inplace=True)
 
@@ -71,6 +73,7 @@ def update_total_revenue(selected_start, selected_end, selected_jobtype):
 
 layout = html.Div(children=[
                 html.H1('Business License Revenue', style={'text-align': 'center'}),
+                html.P(f"Data last updated {last_ddl_time['LAST_DDL_TIME'].iloc[0]}", style = {'text-align': 'center'}),
                 html.Div([
                     html.Div([
                         html.P('Filter by Payment Date'),
@@ -90,7 +93,7 @@ layout = html.Div(children=[
                             value=unique_job_types
                         )
                     ], className='five columns')
-                ], className='dashrow'),
+                ], className='dashrow filters'),
                 html.Div([
                     html.Div(
                         [

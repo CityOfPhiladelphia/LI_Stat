@@ -15,6 +15,8 @@ print('slide3Permits.py')
 with con() as con:
     sql = 'SELECT * FROM li_stat_permits_otcvsreview'
     df = pd.read_sql_query(sql=sql, con=con, parse_dates=['ISSUEDATE'])
+    sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_PERMITS_OTCVSREVIEW'"
+    last_ddl_time = pd.read_sql_query(sql=sql, con=con)
 
 # Rename the columns to be more readable
 # Make a DateText Column to display on the graph
@@ -98,6 +100,7 @@ def update_counts_table_data(selected_start, selected_end, selected_permittype, 
 
 layout = html.Div(children=[
                 html.H1('Permits Issued: Over the Counter (OTC) vs Back Office (Reviewed)', style={'text-align': 'center'}),
+                html.P(f"Data last updated {last_ddl_time['LAST_DDL_TIME'].iloc[0]}", style = {'text-align': 'center'}),
                 html.Div([
                     html.Div([
                         html.P('Filter by Issue Date'),

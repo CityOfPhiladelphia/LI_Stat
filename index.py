@@ -16,37 +16,37 @@ app.layout = html.Div([
                     html.Div([
                         html.Button('Miscellaneous', className='dropbtn'),
                         html.Div([
-                            html.A('Imminently Dangerous Properties', href='/ImmDang'),
-                            html.A('Unsafe Properties', href='/Unsafes'),
-                            html.A('Public Demolitions', href='/PublicDemos'),
-                            html.A('Uninspected Service Requests', href='/UninspectedServiceRequests')
+                            html.A('Imminently Dangerous Properties', href='/imminently-dangerous'),
+                            html.A('Unsafe Properties', href='/unsafes'),
+                            html.A('Public Demolitions', href='/public-demos'),
+                            html.A('Uninspected Service Requests', href='/uninspected-service-requests')
                         ], className='dropdown-content')
                     ], className='dropdown'),
                     html.Div([
                         html.Button('Permits', className='dropbtn'),
                         html.Div([
-                            html.A('Volumes and Revenues', href='/Slide1Permits'),
-                            html.A('Trends', href='/Slide2Permits'),
-                            html.A('OTC vs Review', href='/Slide3Permits'),
-                            html.A('Accelerated Reviews', href='/Slide5Permits')
+                            html.A('Volumes and Revenues', href='/permit-volumes-and-revenues'),
+                            html.A('Trends', href='/permit-trends'),
+                            html.A('OTC vs Review', href='/permits-otc-vs-review'),
+                            html.A('Accelerated Reviews', href='/permits-accelerated-review')
                         ], className='dropdown-content')
                     ], className='dropdown'),
                     html.Div([
                         html.Button('Trade Licenses', className='dropbtn'),
                         html.Div([
-                            html.A('Volumes', href='/Slide1TL'),
-                            html.A('Revenue', href='/Slide2TL'),
-                            html.A('Trends', href='/Slide3TL'),
-                            html.A('Submittal Type', href='/Slide4TL')
+                            html.A('Volumes', href='/trade-license-volumes'),
+                            html.A('Revenue', href='/trade-license-revenue'),
+                            html.A('Trends', href='/trade-license-trends'),
+                            html.A('Submittal Type', href='/trade-license-submittal-types')
                         ], className='dropdown-content')
                     ], className='dropdown'),
                     html.Div([
                         html.Button('Business Licenses', className='dropbtn'),
                         html.Div([
-                            html.A('Volumes', href='/Slide1BL'),
-                            html.A('Revenue', href='/Slide2BL'),
-                            html.A('Trends', href='/Slide3BL'),
-                            html.A('Submittal Type', href='/Slide4BL')
+                            html.A('Volumes', href='/business-license-volumes'),
+                            html.A('Revenue', href='/business-license-revenue'),
+                            html.A('Trends', href='/business-license-trends'),
+                            html.A('Submittal Type', href='/business-license-submittal-types')
                         ], className='dropdown-content')
                     ], className='dropdown'),
                 ], className='navbar'),
@@ -71,35 +71,35 @@ app.layout = html.Div([
 @app.callback(Output('page-content', 'children'),
               [Input('url', 'pathname')])
 def display_page(pathname):
-    if pathname == '/Slide1BL':
+    if pathname == '/business-license-volumes':
         return Slide1BL.layout
-    elif pathname == '/Slide1TL':
+    elif pathname == '/trade-license-volumes':
         return Slide1TL.layout
-    elif pathname == '/Slide2BL':
+    elif pathname == '/business-license-revenue':
         return Slide2BL.layout
-    elif pathname == '/Slide2TL':
+    elif pathname == '/trade-license-revenue':
         return Slide2TL.layout
-    elif pathname == '/Slide3BL':
+    elif pathname == '/business-license-trends':
         return Slide3BL.layout
-    elif pathname == '/Slide4BL':
+    elif pathname == '/business-license-submittal-types':
         return Slide4BL.layout
-    elif pathname == '/Slide4TL':
+    elif pathname == '/trade-license-submittal-types':
         return Slide4TL.layout
-    elif pathname == '/Slide1Permits':
+    elif pathname == '/permit-volumes-and-revenues':
         return Slide1Permits.layout
-    elif pathname == '/Slide2Permits':
+    elif pathname == '/permit-trends':
         return Slide2Permits.layout
-    elif pathname == '/Slide3Permits':
+    elif pathname == '/permits-otc-vs-review':
         return Slide3Permits.layout
-    elif pathname == '/Slide5Permits':
+    elif pathname == '/permits-accelerated-review':
         return Slide5Permits.layout
-    elif pathname == '/PublicDemos':
+    elif pathname == '/public-demos':
         return PublicDemos.layout
-    elif pathname == '/ImmDang':
+    elif pathname == '/imminently-dangerous':
         return ImmDang.layout
-    elif pathname == '/Unsafes':
+    elif pathname == '/unsafes':
         return Unsafes.layout
-    elif pathname == '/UninspectedServiceRequests':
+    elif pathname == '/uninspected-service-requests':
         return UninspectedServiceRequests.layout
     else:
         return Slide1BL.layout

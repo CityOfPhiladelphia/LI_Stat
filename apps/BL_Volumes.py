@@ -19,7 +19,6 @@ with con() as con:
     sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_LICENSEVOLUMES_BL'"
     last_ddl_time = pd.read_sql_query(sql=sql, con=con)
 
-# Strip 'BL_' from JOBTYPE
 # Rename the columns to be more readable
 # Make a DateText Column to display on the graph
 df = (df.rename(columns={'ISSUEDATE': 'Issue Date', 'LICENSETYPE': 'License Type', 'COUNTJOBS': 'Number of Licenses Issued'})

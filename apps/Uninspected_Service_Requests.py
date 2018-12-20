@@ -261,46 +261,50 @@ layout = html.Div(children=[
                 ], className='dashrow'),
                 html.Div([
                     html.Div([
-                        dcc.Graph(id='uninspected-sr-map',
-                                  figure=go.Figure(
-                                      data=[
-                                          go.Scattermapbox(
-                                              lon=df['LON'],
-                                              lat=df['LAT'],
-                                              mode='markers',
-                                              marker=dict(
-                                                  size=14
-                                              ),
-                                              text='Address: ' + df['ADDRESS'].map(str) +
-                                                   '<br>' +
-                                                   'Problem: ' + df['Problem Description'].map(str) +
-                                                   '<br>' +
-                                                   'Unit: ' + df['Unit'].map(str) +
-                                                   '<br>' +
-                                                   'District: ' + df['District'].map(str) +
-                                                   '<br>' +
-                                                   'Call Date: ' + df['Call Date (no time)'].map(str) +
-                                                   '<br>' +
-                                                   'Within SLA: ' + df['Within SLA'].map(str),
-                                              hoverinfo='text'
-                                          )
-                                      ],
-                                      layout=go.Layout(
-                                          autosize=True,
-                                          hovermode='closest',
-                                          mapbox=dict(
-                                              accesstoken=MAPBOX_ACCESS_TOKEN,
-                                              bearing=0,
-                                              center=dict(
-                                                  lon=-75.1652,
-                                                  lat=39.9526
-                                              ),
-                                              pitch=0,
-                                              zoom=10
+                        dcc.Graph(
+                            id='uninspected-sr-map',
+                            config={
+                                'displayModeBar': False
+                            },
+                              figure=go.Figure(
+                                  data=[
+                                      go.Scattermapbox(
+                                          lon=df['LON'],
+                                          lat=df['LAT'],
+                                          mode='markers',
+                                          marker=dict(
+                                              size=14
                                           ),
+                                          text='Address: ' + df['ADDRESS'].map(str) +
+                                               '<br>' +
+                                               'Problem: ' + df['Problem Description'].map(str) +
+                                               '<br>' +
+                                               'Unit: ' + df['Unit'].map(str) +
+                                               '<br>' +
+                                               'District: ' + df['District'].map(str) +
+                                               '<br>' +
+                                               'Call Date: ' + df['Call Date (no time)'].map(str) +
+                                               '<br>' +
+                                               'Within SLA: ' + df['Within SLA'].map(str),
+                                          hoverinfo='text'
                                       )
+                                  ],
+                                  layout=go.Layout(
+                                      autosize=True,
+                                      hovermode='closest',
+                                      mapbox=dict(
+                                          accesstoken=MAPBOX_ACCESS_TOKEN,
+                                          bearing=0,
+                                          center=dict(
+                                              lon=-75.1652,
+                                              lat=39.9526
+                                          ),
+                                          pitch=0,
+                                          zoom=10
+                                      ),
                                   )
-                                  , style={'height': '700px'})
+                              )
+                              , style={'height': '700px'})
                     ], className='twelve columns')
                 ], className='dashrow'),
                 html.Div([

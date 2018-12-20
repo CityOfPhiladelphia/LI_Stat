@@ -60,7 +60,11 @@ layout = html.Div(children=[
                 ], className='dashrow filters'),
                 html.Div([
                     html.Div([
-                        dcc.Graph(id='imm-dang-graph',
+                        dcc.Graph(
+                            id='imm-dang-graph',
+                            config={
+                                'displayModeBar': False
+                            },
                             figure=go.Figure(
                                 data=[
                                     go.Scatter(

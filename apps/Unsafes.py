@@ -50,7 +50,11 @@ layout = html.Div(children=[
                 ], className='dashrow filters'),
                 html.Div([
                     html.Div([
-                        dcc.Graph(id='unsafes-graph',
+                        dcc.Graph(
+                            id='unsafes-graph',
+                            config={
+                                'displayModeBar': False
+                            },
                             figure=go.Figure(
                                 data=[
                                     go.Scatter(

@@ -102,7 +102,11 @@ layout = html.Div(children=[
                 ], style={'display': 'table', 'width': '80%', 'margin-left': 'auto', 'margin-right': 'auto'}),
                 html.Div([
                     html.Div([
-                        dcc.Graph(id='public-demos-graph',
+                        dcc.Graph(
+                            id='public-demos-graph',
+                            config={
+                                'displayModeBar': False
+                            },
                             figure=go.Figure(
                                 data=[
                                     go.Scatter(

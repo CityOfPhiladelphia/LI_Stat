@@ -98,7 +98,11 @@ layout = html.Div(children=[
                 html.Div([
                     html.Div(
                         [
-                            dcc.Graph(id='slide2TL-my-graph',
+                            dcc.Graph(
+                                id='slide2TL-my-graph',
+                                config={
+                                    'displayModeBar': False
+                                },
                                 figure=go.Figure(
                                     data=[
                                         go.Scatter(

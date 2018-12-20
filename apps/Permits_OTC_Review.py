@@ -131,7 +131,11 @@ layout = html.Div(children=[
                 ], className='dashrow filters'),
                 html.Div([
                     html.Div([
-                        dcc.Graph(id='slide3-permits-graph',
+                        dcc.Graph(
+                            id='slide3-permits-graph',
+                            config={
+                                'displayModeBar': False
+                            },
                             figure=go.Figure(
                                 data=[
                                     go.Scatter(

@@ -99,7 +99,11 @@ layout = html.Div([
     html.P(f"Data last updated {last_ddl_time['LAST_DDL_TIME'].iloc[0]}", style = {'text-align': 'center', 'margin-bottom': '50px'}),
     html.Div([
         html.Div([
-            dcc.Graph(id='slide4BL-createdbytype-chart',
+            dcc.Graph(
+                id='slide4BL-createdbytype-chart',
+                config={
+                    'displayModeBar': False
+                },
                 figure=go.Figure(
                     data=[
                         go.Scatter(

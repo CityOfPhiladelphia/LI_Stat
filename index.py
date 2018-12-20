@@ -16,8 +16,8 @@ app.layout = html.Div([
                     html.Div([
                         html.Button('Miscellaneous', className='dropbtn'),
                         html.Div([
-                            html.A('Imminently Dangerous Properties', href='/imminently-dangerous'),
-                            html.A('Unsafe Properties', href='/unsafes'),
+                            html.A('Imminently Dangerous Violations', href='/imminently-dangerous'),
+                            html.A('Unsafe Violations', href='/unsafes'),
                             html.A('Public Demolitions', href='/public-demos'),
                             html.A('Uninspected Service Requests', href='/uninspected-service-requests')
                         ], className='dropdown-content')

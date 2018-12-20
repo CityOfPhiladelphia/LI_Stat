@@ -46,7 +46,7 @@ df_counts.rename(columns=
 df_counts = df_counts.assign(DateText=lambda x: x['Violation Month'].dt.strftime('%b %Y'))
 
 layout = html.Div(children=[
-                html.H1('Immenently Dangerous Buildings', style={'text-align': 'center'}),
+                html.H1('Immenently Dangerous Violations', style={'text-align': 'center'}),
                 html.Div([
                     html.Div([
                         html.P('Filter by Violation Date'),

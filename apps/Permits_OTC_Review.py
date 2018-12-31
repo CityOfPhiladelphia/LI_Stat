@@ -4,7 +4,7 @@ import dash_table_experiments as table
 import plotly.graph_objs as go
 import pandas as pd
 from dash.dependencies import Input, Output
-from datetime import datetime
+from datetime import datetime, date
 import numpy as np
 import urllib.parse
 import os
@@ -23,6 +23,10 @@ with con() as con:
 # Make a DateText Column to display on the graph
 df = (df.rename(columns={'ISSUEDATE': 'Issue Date', 'PERMITDESCRIPTION': 'Permit Type', 'TYPEOFWORK': 'Work Type', 'COUNTOTCPERMITS': 'OTC Permits Issued', 'COUNTREVIEWPERMITS': 'Reviewed Permits Issued'})
         .assign(DateText=lambda x: x['Issue Date'].dt.strftime('%b %Y')))
+
+df['Issue Date'] = df['Issue Date'].map(lambda dt: dt.date())
+issue_dates = df['Issue Date'].unique()
+issue_dates.sort()
 
 df['Permit Type'] = df['Permit Type'].astype(str)
 df['Permit Type'] = df['Permit Type'].map(lambda x: x.replace(" PERMIT", ""))
@@ -45,51 +49,69 @@ total_review_permit_volume = '{:,.0f}'.format(df['Reviewed Permits Issued'].sum(
 def update_total_otc_permit_volume(selected_start, selected_end, selected_permittype, selected_worktype):
     df_selected = df.copy(deep=True)
 
+    start_date = datetime.strptime(selected_start, "%Y-%m-%d").date()
+    end_date = datetime.strptime(selected_end, "%Y-%m-%d").date()
+
     if selected_permittype != "All":
         df_selected = df_selected[(df_selected['Permit Type'] == selected_permittype)]
     if selected_worktype != "All":
         df_selected = df_selected[(df_selected['Work Type'] == selected_worktype)]
 
-    df_selected = df_selected.loc[(df_selected['Issue Date'] >= selected_start)&(df_selected['Issue Date'] <= selected_end)]
+    df_selected = df_selected.loc[(df_selected['Issue Date'] >= start_date)&(df_selected['Issue Date'] <= end_date)]
     total_otc_permit_volume = df_selected['OTC Permits Issued'].sum()
     return '{:,.0f}'.format(total_otc_permit_volume)
 
 def update_total_review_permit_volume(selected_start, selected_end, selected_permittype, selected_worktype):
     df_selected = df.copy(deep=True)
 
+    start_date = datetime.strptime(selected_start, "%Y-%m-%d").date()
+    end_date = datetime.strptime(selected_end, "%Y-%m-%d").date()
+
     if selected_permittype != "All":
         df_selected = df_selected[(df_selected['Permit Type'] == selected_permittype)]
     if selected_worktype != "All":
         df_selected = df_selected[(df_selected['Work Type'] == selected_worktype)]
 
-    df_selected = df_selected.loc[(df_selected['Issue Date'] >= selected_start)&(df_selected['Issue Date'] <= selected_end)]
+    df_selected = df_selected.loc[(df_selected['Issue Date'] >= start_date)&(df_selected['Issue Date'] <= end_date)]
     total_review_permit_volume = df_selected['Reviewed Permits Issued'].sum()
     return '{:,.0f}'.format(total_review_permit_volume)
 
 def update_counts_graph_data(selected_start, selected_end, selected_permittype, selected_worktype):
     df_selected = df.copy(deep=True)
 
+    start_date = datetime.strptime(selected_start, "%Y-%m-%d").date()
+    end_date = datetime.strptime(selected_end, "%Y-%m-%d").date()
+
+    selected_issue_dates = issue_dates[(issue_dates >= start_date) & (issue_dates <= end_date)]
+
     if selected_permittype != "All":
         df_selected = df_selected[(df_selected['Permit Type'] == selected_permittype)]
     if selected_worktype != "All":
         df_selected = df_selected[(df_selected['Work Type'] == selected_worktype)]
 
-    df_selected = (df_selected.loc[(df_selected['Issue Date'] >= selected_start) & (df_selected['Issue Date'] <= selected_end)]
+    df_selected = (df_selected.loc[(df_selected['Issue Date'] >= start_date) & (df_selected['Issue Date'] <= end_date)]
                               .groupby(by=['Issue Date', 'DateText'])['OTC Permits Issued', 'Reviewed Permits Issued']
                               .sum()
-                              .reset_index()
-                              .sort_values(by=['Issue Date']))
-    return df_selected
+                              .reset_index())
+    for month in selected_issue_dates:
+        if month not in df_selected['Issue Date'].values:
+            df_missing_month = pd.DataFrame([[month, month.strftime('%b %Y'), 0, 0]], columns=['Issue Date', 'DateText', 'OTC Permits Issued', 'Reviewed Permits Issued'])
+            df_selected = df_selected.append(df_missing_month, ignore_index=True)
+    df_selected['Issue Date'] = pd.Categorical(df_selected['Issue Date'], issue_dates)
+    return df_selected.sort_values(by='Issue Date')
 
 def update_counts_table_data(selected_start, selected_end, selected_permittype, selected_worktype):
     df_selected = df.copy(deep=True)
 
+    start_date = datetime.strptime(selected_start, "%Y-%m-%d").date()
+    end_date = datetime.strptime(selected_end, "%Y-%m-%d").date()
+    
     if selected_permittype != "All":
         df_selected = df_selected[(df_selected['Permit Type'] == selected_permittype)]
     if selected_worktype != "All":
         df_selected = df_selected[(df_selected['Work Type'] == selected_worktype)]
 
-    df_selected = (df_selected.loc[(df_selected['Issue Date']>=selected_start) & (df_selected['Issue Date']<=selected_end)]
+    df_selected = (df_selected.loc[(df_selected['Issue Date']>=start_date) & (df_selected['Issue Date']<=end_date)]
                               .groupby(by=['Issue Date', 'Permit Type', 'Work Type'])['OTC Permits Issued', 'Reviewed Permits Issued']
                               .sum()
                               .reset_index()
@@ -109,7 +131,7 @@ layout = html.Div(children=[
                             display_format='MMM Y',
                             id='slide3-permits-date-picker-range',
                             start_date=datetime(2016, 1, 1),
-                            end_date=datetime.now()
+                            end_date=date.today()
                         ),
                     ], className='four columns'),
                     html.Div([

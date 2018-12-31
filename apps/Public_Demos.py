@@ -24,13 +24,20 @@ with con() as con:
 df = (df.rename(columns={'DEMODATE': 'Demo Date', 'COUNTDEMOS': 'Count of Demos'})
         .assign(DateText=lambda x: x['Demo Date'].dt.strftime('%b %Y')))
 
+df['Demo Date'] = df['Demo Date'].map(lambda dt: dt.date())
+issue_dates = df['Demo Date'].unique()
+issue_dates.sort()
+
 total_demos = '{:,.0f}'.format(df['Count of Demos'].sum())
 
 
 def update_total_public_demos(selected_start, selected_end):
     df_selected = df.copy(deep=True)
 
-    df_selected = df_selected.loc[(df_selected['Demo Date'] >= selected_start)&(df_selected['Demo Date'] <= selected_end)]
+    start_date = datetime.strptime(selected_start, "%Y-%m-%d").date()
+    end_date = datetime.strptime(selected_end, "%Y-%m-%d").date()
+
+    df_selected = df_selected.loc[(df_selected['Demo Date'] >= start_date)&(df_selected['Demo Date'] <= end_date)]
     total_demos = df_selected['Count of Demos'].sum()
     return '{:,.0f}'.format(total_demos)
 
@@ -38,27 +45,54 @@ def update_total_public_demos(selected_start, selected_end):
 def update_counts_graph_data(selected_start, selected_end):
     df_selected = df.copy(deep=True)
 
-    df_selected = (df_selected.loc[(df_selected['Demo Date'] >= selected_start) & (df_selected['Demo Date'] <= selected_end)]
+    start_date = datetime.strptime(selected_start, "%Y-%m-%d").date()
+    end_date = datetime.strptime(selected_end, "%Y-%m-%d").date()
+
+    selected_issue_dates = issue_dates[(issue_dates >= start_date) & (issue_dates <= end_date)]
+
+    df_selected = (df_selected.loc[(df_selected['Demo Date'] >= start_date) & (df_selected['Demo Date'] <= end_date)]
                               .groupby(by=['Demo Date', 'DateText'])['Count of Demos']
                               .sum()
-                              .reset_index()
-                              .sort_values(by=['Demo Date']))
-    return df_selected
+                              .reset_index())
+    for month in selected_issue_dates:
+        if month not in df_selected['Demo Date'].values:
+            df_missing_month = pd.DataFrame([[month, month.strftime('%b %Y'), 0]], columns=['Demo Date', 'DateText', 'Count of Demos'])
+            df_selected = df_selected.append(df_missing_month, ignore_index=True)
+    df_selected['Demo Date'] = pd.Categorical(df_selected['Demo Date'], issue_dates)
+    return df_selected.sort_values(by='Demo Date')
 
 def update_counts_graph_data_compare(selected_start, selected_end, compare_date_start, compare_date_end):
+    start_date = datetime.strptime(selected_start, "%Y-%m-%d").date()
+    end_date = datetime.strptime(selected_end, "%Y-%m-%d").date()
+    selected_issue_dates = issue_dates[(issue_dates >= start_date) & (issue_dates <= end_date)]
     df_selected1 = df.copy(deep=True)
-    df_selected1 = (df_selected1.loc[(df_selected1['Demo Date'] >= selected_start) & (df_selected1['Demo Date'] <= selected_end)]
+    df_selected1 = (df_selected1.loc[(df_selected1['Demo Date'] >= start_date) & (df_selected1['Demo Date'] <= end_date)]
                               .groupby(by=['Demo Date', 'DateText'])['Count of Demos']
                               .sum()
-                              .reset_index()
-                              .sort_values(by=['Demo Date']))
+                              .reset_index())
+    for month in selected_issue_dates:
+        if month not in df_selected1['Demo Date'].values:
+            df_missing_month = pd.DataFrame([[month, month.strftime('%b %Y'), 0]], columns=['Demo Date', 'DateText', 'Count of Demos'])
+            df_selected1 = df_selected1.append(df_missing_month, ignore_index=True)
+    df_selected1['Demo Date'] = pd.Categorical(df_selected1['Demo Date'], issue_dates)
+    df_selected1.sort_values(by='Demo Date', inplace=True)
 
+    compare_start_date = datetime.strptime(compare_date_start, "%Y-%m-%d").date()
+    compare_end_date = datetime.strptime(compare_date_end, "%Y-%m-%d").date()
+    compare_selected_issue_dates = issue_dates[(issue_dates >= compare_start_date) & (issue_dates <= compare_end_date)]
     df_selected2 = df.copy(deep=True)
-    df_selected2 = (df_selected2.loc[(df_selected2['Demo Date'] >= compare_date_start) & (df_selected2['Demo Date'] <= compare_date_end)]
+    df_selected2 = (df_selected2.loc[(df_selected2['Demo Date'] >= compare_start_date) & (df_selected2['Demo Date'] <= compare_end_date)]
                               .groupby(by=['Demo Date', 'DateText'])['Count of Demos']
                               .sum()
-                              .reset_index()
-                              .sort_values(by=['Demo Date']))
+                              .reset_index())
+    for month in compare_selected_issue_dates:
+        if month not in df_selected2['Demo Date'].values:
+            df_missing_month = pd.DataFrame([[month, month.strftime('%b %Y'), 0]],
+                                            columns=['Demo Date', 'DateText', 'Count of Demos'])
+            df_selected2 = df_selected2.append(df_missing_month, ignore_index=True)
+    df_selected2['Demo Date'] = pd.Categorical(df_selected2['Demo Date'], issue_dates)
+    df_selected2.sort_values(by='Demo Date', inplace=True)
+
     return (df_selected1, df_selected2)
 
 layout = html.Div(children=[

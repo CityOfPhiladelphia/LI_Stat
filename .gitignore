@@ -13,3 +13,4 @@ makecsv.py
 *.~sql
 *.txt
 *.log
+cache-directory

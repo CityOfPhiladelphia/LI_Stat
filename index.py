@@ -10,7 +10,8 @@ from apps import (BL_Volumes, TL_Volumes, BL_Revenue, TL_Revenue, BL_Trends, BL_
                   Imm_Dang, Unsafes, Public_Demos, Uninspected_Service_Requests)
 from send_email import send_email
 
-app.layout = html.Div([
+def serve_layout():
+    return html.Div([
                 html.Nav([
                     html.P('City of Philadelphia | LI Stat'),
                     html.Div([
@@ -67,22 +68,23 @@ app.layout = html.Div([
                 ], className='footer-navbar')
             ])
 
+app.layout = serve_layout
 
 @app.callback(Output('page-content', 'children'),
               [Input('url', 'pathname')])
 def display_page(pathname):
     if pathname == '/business-license-volumes':
-        return BL_Volumes.layout
+        return BL_Volumes.layout()
     elif pathname == '/trade-license-volumes':
         return TL_Volumes.layout
     elif pathname == '/business-license-revenue':
-        return BL_Revenue.layout
+        return BL_Revenue.layout()
     elif pathname == '/trade-license-revenue':
         return TL_Revenue.layout
     elif pathname == '/business-license-trends':
-        return BL_Trends.layout
+        return BL_Trends.layout()
     elif pathname == '/business-license-submittal-types':
-        return BL_Submittal_Type.layout
+        return BL_Submittal_Type.layout()
     elif pathname == '/trade-license-submittal-types':
         return TL_Submittal_Type.layout
     elif pathname == '/permit-volumes-and-revenues':
@@ -96,13 +98,15 @@ def display_page(pathname):
     elif pathname == '/public-demos':
         return Public_Demos.layout
     elif pathname == '/imminently-dangerous':
-        return Imm_Dang.layout
+        return Imm_Dang.layout()
     elif pathname == '/unsafes':
         return Unsafes.layout
     elif pathname == '/uninspected-service-requests':
         return Uninspected_Service_Requests.layout
     else:
         return BL_Volumes.layout
+
+    return BL_Revenue.layout()
 
 if __name__ == '__main__':
     #app.run_server(host='127.0.0.1', port=5001)

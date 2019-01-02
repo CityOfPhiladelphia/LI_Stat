@@ -1,11 +1,25 @@
 import datetime
+from functools import wraps
+
 import dash
 import dash_auth
 import cx_Oracle
 from flask import Flask
-from li_dbs import GISLICLD
-from config import USERNAME_PASSWORD_PAIRS
+from flask_caching import Cache
 
+from li_dbs import GISLICLD
+from config import USERNAME_PASSWORD_PAIRS, REDIS_URL
+
+
+def cache_timeout(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        now = datetime.datetime.now()
+        deadline = now.replace(hour=6, minute=0)
+        period = (deadline - now)
+        f.cache_timeout = period.seconds
+        return f(*args, **kwargs)
+    return decorated_function
 
 con = GISLICLD.GISLICLD
 
@@ -23,4 +37,8 @@ auth = dash_auth.BasicAuth(app, USERNAME_PASSWORD_PAIRS)
 app.config.suppress_callback_exceptions = True
 app.css.config.serve_locally = True
 app.scripts.config.serve_locally = True
+cache = Cache(app.server, config={
+    'CACHE_TYPE': 'redis',
+    'CACHE_REDIS_URL': REDIS_URL
+})
 print('App initialized: ' + str(datetime.datetime.now()))

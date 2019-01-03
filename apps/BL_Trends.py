@@ -31,9 +31,32 @@ def query_data(dataset):
 def dataframe(dataset):
     return pd.read_json(query_data(dataset), orient='split')
 
-# Split the data into renewal_volumes and applications_volumes and pivot it into a logical state,
-# calculate the percent change from 2017-2018 and rename the columns to be easier to read
+def get_last_ddl_time():
+    last_ddl_time = dataframe('last_ddl_time')
+    return last_ddl_time['LAST_DDL_TIME'].iloc[0]
+
+def get_licenses():
+    df_ind = dataframe('df_ind')
+    df_ind['ISSUEDATE'] = pd.to_datetime(df_ind['ISSUEDATE'])
+    # Select only Jan-June 2017 and 2018, then group them by year, job and licensetype
+    licenses = (df_ind.loc[(df_ind['ISSUEDATE'] >= '2017-01-01') 
+                         & (df_ind['ISSUEDATE'] < '2017-07-01')]
+                      .append(df_ind.loc[(df_ind['ISSUEDATE'] >= '2018-01-01') 
+                           & (df_ind['ISSUEDATE'] < '2018-07-01')])
+                      .assign(ISSUEDATE=lambda x: x['ISSUEDATE'].dt.strftime('%Y')))
+    return licenses
+
+def get_license_volumes(licenses):
+    license_volumes = licenses.groupby(['ISSUEDATE', 'JOBTYPE', 'LICENSETYPE'], as_index=False)['COUNTJOBS'].sum()
+    return license_volumes
+
+def get_license_payments(licenses):
+    license_payments = licenses.groupby(['ISSUEDATE', 'JOBTYPE', 'LICENSETYPE'], as_index=False)['TOTALAMOUNT'].sum()
+    return license_payments
+
 def clean_and_pivot_data(license_volumes, jobtype, values):
+    '''Split the data into renewal_volumes and applications_volumes and pivot it into a logical state,
+       calculate the percent change from 2017-2018 and rename the columns to be easier to read'''
     license_volumes = (license_volumes.loc[license_volumes['JOBTYPE'] == jobtype]
                                       .pivot(index='LICENSETYPE', columns='ISSUEDATE', values=values)
                                       .reset_index()
@@ -50,65 +73,45 @@ def select_top_ten_absolute_changes(license_volumes, filteramount):
                                       .sort_values(by='AbsolutePercentChange', ascending=False)
                                       .drop(columns=['AbsolutePercentChange']))
     return license_volumes
-
-def update_layout():
-    df = dataframe('df_ind')
-    df['ISSUEDATE'] = pd.to_datetime(df['ISSUEDATE'])
-    last_ddl_time = dataframe('last_ddl_time')
-
-    # Select only Jan-June 2017 and 2018, then group them by year, job and licensetype
-    licenses = (df.loc[(df['ISSUEDATE'] >= '2017-01-01') 
-                    & (df['ISSUEDATE'] < '2017-07-01')]
-                .append(df.loc[(df['ISSUEDATE'] >= '2018-01-01') 
-                            & (df['ISSUEDATE'] < '2018-07-01')])
-                .assign(ISSUEDATE=lambda x: x['ISSUEDATE'].dt.strftime('%Y')))
-
-    license_volumes = licenses.groupby(['ISSUEDATE', 'JOBTYPE', 'LICENSETYPE'], as_index=False)['COUNTJOBS'].sum()
-
-    # Create column names dictionaries for easy renaming later on.
-    # These make the tables a lot easier to read and understand.
+    
+def get_top_ten_volumes_by_job_type(license_volumes, jobtype):
+    volumes = clean_and_pivot_data(license_volumes, jobtype=jobtype, values='COUNTJOBS')
     license_column_names = {'LICENSETYPE': 'License Type', 
                             '2017': '2017 License Volume', 
                             '2018': '2018 License Volume', 
                             'PercentChange': '% Change'}
+    top_ten_volumes = (select_top_ten_absolute_changes(volumes, 100)
+                            .rename(columns=license_column_names))
+    return top_ten_volumes
 
+def get_top_ten_payments_by_job_type(license_payments, jobtype):
+    payments = clean_and_pivot_data(license_payments, jobtype=jobtype, values='TOTALAMOUNT')
     payment_column_names = {'LICENSETYPE': 'License Type', 
                             '2017': '2017 License Payments', 
                             '2018': '2018 License Payments', 
                             'PercentChange': '% Change'}
-
-    renewal_volumes = clean_and_pivot_data(license_volumes, jobtype='Renewal', values='COUNTJOBS')
-                                    
-    applications_volumes = clean_and_pivot_data(license_volumes, jobtype='Application', values='COUNTJOBS')
-
-    top_ten_renewal_volumes = (select_top_ten_absolute_changes(renewal_volumes, 100)
-                            .rename(columns=license_column_names))
-
-    top_ten_applications_volumes = (select_top_ten_absolute_changes(applications_volumes, 100)
-                                .rename(columns=license_column_names))
-
-    license_payments = licenses.groupby(['ISSUEDATE', 'JOBTYPE', 'LICENSETYPE'], as_index=False)['TOTALAMOUNT'].sum()
-
-    renewal_payments = clean_and_pivot_data(license_payments, jobtype='Renewal', values='TOTALAMOUNT')
-                                    
-    applications_payments = clean_and_pivot_data(license_payments, jobtype='Application', values='TOTALAMOUNT')
-
     # Helper functions for rounding payments up the the nearest dollar
     rounding_functions = {'2017': lambda x: round(x['2017']),
-                        '2018': lambda x: round(x['2018'])}
-
-    top_ten_renewal_payments = (select_top_ten_absolute_changes(renewal_payments, 10000)
+                          '2018': lambda x: round(x['2018'])}
+    top_ten_payments = (select_top_ten_absolute_changes(payments, 10000)
                             .assign(**rounding_functions)
                             .rename(columns=payment_column_names))
+    return top_ten_payments
 
-    top_ten_applications_payments = (select_top_ten_absolute_changes(applications_payments, 10000)
-                                    .assign(**rounding_functions)
-                                    .rename(columns=payment_column_names))
+def update_layout():
+    last_ddl_time = get_last_ddl_time()
+    licenses = get_licenses()
+    license_volumes = get_license_volumes(licenses)
+    license_payments = get_license_payments(licenses)
+    top_ten_renewal_volumes = get_top_ten_volumes_by_job_type(license_volumes, 'Renewal')
+    top_ten_applications_volumes = get_top_ten_volumes_by_job_type(license_volumes, 'Application')
+    top_ten_renewal_payments = get_top_ten_payments_by_job_type(license_payments, 'Renewal')
+    top_ten_applications_payments = get_top_ten_payments_by_job_type(license_payments, 'Application')
 
     return html.Div([
                     html.H1('Business License Trends', style={'text-align': 'center'}),
                     html.H2('From January - July', style={'text-align': 'center'}),
-                    html.P(f"Data last updated {last_ddl_time['LAST_DDL_TIME'].iloc[0]}", style = {'text-align': 'center', 'margin-bottom': '75px'}),
+                    html.P(f"Data last updated {last_ddl_time}", style = {'text-align': 'center', 'margin-bottom': '75px'}),
                     html.Div([
                         html.H3('Top Significant Changes in Application Volumes [1]'),
                         table.DataTable(

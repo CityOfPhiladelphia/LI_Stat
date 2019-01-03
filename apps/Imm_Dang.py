@@ -41,6 +41,29 @@ def query_data(dataset):
 def dataframe(dataset):
     return pd.read_json(query_data(dataset), orient='split')
 
+def get_df_ind():
+    df_ind = dataframe('df_ind')
+    df_ind['VIOLATIONDATE'] = pd.to_datetime(df_ind['VIOLATIONDATE'])
+    return df_ind
+
+def get_df_counts():
+    df_counts = dataframe('df_counts')
+    df_counts['VIOLATIONDATE'] = pd.to_datetime(df_counts['VIOLATIONDATE'])
+    df_counts.rename(columns=
+                {'VIOLATIONDATE': 'Violation Month', 
+                'NUMBEROFVIOLATIONS': 'Number of Violations'}, 
+            inplace=True)
+    df_counts = df_counts.assign(DateText=lambda x: x['Violation Month'].dt.strftime('%b %Y'))
+    return df_counts
+
+def get_ind_last_ddl_time():
+    ind_last_ddl_time = dataframe('ind_last_ddl_time')
+    return ind_last_ddl_time['LAST_DDL_TIME'].iloc[0]
+
+def get_counts_last_ddl_time():
+    counts_last_ddl_time = dataframe('counts_last_ddl_time')
+    return counts_last_ddl_time['LAST_DDL_TIME'].iloc[0]
+
 def update_counts_data(start_date, end_date):
     df_counts = dataframe('df_counts')
     df_results = df_counts.loc[(df_counts['VIOLATIONDATE'] >= start_date) & (df_counts['VIOLATIONDATE'] <= end_date)]\
@@ -54,20 +77,10 @@ def update_ind_data(start_date, end_date):
     return df_results
 
 def update_layout():
-    df_ind = dataframe('df_ind')
-    df_ind['VIOLATIONDATE'] = pd.to_datetime(df_ind['VIOLATIONDATE'])
-    df_counts = dataframe('df_counts')
-    df_counts['VIOLATIONDATE'] = pd.to_datetime(df_counts['VIOLATIONDATE'])
-    ind_last_ddl_time = dataframe('ind_last_ddl_time')
-    counts_last_ddl_time = dataframe('counts_last_ddl_time')
-    # Rename the columns to be more readable
-    df_counts.rename(columns=
-                {'VIOLATIONDATE': 'Violation Month', 
-                'NUMBEROFVIOLATIONS': 'Number of Violations'}, 
-            inplace=True)
-
-    # Make a DateText Column to display on the graph
-    df_counts = df_counts.assign(DateText=lambda x: x['Violation Month'].dt.strftime('%b %Y'))
+    df_ind = get_df_ind()
+    df_counts = get_df_counts()
+    ind_last_ddl_time = get_ind_last_ddl_time()
+    counts_last_ddl_time = get_counts_last_ddl_time()
 
     return html.Div(children=[
                     html.H1('Immenently Dangerous Violations', style={'text-align': 'center'}),
@@ -114,7 +127,7 @@ def update_layout():
                             )
                         ], className='twelve columns'),
                     ], className='dashrow'),
-                    html.P(f"Data last updated {counts_last_ddl_time['LAST_DDL_TIME'].iloc[0]}", className = 'timestamp', style = {'text-align': 'center'}),
+                    html.P(f"Data last updated {counts_last_ddl_time}", className = 'timestamp', style = {'text-align': 'center'}),
                     html.Div([
                         html.Div([
                             dcc.Graph(id='imm-dang-map',
@@ -155,7 +168,7 @@ def update_layout():
                             , style={'height': '700px'})
                         ], className='twelve columns')
                     ], className='dashrow'),
-                    html.P(f"Data last updated {ind_last_ddl_time['LAST_DDL_TIME'].iloc[0]}", className = 'timestamp', style = {'text-align': 'center'}),
+                    html.P(f"Data last updated {ind_last_ddl_time}", className = 'timestamp', style = {'text-align': 'center'}),
                     html.Div([
                         html.Div([
                             html.H3('Number of ID Violations by Month', style={'text-align': 'center'}),
@@ -181,7 +194,7 @@ def update_layout():
                             ], style={'text-align': 'right'})
                         ], style={'width': '50%', 'margin-left': 'auto', 'margin-right': 'auto','margin-top': '50px', 'margin-bottom': '50px'})
                     ], className='dashrow'),
-                    html.P(f"Data last updated {counts_last_ddl_time['LAST_DDL_TIME'].iloc[0]}", className = 'timestamp', style = {'text-align': 'center'}),
+                    html.P(f"Data last updated {counts_last_ddl_time}", className = 'timestamp', style = {'text-align': 'center'}),
                     html.Details([
                         html.Summary('Query Description'),
                         html.Div([

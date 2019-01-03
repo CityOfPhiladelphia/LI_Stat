@@ -25,7 +25,7 @@ def query_data(dataset):
             df = pd.read_sql_query(sql=sql, con=con, parse_dates=['ISSUEDATE'])
             df.sort_values(by='ISSUEDATE', inplace=True)
             df = (df.rename(columns={'ISSUEDATE': 'Issue Date', 'LICENSETYPE': 'License Type', 'COUNTJOBS': 'Number of Licenses Issued'})
-            .assign(DateText=lambda x: x['Issue Date'].dt.strftime('%b %Y')))
+                    .assign(DateText=lambda x: x['Issue Date'].dt.strftime('%b %Y')))
         elif dataset == 'last_ddl_time':
             sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_LICENSEVOLUMES_BL'"
             df = pd.read_sql_query(sql=sql, con=con)
@@ -33,6 +33,30 @@ def query_data(dataset):
 
 def dataframe(dataset):
     return pd.read_json(query_data(dataset), orient='split')
+
+def get_df_ind():
+    df_ind = dataframe('df_ind')
+    df_ind['Issue Date'] = pd.to_datetime(df_ind['Issue Date']).map(lambda dt: dt.date())
+    return df_ind
+
+def get_last_ddl_time():
+    last_ddl_time = dataframe('last_ddl_time')
+    return last_ddl_time['LAST_DDL_TIME'].iloc[0]
+
+def get_issue_dates(df_ind):
+    issue_dates = df_ind['Issue Date'].unique()
+    issue_dates.sort()
+    return issue_dates
+
+def get_unique_licensetypes(df_ind):
+    unique_licensetypes = df_ind['License Type'].unique()
+    unique_licensetypes.sort()
+    unique_licensetypes = np.append(['All'], unique_licensetypes)
+    return unique_licensetypes
+
+def get_total_license_volume(df_ind):
+    total_license_volume = '{:,.0f}'.format(df_ind['Number of Licenses Issued'].sum())
+    return total_license_volume
 
 def update_total_license_volume(selected_start, selected_end, selected_jobtype, selected_licensetype):
     df_selected = dataframe('df_ind')
@@ -98,24 +122,15 @@ def update_counts_table_data(selected_start, selected_end, selected_jobtype, sel
     return df_selected
 
 def update_layout():
-    df = dataframe('df_ind')
-    df['Issue Date'] = pd.to_datetime(df['Issue Date']).map(lambda dt: dt.date())
-    last_ddl_time = dataframe('last_ddl_time')
-    # Rename the columns to be more readable
-    # Make a DateText Column to display on the graph
-
-    issue_dates = df['Issue Date'].unique()
-    issue_dates.sort()
-
-    unique_licensetypes = df['License Type'].unique()
-    unique_licensetypes.sort()
-    unique_licensetypes = np.append(['All'], unique_licensetypes)
-
-    total_license_volume = '{:,.0f}'.format(df['Number of Licenses Issued'].sum())
+    df_ind = get_df_ind()
+    last_ddl_time = get_last_ddl_time()
+    issue_dates = get_issue_dates(df_ind)
+    unique_licensetypes = get_unique_licensetypes(df_ind)
+    total_license_volume = get_total_license_volume(df_ind)
 
     return html.Div(children=[
                     html.H1('Business License Volumes', style={'text-align': 'center'}),
-                    html.P(f"Data last updated {last_ddl_time['LAST_DDL_TIME'].iloc[0]}", style = {'text-align': 'center'}),
+                    html.P(f"Data last updated {last_ddl_time}", style = {'text-align': 'center'}),
                     html.Div([
                         html.Div([
                             html.P('Filter by Issue Date'),
@@ -157,10 +172,10 @@ def update_layout():
                                 figure=go.Figure(
                                     data=[
                                         go.Scatter(
-                                            x=df['Issue Date'],
-                                            y=df['Number of Licenses Issued'],
+                                            x=df_ind['Issue Date'],
+                                            y=df_ind['Number of Licenses Issued'],
                                             mode='lines',
-                                            text=df['DateText'],
+                                            text=df_ind['DateText'],
                                             hoverinfo='text+y',
                                             line=dict(
                                                 shape='spline',

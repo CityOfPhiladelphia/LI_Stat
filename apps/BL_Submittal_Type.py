@@ -31,90 +31,122 @@ def query_data(dataset):
 def dataframe(dataset):
     return pd.read_json(query_data(dataset), orient='split')
 
-def percent_renewals(df):
-    count_new = df.loc[df['JOBTYPE'] == 'Application']['JOBNUMBERCOUNT'].sum()
-    count_renewals = df.loc[df['JOBTYPE'] == 'Renewal']['JOBNUMBERCOUNT'].sum()
-    return round(count_renewals / (count_new + count_renewals) * 100, 1)
+def get_df_ind():
+    df_ind = dataframe('df_ind')
+    df_ind['ISSUEDATE'] = pd.to_datetime(df_ind['ISSUEDATE'])
+    return df_ind
 
-def update_layout():
-    df = dataframe('df_ind')
-    df['ISSUEDATE'] = pd.to_datetime(df['ISSUEDATE'])
-
+def get_last_ddl_time():
     last_ddl_time = dataframe('last_ddl_time')
+    return last_ddl_time['LAST_DDL_TIME'].iloc[0]
 
-    df_chart_createdbytype = (df.copy(deep=True)
-                                .groupby(['ISSUEDATE', 'CREATEDBYTYPE'])['JOBNUMBERCOUNT']
-                                .sum()
-                                .reset_index()
-                                .sort_values(by='ISSUEDATE')
-                                .assign(DateText=lambda x: x['ISSUEDATE'].dt.strftime('%b %Y')))
-
-    df_chart_createdbytype_all = (df.copy(deep=True)
-                                    .groupby(['ISSUEDATE'])['JOBNUMBERCOUNT']
+def get_df_chart_createdbytype(df_ind):
+    df_chart_createdbytype = (df_ind.groupby(['ISSUEDATE', 'CREATEDBYTYPE'])['JOBNUMBERCOUNT']
                                     .sum()
                                     .reset_index()
                                     .sort_values(by='ISSUEDATE')
                                     .assign(DateText=lambda x: x['ISSUEDATE'].dt.strftime('%b %Y')))
+    return df_chart_createdbytype
 
-    df_chart_jobtype = (df.copy(deep=True)
-                          .groupby(['ISSUEDATE', 'JOBTYPE'])['JOBNUMBERCOUNT']
-                          .sum()
-                          .reset_index()
-                          .sort_values(by='ISSUEDATE')
-                          .assign(DateText=lambda x: x['ISSUEDATE'].dt.strftime('%b %Y')))
+def get_df_chart_createdbytype_all(df_ind):
+    df_chart_createdbytype_all = (df_ind.groupby(['ISSUEDATE'])['JOBNUMBERCOUNT']
+                                        .sum()
+                                        .reset_index()
+                                        .sort_values(by='ISSUEDATE')
+                                        .assign(DateText=lambda x: x['ISSUEDATE'].dt.strftime('%b %Y')))
+    return df_chart_createdbytype_all
 
-    df_chart_jobtype_all = (df.copy(deep=True)
-                              .groupby(['ISSUEDATE'])['JOBNUMBERCOUNT']
+def get_df_chart_jobtype(df_ind):
+    df_chart_jobtype = (df_ind.groupby(['ISSUEDATE', 'JOBTYPE'])['JOBNUMBERCOUNT']
                               .sum()
                               .reset_index()
                               .sort_values(by='ISSUEDATE')
                               .assign(DateText=lambda x: x['ISSUEDATE'].dt.strftime('%b %Y')))
+    return df_chart_jobtype
 
-    df_created_by_type = (df.copy(deep=True)
-                            .loc[df['ISSUEDATE'] >= '2018-01-01']
-                            .groupby(['CREATEDBYTYPE'])['JOBNUMBERCOUNT']
-                            .sum())
+def get_df_chart_jobtype_all(df_ind):
+    df_chart_jobtype_all = (df_ind.groupby(['ISSUEDATE'])['JOBNUMBERCOUNT']
+                                  .sum()
+                                  .reset_index()
+                                  .sort_values(by='ISSUEDATE')
+                                  .assign(DateText=lambda x: x['ISSUEDATE'].dt.strftime('%b %Y')))
+    return df_chart_jobtype_all
 
-    df_job_type = (df.copy(deep=True)
-                     .loc[df['ISSUEDATE'] >= '2018-01-01']
-                     .groupby(['JOBTYPE'])['JOBNUMBERCOUNT']
-                     .sum())
+def get_df_created_by_type(df_ind):
+    df_created_by_type = (df_ind.loc[df_ind['ISSUEDATE'] >= '2018-01-01']
+                                .groupby(['CREATEDBYTYPE'])['JOBNUMBERCOUNT']
+                                .sum())
+    return df_created_by_type
 
-    df_table = (df.copy(deep=True)
-                  .groupby(['ISSUEDATE', 'LICENSETYPE', 'CREATEDBYTYPE'])['JOBNUMBERCOUNT']
-                  .sum()
-                  .reset_index()
-                  .sort_values(by='ISSUEDATE')
-                  .assign(ISSUEDATE=lambda x: x['ISSUEDATE'].dt.strftime('%b %Y'))
-                  .rename(columns={'ISSUEDATE': 'Issue Date', 'LICENSETYPE': 'License Type', 'CREATEDBYTYPE': 'Submittal Type', 'JOBNUMBERCOUNT': 'Jobs Completed'}))
+def get_df_job_type(df_ind):
+    df_job_type = (df_ind.loc[df_ind['ISSUEDATE'] >= '2018-01-01']
+                         .groupby(['JOBTYPE'])['JOBNUMBERCOUNT']
+                         .sum())
+    return df_job_type
 
-    all_licenses = df.copy(deep=True)
-    rentals = df.loc[(df['LICENSETYPE'] == 'Rental') & (df['CREATEDBYTYPE'] == 'Online') & (df['ISSUEDATE'] >= '2018-01-01')] 
-    vacant_properties = df.loc[(df['LICENSETYPE'].str.contains('Vacant')) & (df['CREATEDBYTYPE'] == 'Online') & (df['ISSUEDATE'] >= '2018-01-01')]
-    food = df.loc[(df['LICENSETYPE'].str.contains('Food')) & (df['CREATEDBYTYPE'] == 'Online') & (df['ISSUEDATE'] >= '2018-01-01')]
-    cals = df.loc[(df['LICENSETYPE'].str.contains('Activity')) & (df['CREATEDBYTYPE'] == 'Online') & (df['ISSUEDATE'] >= '2018-01-01')]
+def get_df_table(df_ind):
+    df_table = (df_ind.groupby(['ISSUEDATE', 'LICENSETYPE', 'CREATEDBYTYPE'])['JOBNUMBERCOUNT']
+                      .sum()
+                      .reset_index()
+                      .sort_values(by='ISSUEDATE')
+                      .assign(ISSUEDATE=lambda x: x['ISSUEDATE'].dt.strftime('%b %Y'))
+                      .rename(columns={'ISSUEDATE': 'Issue Date', 'LICENSETYPE': 'License Type', 'CREATEDBYTYPE': 'Submittal Type', 'JOBNUMBERCOUNT': 'Jobs Completed'}))
+    return df_table
 
+def get_licenses_by_type(df_ind, license_type):
+    licenses = df_ind.loc[(df_ind['LICENSETYPE'].str.contains(license_type)) & (df_ind['CREATEDBYTYPE'] == 'Online') & (df_ind['ISSUEDATE'] >= '2018-01-01')] 
+    return licenses
+
+def get_df_table_2(df_ind):
+    rentals = get_licenses_by_type(df_ind, 'Rental')
+    vacant_properties = get_licenses_by_type(df_ind, 'Vacant')
+    food = get_licenses_by_type(df_ind, 'Food')
+    cals = get_licenses_by_type(df_ind, 'Activity')
     df_table_2 = pd.DataFrame(data={
-    'License Type': ['All Licenses', 'Rentals', 'Vacant Properties', 'Food'],
-    '% Online Renewals': [percent_renewals(license_type) for license_type in [all_licenses, rentals, vacant_properties, food]]
+        'License Type': ['All Licenses', 'Rentals', 'Vacant Properties', 'Food'],
+        '% Online Renewals': [percent_renewals(license_type) for license_type in [df_ind, rentals, vacant_properties, food]]
     })
+    return df_table_2
 
-    count_2016 = df.loc[(df['ISSUEDATE'] >= '2016-01-01') & (df['ISSUEDATE'] < '2016-08-01')]['JOBNUMBERCOUNT'].sum()
-    count_2017 = df.loc[(df['ISSUEDATE'] >= '2017-01-01') & (df['ISSUEDATE'] < '2017-08-01')]['JOBNUMBERCOUNT'].sum()
-    count_2018 = df.loc[(df['ISSUEDATE'] >= '2018-01-01')  & (df['ISSUEDATE'] < '2018-08-01')]['JOBNUMBERCOUNT'].sum()
+def get_license_counts_by_year(df_ind, year):
+    year_count = df_ind.loc[(df_ind['ISSUEDATE'] >= f'{year}-01-01') & (df_ind['ISSUEDATE'] < f'{year}-08-01')]['JOBNUMBERCOUNT'].sum()
+    return year_count
+
+def get_df_table_3(df_ind):
+    count_2016 = get_license_counts_by_year(df_ind, 2016)
+    count_2017 = get_license_counts_by_year(df_ind, 2017)
+    count_2018 = get_license_counts_by_year(df_ind, 2018)
     count_all = count_2016 + count_2017 + count_2018
-
     df_table_3 = pd.DataFrame(data={
         '2016': [count_2016],
         '2017': [count_2017],
         '2018': [count_2018],
         'All': [count_all]
     })
+    return df_table_3
+
+def percent_renewals(df):
+    count_new = df.loc[df['JOBTYPE'] == 'Application']['JOBNUMBERCOUNT'].sum()
+    count_renewals = df.loc[df['JOBTYPE'] == 'Renewal']['JOBNUMBERCOUNT'].sum()
+    return round(count_renewals / (count_new + count_renewals) * 100, 1)
+
+def update_layout():
+    df_ind = get_df_ind()
+    last_ddl_time = get_last_ddl_time()
+    df_chart_createdbytype = get_df_chart_createdbytype(df_ind)
+    df_chart_createdbytype_all = get_df_chart_createdbytype_all(df_ind)
+    df_chart_jobtype = get_df_chart_jobtype(df_ind)
+    df_chart_jobtype_all = get_df_chart_jobtype_all(df_ind)
+    df_created_by_type = get_df_created_by_type(df_ind)
+    df_job_type = get_df_job_type(df_ind)
+    df_table = get_df_table(df_ind)
+    df_table_2 = get_df_table_2(df_ind)
+    df_table_3 = get_df_table_3(df_ind)
 
     return html.Div([
         html.H1('Submittal Type', style={'text-align': 'center'}),
         html.H2('(Business Licenses)', style={'text-align': 'center', 'margin-bottom': '20px'}),
-        html.P(f"Data last updated {last_ddl_time['LAST_DDL_TIME'].iloc[0]}", style = {'text-align': 'center', 'margin-bottom': '50px'}),
+        html.P(f"Data last updated {last_ddl_time}", style = {'text-align': 'center', 'margin-bottom': '50px'}),
         html.Div([
             html.Div([
                 dcc.Graph(

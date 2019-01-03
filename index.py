@@ -94,7 +94,7 @@ def display_page(pathname):
     elif pathname == '/permits-otc-vs-review':
         return Permits_OTC_Review.layout
     elif pathname == '/permits-accelerated-review':
-        return Permits_Accel_Review.layout
+        return Permits_Accel_Review.layout()
     elif pathname == '/public-demos':
         return Public_Demos.layout
     elif pathname == '/imminently-dangerous':
@@ -104,9 +104,7 @@ def display_page(pathname):
     elif pathname == '/uninspected-service-requests':
         return Uninspected_Service_Requests.layout
     else:
-        return BL_Volumes.layout
-
-    return BL_Revenue.layout()
+        return BL_Volumes.layout()
 
 if __name__ == '__main__':
     #app.run_server(host='127.0.0.1', port=5001)

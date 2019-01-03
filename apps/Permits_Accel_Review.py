@@ -1,51 +1,87 @@
+import os
+from datetime import datetime
+import urllib.parse
+
+import pandas as pd
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_table_experiments as table
 import plotly.graph_objs as go
-import pandas as pd
 from dash.dependencies import Input, Output
-from datetime import datetime
 import numpy as np
-import urllib.parse
-import os
 
-from app import app, con
+from app import app, cache, cache_timeout
+
 
 print(os.path.basename(__file__))
 
-with con() as con:
-    sql = 'SELECT * FROM li_stat_permits_accelreview'
-    df = pd.read_sql_query(sql=sql, con=con, parse_dates=['PERMITAPPLICATIONDATE', 'PERMITISSUEDATE',
-                                                                  'REVIEWISSUEDATE', 'PAIDDTTM'])
-    sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_PERMITS_ACCELREVIEW'"
-    last_ddl_time = pd.read_sql_query(sql=sql, con=con)
+@cache_timeout
+@cache.memoize()
+def query_data(dataset):
+    from app import con
+    with con() as con:
+        if dataset == 'df_ind':
+            sql = 'SELECT * FROM li_stat_permits_accelreview'
+            df = pd.read_sql_query(sql=sql, con=con, parse_dates=['PERMITAPPLICATIONDATE', 'PERMITISSUEDATE',
+                                                                        'REVIEWISSUEDATE', 'PAIDDTTM'])
+        elif dataset == 'last_ddl_time':
+            sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_PERMITS_ACCELREVIEW'"
+            df = pd.read_sql_query(sql=sql, con=con)
+    return df.to_json(date_format='iso', orient='split')
 
-# Rename the columns to be more readable
-df = (df.rename(columns={'APNO': 'Permit Number', 'PERMITAPPLICATIONDATE': 'Permit Application Date',
-                         'PERMITISSUEDATE': 'Permit Issue Date', 'SLACOMPLIANCE': 'SLA Compliance',
-                         'PERMITDESCRIPTION': 'Permit Type', 'WORKTYPE': 'Work Type'}))
+def dataframe(dataset):
+    return pd.read_json(query_data(dataset), orient='split')
 
-df['Permit Type'] = df['Permit Type'].astype(str)
-df['Permit Type'] = df['Permit Type'].map(lambda x: x.replace(" PERMIT", ""))
-df['Permit Type'] = df['Permit Type'].str.lower()
-df['Permit Type'] = df['Permit Type'].str.title()
+def get_df_ind():
+    df = dataframe('df_ind')
+    # Rename the columns to be more readable
+    df = (df.rename(columns={'APNO': 'Permit Number', 'PERMITAPPLICATIONDATE': 'Permit Application Date',
+                            'PERMITISSUEDATE': 'Permit Issue Date', 'SLACOMPLIANCE': 'SLA Compliance',
+                            'PERMITDESCRIPTION': 'Permit Type', 'WORKTYPE': 'Work Type'}))
 
-unique_permittypes = df['Permit Type'].unique()
-unique_permittypes.sort()
-unique_permittypes = np.append(['All'], unique_permittypes)
+    df['Permit Type'] = df['Permit Type'].astype(str)
+    df['Permit Type'] = df['Permit Type'].map(lambda x: x.replace(" PERMIT", ""))
+    df['Permit Type'] = df['Permit Type'].str.lower()
+    df['Permit Type'] = df['Permit Type'].str.title()
+    df['Work Type'] = df['Work Type'].fillna('None').astype(str)
+    return df
 
-df['Work Type'] = df['Work Type'].fillna('None').astype(str)
+def get_last_ddl_time():
+    df = dataframe('last_ddl_time')
+    df = df['LAST_DDL_TIME'].iloc[0]
+    return df
 
-unique_worktypes = df['Work Type'].unique()
-unique_worktypes.sort()
-unique_worktypes = np.append(['All'], unique_worktypes)
+def get_unique_permittypes():
+    df = get_df_ind()
+    unique_permittypes = df['Permit Type'].unique()
+    unique_permittypes.sort()
+    unique_permittypes = np.append(['All'], unique_permittypes)
+    return unique_permittypes
 
-null_hour_values = df['HOURS'].isna().sum()
-zero_hour_values = (df['HOURS']==0).sum()
-records = len(df)
+def get_unique_worktypes():
+    df = get_df_ind()
+    unique_worktypes = df['Work Type'].unique()
+    unique_worktypes.sort()
+    unique_worktypes = np.append(['All'], unique_worktypes)
+    return unique_worktypes
+
+def get_null_hours():
+    df = get_df_ind()
+    null_hour_values = df['HOURS'].isna().sum()
+    return null_hour_values
+
+def get_zero_hour_values():
+    df = get_df_ind()
+    zero_hour_values = (df['HOURS']==0).sum()
+    return zero_hour_values
+
+def get_records_count():
+    df = get_df_ind()
+    records = len(df)
+    return records
 
 def update_table_data(selected_start, selected_end, selected_permittype, selected_worktype):
-    df_selected = df.copy(deep=True)
+    df_selected = get_df_ind()
 
     if selected_permittype != "All":
         df_selected = df_selected[(df_selected['Permit Type'] == selected_permittype)]
@@ -64,7 +100,7 @@ def update_table_data(selected_start, selected_end, selected_permittype, selecte
     return df_selected_grouped.sort_values(by=['SLA Compliance'])
 
 def update_footnote(selected_start, selected_end, selected_permittype, selected_worktype):
-    df_selected = df.copy(deep=True)
+    df_selected = get_df_ind()
 
     if selected_permittype != "All":
         df_selected = df_selected[(df_selected['Permit Type'] == selected_permittype)]
@@ -85,83 +121,88 @@ def update_footnote(selected_start, selected_end, selected_permittype, selected_
     else:
         return '[1] No records'
 
+def update_layout():
+    last_ddl_time = get_last_ddl_time()
+    unique_permittypes = get_unique_permittypes()
+    unique_worktypes = get_unique_worktypes()
 
-layout = html.Div(children=[
-                html.H1('Accelerated Reviews', style={'text-align': 'center'}),
-                html.P(f"Data last updated {last_ddl_time['LAST_DDL_TIME'].iloc[0]}", style = {'text-align': 'center'}),
-                html.Div([
+    return html.Div(children=[
+                    html.H1('Accelerated Reviews', style={'text-align': 'center'}),
+                    html.P(f"Data last updated {last_ddl_time}", style = {'text-align': 'center'}),
                     html.Div([
-                        html.P('Filter by Permit Application Date'),
-                        dcc.DatePickerRange(
-                            display_format='MMM Y',
-                            id='slide5-permits-date-picker-range',
-                            start_date=datetime(2016, 1, 1),
-                            end_date=datetime.now()
-                        ),
-                    ], className='four columns'),
-                    html.Div([
-                        html.P('Filter by Permit Type'),
-                        dcc.Dropdown(
-                                id='slide5-permits-permittype-dropdown',
-                                options=[{'label': k, 'value': k} for k in unique_permittypes],
-                                value='All'
-                        ),
-                    ], className='four columns'),
-                    html.Div([
-                        html.P('Filter by Work Type'),
-                        dcc.Dropdown(
-                            id='slide5-permits-worktype-dropdown',
-                            options=[{'label': k, 'value': k} for k in unique_worktypes],
-                            value='All'
-                        ),
-                    ], className='four columns'),
-                ], className='dashrow filters'),
-                html.Div([
-                    html.Div([
-                        html.H3('Accelerated Reviews', style={'text-align': 'center'}),
                         html.Div([
-                            table.DataTable(
-                                rows=[{}],
-                                columns=['SLA Compliance', '# of Accel. Reviews', '% of Total', 'Avg. Hours Per Review [1]'],
-                                editable=False,
-                                sortable=True,
-                                id='slide5-permits-count-table'
+                            html.P('Filter by Permit Application Date'),
+                            dcc.DatePickerRange(
+                                display_format='MMM Y',
+                                id='slide5-permits-date-picker-range',
+                                start_date=datetime(2016, 1, 1),
+                                end_date=datetime.now()
                             ),
-                        ], style={'text-align': 'center'},
-                           id='slide5-permits-count-table-div'
-                        ),
+                        ], className='four columns'),
                         html.Div([
-                            html.A(
-                                'Download Data',
-                                id='slide5-permits-count-table-download-link',
-                                download='slide5_permit_volumes_counts.csv',
-                                href='',
-                                target='_blank',
-                            )
-                        ], style={'text-align': 'right'})
-                    ], style={'width': '70%', 'margin-left': 'auto', 'margin-right': 'auto','margin-top': '50px', 'margin-bottom': '50px'})
-                ], className='dashrow'),
-                html.Div([
-                    html.P(
-                        style={'text-align': 'center'},
-                        id='footnote'
-                    )
-                ]),
-                html.Details([
-                    html.Summary('Query Description'),
+                            html.P('Filter by Permit Type'),
+                            dcc.Dropdown(
+                                    id='slide5-permits-permittype-dropdown',
+                                    options=[{'label': k, 'value': k} for k in unique_permittypes],
+                                    value='All'
+                            ),
+                        ], className='four columns'),
+                        html.Div([
+                            html.P('Filter by Work Type'),
+                            dcc.Dropdown(
+                                id='slide5-permits-worktype-dropdown',
+                                options=[{'label': k, 'value': k} for k in unique_worktypes],
+                                value='All'
+                            ),
+                        ], className='four columns'),
+                    ], className='dashrow filters'),
+                    html.Div([
+                        html.Div([
+                            html.H3('Accelerated Reviews', style={'text-align': 'center'}),
+                            html.Div([
+                                table.DataTable(
+                                    rows=[{}],
+                                    columns=['SLA Compliance', '# of Accel. Reviews', '% of Total', 'Avg. Hours Per Review [1]'],
+                                    editable=False,
+                                    sortable=True,
+                                    id='slide5-permits-count-table'
+                                ),
+                            ], style={'text-align': 'center'},
+                            id='slide5-permits-count-table-div'
+                            ),
+                            html.Div([
+                                html.A(
+                                    'Download Data',
+                                    id='slide5-permits-count-table-download-link',
+                                    download='slide5_permit_volumes_counts.csv',
+                                    href='',
+                                    target='_blank',
+                                )
+                            ], style={'text-align': 'right'})
+                        ], style={'width': '70%', 'margin-left': 'auto', 'margin-right': 'auto','margin-top': '50px', 'margin-bottom': '50px'})
+                    ], className='dashrow'),
                     html.Div([
                         html.P(
-                            'Permits applied for since 1/1/16 that have been issued and have paid an accelerated fee.'),
-                        html.P(
-                            'Within SLA: When the permit was issued within 10 days or less of when it was applied for.'),
-                        html.P(
-                            'Outside SLA: When the permit was issued 10 days or longer from when it was applied for.'),
-                        html.P(
-                            'Avg. Hours Per Review: This data comes from the Hours field in the Supplementary -> Log tab in Hansen.'),
+                            style={'text-align': 'center'},
+                            id='footnote'
+                        )
+                    ]),
+                    html.Details([
+                        html.Summary('Query Description'),
+                        html.Div([
+                            html.P(
+                                'Permits applied for since 1/1/16 that have been issued and have paid an accelerated fee.'),
+                            html.P(
+                                'Within SLA: When the permit was issued within 10 days or less of when it was applied for.'),
+                            html.P(
+                                'Outside SLA: When the permit was issued 10 days or longer from when it was applied for.'),
+                            html.P(
+                                'Avg. Hours Per Review: This data comes from the Hours field in the Supplementary -> Log tab in Hansen.'),
+                        ])
                     ])
-                ])
-])
+    ])
 
+layout = update_layout
 
 @app.callback(
     Output('slide5-permits-count-table', 'rows'),

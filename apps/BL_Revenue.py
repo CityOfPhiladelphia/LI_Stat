@@ -1,6 +1,5 @@
-import json
-import urllib.parse
 import os
+import urllib.parse
 from datetime import datetime
 
 import dash_core_components as dcc
@@ -33,8 +32,43 @@ def query_data(dataset):
 def dataframe(dataset):
     return pd.read_json(query_data(dataset), orient='split')
 
+def get_df_ind():
+    return dataframe('df_ind')
+
+def get_last_ddl_time():
+    last_ddl_time = dataframe('last_ddl_time')
+    last_ddl_time = last_ddl_time['LAST_DDL_TIME'].iloc[0]
+    return last_ddl_time
+
+def get_total_revenue(df_ind):
+    total_revenue = '${:,.0f}'.format(df_ind['Revenue Collected'].sum())
+    return total_revenue
+
+def get_unique_job_types(df_ind):
+    unique_job_types =  df_ind['Job Type'].unique()
+    return unique_job_types
+
+def get_job_type_options(unique_job_types):
+    job_type_options = [{'label': unique_job_type,
+                        'value': unique_job_type}
+                        for unique_job_type in unique_job_types]
+    return job_type_options
+
+def get_df_line_chart(df_ind):
+    df_line_chart = (df_ind.groupby(['Date'])['Revenue Collected']
+                       .sum()
+                       .reset_index()
+                       .assign(DateText=lambda x: x['Date'].dt.strftime('%b %Y')))
+    return df_line_chart
+
+def get_df_pie_chart(df_ind):
+    df_pie_chart = (df_ind.groupby(['Job Type'])['Revenue Collected']
+                      .sum()
+                      .reset_index())
+    return df_pie_chart
+
 def update_count_data(selected_start, selected_end, selected_jobtype):
-    df = dataframe('df_ind')
+    df = get_df_ind()
     df_counts = df[(df['Date'] >= selected_start)
                   & (df['Date']<=selected_end)
                   & df['Job Type'].isin(selected_jobtype)]
@@ -42,7 +76,7 @@ def update_count_data(selected_start, selected_end, selected_jobtype):
     return df_counts
 
 def update_line_chart_data(selected_start, selected_end, selected_jobtype):
-    df = dataframe('df_ind')
+    df = get_df_ind()
     df_line_chart = df[(df['Date'] >= selected_start)
                   & (df['Date']<=selected_end)
                   & df['Job Type'].isin(selected_jobtype)]
@@ -53,7 +87,7 @@ def update_line_chart_data(selected_start, selected_end, selected_jobtype):
     return df_line_chart
 
 def update_pie_data(selected_start, selected_end, selected_jobtype):
-    df = dataframe('df_ind')
+    df = get_df_ind()
     df_pie_chart = df[(df['Date'] >= selected_start)
                     & (df['Date'] <= selected_end)
                     & df['Job Type'].isin(selected_jobtype)]
@@ -61,7 +95,7 @@ def update_pie_data(selected_start, selected_end, selected_jobtype):
     return df_pie_chart
 
 def update_total_revenue(selected_start, selected_end, selected_jobtype):
-    df = dataframe('df_ind')
+    df = get_df_ind()
     df_selected = df[(df['Date'] >= selected_start)
                   & (df['Date']<=selected_end)
                   & df['Job Type'].isin(selected_jobtype)]
@@ -69,25 +103,13 @@ def update_total_revenue(selected_start, selected_end, selected_jobtype):
     return '${:,.0f}'.format(total_license_volume)
 
 def update_layout():
-    df = dataframe('df_ind')
-    last_ddl_time = dataframe('last_ddl_time')
-
-    total_revenue = '${:,.0f}'.format(df['Revenue Collected'].sum())
-
-    unique_job_types = df['Job Type'].unique()
-
-    job_type_options = [{'label': unique_job_type,
-                        'value': unique_job_type}
-                        for unique_job_type in unique_job_types]
-
-    df_line_chart = (df.groupby(['Date'])['Revenue Collected']
-                       .sum()
-                       .reset_index()
-                       .assign(DateText=lambda x: x['Date'].dt.strftime('%b %Y')))
-
-    df_pie_chart = (df.groupby(['Job Type'])['Revenue Collected']
-                      .sum()
-                      .reset_index())
+    df_ind = get_df_ind()
+    last_ddl_time = get_last_ddl_time()
+    total_revenue = get_total_revenue(df_ind)
+    unique_job_types = get_unique_job_types(df_ind)
+    job_type_options = get_job_type_options(unique_job_types)
+    df_line_chart = get_df_line_chart(df_ind)
+    df_pie_chart = get_df_pie_chart(df_ind)
 
     return html.Div(children=[
                     html.H1('Business License Revenue', style={'text-align': 'center'}),

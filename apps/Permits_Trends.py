@@ -1,40 +1,65 @@
+import os
+import urllib.parse
+from datetime import datetime
+
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_table_experiments as table
 import plotly.graph_objs as go
 import pandas as pd
 from dash.dependencies import Input, Output
-from datetime import datetime
 import numpy as np
-import urllib.parse
-import os
 
-from app import app, con
+from app import app, cache, cache_timeout
+
 
 print(os.path.basename(__file__))
 
-with con() as con:
-    sql = 'SELECT * FROM li_stat_permitsfees'
-    df = pd.read_sql_query(sql=sql, con=con, parse_dates=['ISSUEDATE'])
-    sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_PERMITSFEES'"
-    last_ddl_time = pd.read_sql_query(sql=sql, con=con)
+@cache_timeout
+@cache.memoize()
+def query_data(dataset):
+    from app import con
+    with con() as con:
+        if dataset == 'df_ind':
+            sql = 'SELECT * FROM li_stat_permitsfees'
+            df = pd.read_sql_query(sql=sql, con=con, parse_dates=['ISSUEDATE'])
+            df['PERMITDESCRIPTION'] = df['PERMITDESCRIPTION'].map(lambda x: x.replace(" PERMIT", ""))
+            df['PERMITDESCRIPTION'] = df['PERMITDESCRIPTION'].str.lower()
+            df['PERMITDESCRIPTION'] = df['PERMITDESCRIPTION'].str.title()
+        elif dataset == 'last_ddl_time':
+            sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_PERMITSFEES'"
+            df = pd.read_sql_query(sql=sql, con=con)
+    return df.to_json(date_format='iso', orient='split')
 
-df['PERMITDESCRIPTION'] = df['PERMITDESCRIPTION'].map(lambda x: x.replace(" PERMIT", ""))
-df['PERMITDESCRIPTION'] = df['PERMITDESCRIPTION'].str.lower()
-df['PERMITDESCRIPTION'] = df['PERMITDESCRIPTION'].str.title()
+def dataframe(dataset):
+    return pd.read_json(query_data(dataset), orient='split')
 
-# Select only Jun-Nov 2016 and 2017, then group them by year and permit type
-permits = (df.loc[(df['ISSUEDATE'] >= '2016-06-01')
-                 & (df['ISSUEDATE'] < '2016-12-01')]
-              .append(df.loc[(df['ISSUEDATE'] >= '2017-06-01')
-                           & (df['ISSUEDATE'] < '2017-12-01')])
-              .assign(ISSUEDATE=lambda x: x['ISSUEDATE'].dt.strftime('%Y')))
+def get_last_ddl_time():
+    last_ddl_time = dataframe('last_ddl_time')
+    return last_ddl_time['LAST_DDL_TIME'].iloc[0]
 
-permit_volumes = permits.groupby(['ISSUEDATE', 'PERMITDESCRIPTION'], as_index=False)['COUNTPERMITS'].sum()
+def get_permits():
+    df_ind = dataframe('df_ind')
+    df_ind['ISSUEDATE'] = pd.to_datetime(df_ind['ISSUEDATE'])
+    # Select only Jun-Nov 2016 and 2017
+    permits = (df_ind.loc[(df_ind['ISSUEDATE'] >= datetime(2016, 6, 1))
+                        & (df_ind['ISSUEDATE'] < datetime(2016, 12, 1))]
+                .append(df_ind.loc[(df_ind['ISSUEDATE'] >= datetime(2017, 6, 1))
+                     & (df_ind['ISSUEDATE'] < datetime(2017, 12, 1))])
+                .assign(ISSUEDATE=lambda x: x['ISSUEDATE'].dt.strftime('%Y')))
+    return permits
 
-# Split the data into renewal_volumes and applications_volumes and pivot it into a logical state,
-# calculate the percent change from 2016-2017 and rename the columns to be easier to read
+def get_permit_volumes(permits):
+    permit_volumes = permits.groupby(['ISSUEDATE', 'PERMITDESCRIPTION'], as_index=False)['COUNTPERMITS'].sum()
+    return permit_volumes
+
+def get_permit_payments(permits):
+    permit_payments = permits.groupby(['ISSUEDATE', 'PERMITDESCRIPTION'], as_index=False)['TOTALFEESPAID'].sum()
+    return permit_payments
+
 def clean_and_pivot_data(permit_volumes, values):
+    ''' Split the data into renewal_volumes and applications_volumes and pivot it into a logical state,
+        calculate the percent change from 2016-2017 and rename the columns to be easier to read'''
     permit_volumes = (permit_volumes.pivot(index='PERMITDESCRIPTION', columns='ISSUEDATE', values=values)
                                     .reset_index()
                                     .assign(PercentChange=lambda x: round((x['2017'] - x['2016']) /  x['2016'] * 100, 1))
@@ -51,48 +76,48 @@ def select_top_ten_absolute_changes(permit_volumes, filteramount):
                                       .drop(columns=['AbsolutePercentChange']))
     return permit_volumes
 
-# Create column names dictionaries for easy renaming later on.
-# These make the tables a lot easier to read and understand.
-permit_column_names = {'PERMITDESCRIPTION': 'Permit Type',
+def get_top_ten_volumes(permit_volumes):
+    permit_percent_changes = clean_and_pivot_data(permit_volumes, values='COUNTPERMITS')
+    permit_column_names = {'PERMITDESCRIPTION': 'Permit Type',
                         '2016': '2016 Permits Issued',
                         '2017': '2017 Permits Issued',
                         'PercentChange': '% Change'}
-
-payment_column_names = {'PERMITDESCRIPTION': 'Permit Type',
-                        '2016': '2016 Fees Paid ($)',
-                        '2017': '2017 Fees Paid ($)',
-                        'PercentChange': '% Change'}
-
-permit_percent_changes = clean_and_pivot_data(permit_volumes, values='COUNTPERMITS')
-
-top_ten_volumes = (select_top_ten_absolute_changes(permit_percent_changes, 100)
+    top_ten_volumes = (select_top_ten_absolute_changes(permit_percent_changes, 100)
                           .rename(columns=permit_column_names))
+    top_ten_volumes['2016 Permits Issued'] = top_ten_volumes['2016 Permits Issued'].map('{:,.0f}'.format)
+    top_ten_volumes['2017 Permits Issued'] = top_ten_volumes['2017 Permits Issued'].map('{:,.0f}'.format)
+    top_ten_volumes['% Change'] = top_ten_volumes['% Change'].map('{:,.1f}'.format)
+    return top_ten_volumes
 
-permit_payments = permits.groupby(['ISSUEDATE', 'PERMITDESCRIPTION'], as_index=False)['TOTALFEESPAID'].sum()
-
-permit_payments_pivoted = clean_and_pivot_data(permit_payments, values='TOTALFEESPAID')
-                                
-
-# Helper functions for rounding payments up the the nearest dollar
-rounding_functions = {'2016': lambda x: round(x['2016']),
-                      '2017': lambda x: round(x['2017'])}
-
-top_ten_payments = (select_top_ten_absolute_changes(permit_payments_pivoted, 10000)
+def get_top_ten_payments(permit_payments):
+    permit_payments_pivoted = clean_and_pivot_data(permit_payments, values='TOTALFEESPAID')
+    payment_column_names = {'PERMITDESCRIPTION': 'Permit Type',
+                            '2016': '2016 Fees Paid ($)',
+                            '2017': '2017 Fees Paid ($)',
+                            'PercentChange': '% Change'}
+    # Helper functions for rounding payments up the the nearest dollar
+    rounding_functions = {'2016': lambda x: round(x['2016']),
+                          '2017': lambda x: round(x['2017'])}
+    top_ten_payments = (select_top_ten_absolute_changes(permit_payments_pivoted, 10000)
                            .assign(**rounding_functions)
                            .rename(columns=payment_column_names))
+    top_ten_payments['2016 Fees Paid ($)'] = top_ten_payments['2016 Fees Paid ($)'].map('{:,.0f}'.format)
+    top_ten_payments['2017 Fees Paid ($)'] = top_ten_payments['2017 Fees Paid ($)'].map('{:,.0f}'.format)
+    top_ten_payments['% Change'] = top_ten_payments['% Change'].map('{:,.1f}'.format)
+    return top_ten_payments
 
-top_ten_volumes['2016 Permits Issued'] = top_ten_volumes['2016 Permits Issued'].map('{:,.0f}'.format)
-top_ten_volumes['2017 Permits Issued'] = top_ten_volumes['2017 Permits Issued'].map('{:,.0f}'.format)
-top_ten_volumes['% Change'] = top_ten_volumes['% Change'].map('{:,.1f}'.format)
+def update_layout():
+    last_ddl_time = get_last_ddl_time()
+    permits = get_permits()
+    permit_volumes = get_permit_volumes(permits)
+    permit_payments = get_permit_payments(permits)
+    top_ten_volumes = get_top_ten_volumes(permit_volumes)
+    top_ten_payments = get_top_ten_payments(permit_payments)
 
-top_ten_payments['2016 Fees Paid ($)'] = top_ten_payments['2016 Fees Paid ($)'].map('{:,.0f}'.format)
-top_ten_payments['2017 Fees Paid ($)'] = top_ten_payments['2017 Fees Paid ($)'].map('{:,.0f}'.format)
-top_ten_payments['% Change'] = top_ten_payments['% Change'].map('{:,.1f}'.format)
-
-layout = html.Div([
+    return html.Div([
                 html.H1('Permit Trends', style={'text-align': 'center'}),
                 html.H2('June - November', style={'text-align': 'center'}),
-                html.P(f"Data last updated {last_ddl_time['LAST_DDL_TIME'].iloc[0]}", style = {'text-align': 'center', 'margin-bottom': '75px'}),
+                html.P(f"Data last updated {last_ddl_time}", style = {'text-align': 'center', 'margin-bottom': '75px'}),
                 html.Div([
                     html.H3('Top Significant Changes in Permits Issued [1]'),
                     table.DataTable(
@@ -133,3 +158,5 @@ layout = html.Div([
                     ])
                 ])
             ])
+
+layout = update_layout

@@ -88,11 +88,11 @@ def display_page(pathname):
     elif pathname == '/trade-license-submittal-types':
         return TL_Submittal_Type.layout
     elif pathname == '/permit-volumes-and-revenues':
-        return Permits_Volumes_Revenues.layout
+        return Permits_Volumes_Revenues.layout()
     elif pathname == '/permit-trends':
-        return Permits_Trends.layout
+        return Permits_Trends.layout()
     elif pathname == '/permits-otc-vs-review':
-        return Permits_OTC_Review.layout
+        return Permits_OTC_Review.layout()
     elif pathname == '/permits-accelerated-review':
         return Permits_Accel_Review.layout()
     elif pathname == '/public-demos':

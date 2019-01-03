@@ -1,43 +1,64 @@
+import os
+from datetime import datetime
+import urllib.parse
+
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_table_experiments as table
 import plotly.graph_objs as go
 import pandas as pd
 from dash.dependencies import Input, Output
-from datetime import datetime
 import numpy as np
-import urllib.parse
-import os
 
-from app import app, con
+from app import app, cache, cache_timeout
+
 
 print(os.path.basename(__file__))
 
-with con() as con:
-    sql = 'SELECT * FROM li_stat_permitsfees'
-    df = pd.read_sql_query(sql=sql, con=con, parse_dates=['ISSUEDATE'])
-    sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_PERMITSFEES'"
-    last_ddl_time = pd.read_sql_query(sql=sql, con=con)
+@cache_timeout
+@cache.memoize()
+def query_data(dataset):
+    from app import con
+    with con() as con:
+        if dataset == 'df_ind':
+            sql = 'SELECT * FROM li_stat_permitsfees'
+            df = pd.read_sql_query(sql=sql, con=con, parse_dates=['ISSUEDATE'])
+        elif dataset == 'last_ddl_time':
+            sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_PERMITSFEES'"
+            df = pd.read_sql_query(sql=sql, con=con)
+    return df.to_json(date_format='iso', orient='split')
 
-# Rename the columns to be more readable
-# Make a DateText Column to display on the graph
-df = (df.rename(columns={'ISSUEDATE': 'Issue Date', 'PERMITDESCRIPTION': 'Permit Type', 'COUNTPERMITS': 'Permits Issued', 'TOTALFEESPAID': 'Fees Paid'})
+def dataframe(dataset):
+    return pd.read_json(query_data(dataset), orient='split')
+
+def get_last_ddl_time():
+    last_ddl_time = dataframe('last_ddl_time')
+    return last_ddl_time['LAST_DDL_TIME'].iloc[0]
+
+def get_permits():
+    permits = dataframe('df_ind')
+    permits['ISSUEDATE'] = pd.to_datetime(permits['ISSUEDATE'])
+    permits = (permits.rename(columns={'ISSUEDATE': 'Issue Date', 'PERMITDESCRIPTION': 'Permit Type', 'COUNTPERMITS': 'Permits Issued', 'TOTALFEESPAID': 'Fees Paid'})
         .assign(DateText=lambda x: x['Issue Date'].dt.strftime('%b %Y')))
+    permits['Fees Paid'] = pd.to_numeric(permits['Fees Paid'])
+    permits['Permit Type'] = permits['Permit Type'].map(lambda x: x.replace(" PERMIT", ""))
+    permits['Permit Type'] = permits['Permit Type'].str.lower()
+    permits['Permit Type'] = permits['Permit Type'].str.title()
+    return permits
 
-df['Fees Paid'] = pd.to_numeric(df['Fees Paid'])
+def get_unique_permittypes(permits):
+    unique_permittypes = permits['Permit Type'].unique()
+    unique_permittypes = np.append(['All'], unique_permittypes)
+    return unique_permittypes
 
-df['Permit Type'] = df['Permit Type'].map(lambda x: x.replace(" PERMIT", ""))
-df['Permit Type'] = df['Permit Type'].str.lower()
-df['Permit Type'] = df['Permit Type'].str.title()
+def get_total_permit_volume(permits):
+    return '{:,.0f}'.format(permits['Permits Issued'].sum())
 
-unique_permittypes = df['Permit Type'].unique()
-unique_permittypes = np.append(['All'], unique_permittypes)
-
-total_permit_volume = '{:,.0f}'.format(df['Permits Issued'].sum())
-total_permit_feespaid = '{:,.0f}'.format(df['Fees Paid'].sum())
+def get_total_permit_feespaid(permits):
+    return '{:,.0f}'.format(permits['Fees Paid'].sum())
 
 def update_total_permit_volume(selected_start, selected_end, selected_permittype):
-    df_selected = df.copy(deep=True)
+    df_selected = get_permits()
 
     if selected_permittype != "All":
         df_selected = df_selected[(df_selected['Permit Type'] == selected_permittype)]
@@ -47,7 +68,7 @@ def update_total_permit_volume(selected_start, selected_end, selected_permittype
     return '{:,.0f}'.format(total_permit_volume)
 
 def update_total_fees_paid(selected_start, selected_end, selected_permittype):
-    df_selected = df.copy(deep=True)
+    df_selected = get_permits()
 
     if selected_permittype != "All":
         df_selected = df_selected[(df_selected['Permit Type'] == selected_permittype)]
@@ -57,7 +78,7 @@ def update_total_fees_paid(selected_start, selected_end, selected_permittype):
     return '${:,.0f}'.format(total_fees_paid)
 
 def update_counts_graph_data(selected_start, selected_end, selected_permittype):
-    df_selected = df.copy(deep=True)
+    df_selected = get_permits()
 
     if selected_permittype != "All":
         df_selected = df_selected[(df_selected['Permit Type'] == selected_permittype)]
@@ -70,7 +91,7 @@ def update_counts_graph_data(selected_start, selected_end, selected_permittype):
     return df_selected
 
 def update_counts_table_data(selected_start, selected_end, selected_permittype):
-    df_selected = df.copy(deep=True)
+    df_selected = get_permits()
 
     if selected_permittype != "All":
         df_selected = df_selected[(df_selected['Permit Type'] == selected_permittype)]
@@ -85,9 +106,16 @@ def update_counts_table_data(selected_start, selected_end, selected_permittype):
     df_selected['Fees Paid'] = df_selected['Fees Paid'].map('${:,.0f}'.format)
     return df_selected
 
-layout = html.Div(children=[
+def update_layout():
+    last_ddl_time = get_last_ddl_time()
+    permits = get_permits()
+    unique_permittypes = get_unique_permittypes(permits)
+    total_permit_volume = get_total_permit_volume(permits)
+    total_fees_paid = get_total_permit_feespaid(permits)
+
+    return html.Div(children=[
                 html.H1('Permit Volumes and Revenues', style={'text-align': 'center'}),
-                html.P(f"Data last updated {last_ddl_time['LAST_DDL_TIME'].iloc[0]}", style = {'text-align': 'center'}),
+                html.P(f"Data last updated {last_ddl_time}", style = {'text-align': 'center'}),
                 html.Div([
                     html.Div([
                         html.P('Filter by Issue Date'),
@@ -117,10 +145,10 @@ layout = html.Div(children=[
                             figure=go.Figure(
                                 data=[
                                     go.Scatter(
-                                        x=df['Issue Date'],
-                                        y=df['Permits Issued'],
+                                        x=permits['Issue Date'],
+                                        y=permits['Permits Issued'],
                                         mode='lines',
-                                        text=df['DateText'],
+                                        text=permits['DateText'],
                                         hoverinfo='text+y',
                                         line=dict(
                                             shape='spline',
@@ -129,10 +157,10 @@ layout = html.Div(children=[
                                         name='Permits Issued'
                                     ),
                                     go.Scatter(
-                                        x=df['Issue Date'],
-                                        y=df['Fees Paid'],
+                                        x=permits['Issue Date'],
+                                        y=permits['Fees Paid'],
                                         mode='lines',
-                                        text=df['DateText'],
+                                        text=permits['DateText'],
                                         hoverinfo='text+y',
                                         line=dict(
                                             shape='spline',
@@ -206,6 +234,8 @@ layout = html.Div(children=[
                     ])
                 ])
             ])
+
+layout = update_layout
 
 @app.callback(
     Output('slide1-permits-graph', 'figure'),

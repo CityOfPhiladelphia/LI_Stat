@@ -9,7 +9,7 @@ import dash_table_experiments as dt
 import plotly.graph_objs as go
 from dash.dependencies import Input, Output
 
-from app import app, cache, cache_timeout
+from app import cache, cache_timeout
 
 
 print(os.path.basename(__file__))

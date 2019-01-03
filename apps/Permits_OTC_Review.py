@@ -1,53 +1,85 @@
+import os
+from datetime import datetime, date
+import urllib.parse
+
+import pandas as pd
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_table_experiments as table
 import plotly.graph_objs as go
-import pandas as pd
 from dash.dependencies import Input, Output
-from datetime import datetime, date
 import numpy as np
-import urllib.parse
-import os
 
-from app import app, con
+from app import app, cache, cache_timeout
+
 
 print(os.path.basename(__file__))
 
-with con() as con:
-    sql = 'SELECT * FROM li_stat_permits_otcvsreview'
-    df = pd.read_sql_query(sql=sql, con=con, parse_dates=['ISSUEDATE'])
-    sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_PERMITS_OTCVSREVIEW'"
-    last_ddl_time = pd.read_sql_query(sql=sql, con=con)
+@cache_timeout
+@cache.memoize()
+def query_data(dataset):
+    from app import con
+    with con() as con:
+        if dataset == 'df_ind':
+            sql = 'SELECT * FROM li_stat_permits_otcvsreview'
+            df = pd.read_sql_query(sql=sql, con=con, parse_dates=['ISSUEDATE'])
+        elif dataset == 'last_ddl_time':
+            sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_PERMITS_OTCVSREVIEW'"
+            df = pd.read_sql_query(sql=sql, con=con)
+    return df.to_json(date_format='iso', orient='split')
 
-# Rename the columns to be more readable
-# Make a DateText Column to display on the graph
-df = (df.rename(columns={'ISSUEDATE': 'Issue Date', 'PERMITDESCRIPTION': 'Permit Type', 'TYPEOFWORK': 'Work Type', 'COUNTOTCPERMITS': 'OTC Permits Issued', 'COUNTREVIEWPERMITS': 'Reviewed Permits Issued'})
-        .assign(DateText=lambda x: x['Issue Date'].dt.strftime('%b %Y')))
+def dataframe(dataset):
+    return pd.read_json(query_data(dataset), orient='split')
 
-df['Issue Date'] = df['Issue Date'].map(lambda dt: dt.date())
-issue_dates = df['Issue Date'].unique()
-issue_dates.sort()
+def get_df_ind():
+    df_ind = dataframe('df_ind')
+    df_ind = (df_ind.rename(
+                columns={
+                    'ISSUEDATE': 'Issue Date', 
+                    'PERMITDESCRIPTION': 'Permit Type', 
+                    'TYPEOFWORK': 'Work Type', 
+                    'COUNTOTCPERMITS': 'OTC Permits Issued', 
+                    'COUNTREVIEWPERMITS': 'Reviewed Permits Issued'
+                }))
+    df_ind['Issue Date'] = pd.to_datetime(df_ind['Issue Date'])
+    df_ind['DateText'] = df_ind['Issue Date'].dt.strftime('%b %Y')
+    df_ind['Issue Date'] = df_ind['Issue Date'].map(lambda x: x.date())
+    df_ind['Permit Type'] = df_ind['Permit Type'].astype(str)
+    df_ind['Permit Type'] = df_ind['Permit Type'].map(lambda x: x.replace(" PERMIT", ""))
+    df_ind['Permit Type'] = df_ind['Permit Type'].str.lower()
+    df_ind['Permit Type'] = df_ind['Permit Type'].str.title()
+    df_ind['Work Type'] = df_ind['Work Type'].fillna('None').astype(str)
+    df_ind.sort_values(by='Issue Date', inplace=True)
+    return df_ind
 
-df['Permit Type'] = df['Permit Type'].astype(str)
-df['Permit Type'] = df['Permit Type'].map(lambda x: x.replace(" PERMIT", ""))
-df['Permit Type'] = df['Permit Type'].str.lower()
-df['Permit Type'] = df['Permit Type'].str.title()
+def get_last_ddl_time():
+    last_ddl_time = dataframe('last_ddl_time')
+    return last_ddl_time['LAST_DDL_TIME'].iloc[0]
 
-unique_permittypes = df['Permit Type'].unique()
-unique_permittypes.sort()
-unique_permittypes = np.append(['All'], unique_permittypes)
+def get_issue_dates(df_ind):
+    issue_dates = df_ind['Issue Date'].unique()
+    return issue_dates
 
-df['Work Type'] = df['Work Type'].fillna('None').astype(str)
+def get_unique_permittypes(df_ind):
+    unique_permittypes = df_ind['Permit Type'].unique()
+    unique_permittypes.sort()
+    unique_permittypes = np.append(['All'], unique_permittypes)
+    return unique_permittypes
 
-unique_worktypes = df['Work Type'].unique()
-unique_worktypes.sort()
-unique_worktypes = np.append(['All'], unique_worktypes)
+def get_unique_worktypes(df_ind):
+    unique_worktypes = df_ind['Work Type'].unique()
+    unique_worktypes.sort()
+    unique_worktypes = np.append(['All'], unique_worktypes)
+    return unique_worktypes
 
-total_otc_permit_volume = '{:,.0f}'.format(df['OTC Permits Issued'].sum())
-total_review_permit_volume = '{:,.0f}'.format(df['Reviewed Permits Issued'].sum())
+def get_total_otc_permit_volume(df_ind):
+    return '{:,.0f}'.format(df_ind['OTC Permits Issued'].sum())
+
+def get_total_review_permit_volume(df_ind):
+    return '{:,.0f}'.format(df_ind['Reviewed Permits Issued'].sum())
 
 def update_total_otc_permit_volume(selected_start, selected_end, selected_permittype, selected_worktype):
-    df_selected = df.copy(deep=True)
+    df_selected = get_df_ind()
 
     start_date = datetime.strptime(selected_start, "%Y-%m-%d").date()
     end_date = datetime.strptime(selected_end, "%Y-%m-%d").date()
@@ -62,7 +94,7 @@ def update_total_otc_permit_volume(selected_start, selected_end, selected_permit
     return '{:,.0f}'.format(total_otc_permit_volume)
 
 def update_total_review_permit_volume(selected_start, selected_end, selected_permittype, selected_worktype):
-    df_selected = df.copy(deep=True)
+    df_selected = get_df_ind()
 
     start_date = datetime.strptime(selected_start, "%Y-%m-%d").date()
     end_date = datetime.strptime(selected_end, "%Y-%m-%d").date()
@@ -77,7 +109,8 @@ def update_total_review_permit_volume(selected_start, selected_end, selected_per
     return '{:,.0f}'.format(total_review_permit_volume)
 
 def update_counts_graph_data(selected_start, selected_end, selected_permittype, selected_worktype):
-    df_selected = df.copy(deep=True)
+    df_selected = get_df_ind()
+    issue_dates = get_issue_dates(df_selected)
 
     start_date = datetime.strptime(selected_start, "%Y-%m-%d").date()
     end_date = datetime.strptime(selected_end, "%Y-%m-%d").date()
@@ -101,7 +134,7 @@ def update_counts_graph_data(selected_start, selected_end, selected_permittype, 
     return df_selected.sort_values(by='Issue Date')
 
 def update_counts_table_data(selected_start, selected_end, selected_permittype, selected_worktype):
-    df_selected = df.copy(deep=True)
+    df_selected = get_df_ind()
 
     start_date = datetime.strptime(selected_start, "%Y-%m-%d").date()
     end_date = datetime.strptime(selected_end, "%Y-%m-%d").date()
@@ -121,9 +154,18 @@ def update_counts_table_data(selected_start, selected_end, selected_permittype, 
     df_selected['Reviewed Permits Issued'] = df_selected['Reviewed Permits Issued'].map('{:,.0f}'.format)
     return df_selected
 
-layout = html.Div(children=[
+def update_layout():
+    last_ddl_time = get_last_ddl_time()
+    df_ind = get_df_ind()
+    issue_dates = get_issue_dates(df_ind)
+    unique_permittypes = get_unique_permittypes(df_ind)
+    unique_worktypes = get_unique_worktypes(df_ind)
+    total_otc_permit_volume = get_total_otc_permit_volume(df_ind)
+    total_review_permit_volume = get_total_review_permit_volume(df_ind)
+
+    return html.Div(children=[
                 html.H1('Permits Issued: Over the Counter (OTC) vs Back Office (Reviewed)', style={'text-align': 'center'}),
-                html.P(f"Data last updated {last_ddl_time['LAST_DDL_TIME'].iloc[0]}", style = {'text-align': 'center'}),
+                html.P(f"Data last updated {last_ddl_time}", style = {'text-align': 'center'}),
                 html.Div([
                     html.Div([
                         html.P('Filter by Issue Date'),
@@ -161,10 +203,10 @@ layout = html.Div(children=[
                             figure=go.Figure(
                                 data=[
                                     go.Scatter(
-                                        x=df['Issue Date'],
-                                        y=df['OTC Permits Issued'],
+                                        x=df_ind['Issue Date'],
+                                        y=df_ind['OTC Permits Issued'],
                                         mode='lines',
-                                        text=df['DateText'],
+                                        text=df_ind['DateText'],
                                         hoverinfo='text+y',
                                         line=dict(
                                             shape='spline',
@@ -173,10 +215,10 @@ layout = html.Div(children=[
                                         name='OTC'
                                     ),
                                     go.Scatter(
-                                        x=df['Issue Date'],
-                                        y=df['Reviewed Permits Issued'],
+                                        x=df_ind['Issue Date'],
+                                        y=df_ind['Reviewed Permits Issued'],
                                         mode='lines',
-                                        text=df['DateText'],
+                                        text=df_ind['DateText'],
                                         hoverinfo='text+y',
                                         line=dict(
                                             shape='spline',
@@ -244,6 +286,8 @@ layout = html.Div(children=[
                     ])
                 ])
             ])
+
+layout = update_layout
 
 @app.callback(
     Output('slide3-permits-graph', 'figure'),

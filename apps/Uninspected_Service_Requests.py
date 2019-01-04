@@ -1,68 +1,97 @@
+import os
+from datetime import datetime, date
+import urllib.parse
+
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_table_experiments as table
 import plotly.graph_objs as go
 import pandas as pd
 from dash.dependencies import Input, Output
-import datetime
 import numpy as np
-import urllib.parse
 from pandas.tseries.holiday import USFederalHolidayCalendar
 from pandas.tseries.offsets import CustomBusinessDay
-import os
 
-from app import app, con
+from app import app, cache, cache_timeout
 from config import MAPBOX_ACCESS_TOKEN
+
 
 print(os.path.basename(__file__))
 
-with con() as con:
-    sql = 'SELECT * FROM li_stat_uninspectedservreq'
-    df = pd.read_sql_query(sql=sql, con=con, parse_dates=['CALLDATE'])
-    sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_UNINSPECTEDSERVREQ'"
-    last_ddl_time = pd.read_sql_query(sql=sql, con=con)
+@cache_timeout
+@cache.memoize()
+def query_data(dataset):
+    from app import con
+    with con() as con:
+        if dataset == 'df_ind':
+            sql = 'SELECT * FROM li_stat_uninspectedservreq'
+            df = pd.read_sql_query(sql=sql, con=con, parse_dates=['CALLDATE'])
+            df.rename(columns=
+                {'SERVREQNO': 'Service Request Num',
+                 'CALLDATE': 'Call Date',
+                 'PROBLEMDESCRIPTION': 'Problem Description',
+                 'UNIT': 'Unit',
+                 'DISTRICT': 'District'},
+            inplace=True)
+            df['Call Date'] = pd.to_datetime(df['Call Date'])
+            df['Call Date (no time)'] = df['Call Date'].dt.date
+            df['Bus. Days Outstanding'] = df[df['Call Date (no time)'].notnull()].apply(calc_bus_days, axis=1)
+            df['Within SLA'] = np.where(df['Bus. Days Outstanding'] > df['SLA'], 'No', 'Yes')
+            df['Bus. Days Overdue'] = np.where(df['Within SLA'] == 'No', df['Bus. Days Outstanding'] - df['SLA'], 'N/A')
+        elif dataset == 'last_ddl_time':
+            sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_UNINSPECTEDSERVREQ'"
+            df = pd.read_sql_query(sql=sql, con=con)
+    return df.to_json(date_format='iso', orient='split')
 
-#Create df of just the SLA lengths for each problem description. Just for documentation/help purposes.
-df_sla_records = (df.drop(['SERVREQNO', 'ADDRESS', 'CALLDATE', 'UNIT', 'DISTRICT', 'LON', 'LAT'], axis=1)
-                  .drop_duplicates()
-                  .rename(columns={'PROBLEMDESCRIPTION': 'Problem Description', 'SLA': 'SLA Length(days)'})
-                  .sort_values('Problem Description', ascending=True)
-                  .to_dict('records'))
+def dataframe(dataset):
+    return pd.read_json(query_data(dataset), orient='split')
 
-df.rename(columns=
-            {'SERVREQNO': 'Service Request Num',
-             'CALLDATE': 'Call Date',
-             'PROBLEMDESCRIPTION': 'Problem Description',
-             'UNIT': 'Unit',
-             'DISTRICT': 'District'},
-        inplace=True)
-
-#Determine which service requests are within SLA and how long they've been outstanding
-df['Call Date (no time)'] = df['Call Date'].dt.date
-today = datetime.date.today()
-us_bd = CustomBusinessDay(calendar=USFederalHolidayCalendar())
 def calc_bus_days(row):
+    '''Helper function for get_df_ind'''
+    today = datetime.today().date()
+    us_bd = CustomBusinessDay(calendar=USFederalHolidayCalendar())
     row['Bus. Days Outstanding'] = pd.DatetimeIndex(start=row['Call Date (no time)'], end=today, freq=us_bd).shape[0] - 1
     return row['Bus. Days Outstanding']
-df['Bus. Days Outstanding'] = df[df['Call Date (no time)'].notnull()].apply(calc_bus_days, axis=1)
-df['Within SLA'] = np.where(df['Bus. Days Outstanding'] > df['SLA'], 'No', 'Yes')
-df['Bus. Days Overdue'] = np.where(df['Within SLA'] == 'No', df['Bus. Days Outstanding'] - df['SLA'], 'N/A')
 
-unique_problems = df['Problem Description'].unique()
-unique_problems = np.append(['All'], unique_problems)
+def get_df_ind():
+    df_ind = dataframe('df_ind')
+    return df_ind
 
-unique_units = df['Unit'].unique()
-unique_units = np.append(['All'], unique_units)
+def get_last_ddl_time():
+    last_ddl_time = dataframe('last_ddl_time')
+    return last_ddl_time['LAST_DDL_TIME'].iloc[0]
 
-unique_districts = df['District'].unique()
-unique_districts = np.append(['All'], unique_districts)
+def get_df_sla_records(df_ind):
+    '''Create df of just the SLA lengths for each problem description. Just for documentation/help purposes.'''
+    df_sla_records = (df_ind.drop(['ADDRESS', 'LON', 'LAT'], axis=1)
+                            .drop_duplicates()
+                            .rename(columns={'SLA': 'SLA Length(days)'})
+                            .sort_values('Problem Description', ascending=True)
+                            .to_dict('records'))
+    return df_sla_records
 
-unique_within_sla = df['Within SLA'].unique()
-unique_within_sla = np.append(['All'], unique_within_sla)
+def get_unique_problems(df_ind):
+    unique_problems = df_ind['Problem Description'].unique()
+    unique_problems = np.append(['All'], unique_problems)
+    return unique_problems
 
+def get_unique_units(df_ind):
+    unique_units = df_ind['Unit'].unique()
+    unique_units = np.append(['All'], unique_units)
+    return unique_units
+
+def get_unique_districts(df_ind):
+    unique_districts = df_ind['District'].unique()
+    unique_districts = np.append(['All'], unique_districts)
+    return unique_districts
+
+def get_unique_within_sla(df_ind):
+    unique_within_sla = df_ind['Within SLA'].unique()
+    unique_within_sla = np.append(['All'], unique_within_sla)
+    return unique_within_sla
 
 def update_sr_volume(selected_start, selected_end, selected_problem, selected_unit, selected_district, selected_within_sla):
-    df_selected = df.copy(deep=True)
+    df_selected = get_df_ind()
 
     if selected_problem != "All":
         df_selected = df_selected[(df_selected['Problem Description'] == selected_problem)]
@@ -77,9 +106,8 @@ def update_sr_volume(selected_start, selected_end, selected_problem, selected_un
     total_sr_volume = df_selected['Service Request Num'].count()
     return '{:,.0f}'.format(total_sr_volume)
 
-
 def update_within_sla(selected_start, selected_end, selected_problem, selected_unit, selected_district, selected_within_sla):
-    df_selected = df.copy(deep=True)
+    df_selected = get_df_ind()
 
     if selected_problem != "All":
         df_selected = df_selected[(df_selected['Problem Description'] == selected_problem)]
@@ -94,9 +122,8 @@ def update_within_sla(selected_start, selected_end, selected_problem, selected_u
     within_sla = len(df_selected[df_selected['Within SLA'] == 'Yes']) / len(df_selected) * 100
     return '{:,.0f}%'.format(within_sla)
 
-
 def update_avg_days_out(selected_start, selected_end, selected_problem, selected_unit, selected_district, selected_within_sla):
-    df_selected = df.copy(deep=True)
+    df_selected = get_df_ind()
 
     if selected_problem != "All":
         df_selected = df_selected[(df_selected['Problem Description'] == selected_problem)]
@@ -112,7 +139,7 @@ def update_avg_days_out(selected_start, selected_end, selected_problem, selected
     return '{:,.0f}'.format(avg_days_out)
 
 def update_summary_table_data(selected_start, selected_end, selected_problem, selected_unit, selected_district, selected_within_sla):
-    df_selected = df.copy(deep=True)
+    df_selected = get_df_ind()
 
     if selected_problem != "All":
         df_selected = df_selected[(df_selected['Problem Description'] == selected_problem)].drop(['Problem Description'], axis=1)
@@ -144,7 +171,7 @@ def update_summary_table_data(selected_start, selected_end, selected_problem, se
     return df_grouped.drop('# Within SLA', axis=1)
 
 def update_table_data(selected_start, selected_end, selected_problem, selected_unit, selected_district, selected_within_sla):
-    df_selected = df.copy(deep=True)
+    df_selected = get_df_ind()
 
     if selected_problem != "All":
         df_selected = df_selected[(df_selected['Problem Description'] == selected_problem)]
@@ -159,7 +186,7 @@ def update_table_data(selected_start, selected_end, selected_problem, selected_u
     return df_selected.drop(['Call Date (no time)', 'SLA', 'LON', 'LAT'], axis=1)
 
 def update_map_data(selected_start, selected_end, selected_problem, selected_unit, selected_district, selected_within_sla):
-    df_selected = df.copy(deep=True)
+    df_selected = get_df_ind()
 
     if selected_problem != "All":
         df_selected = df_selected[(df_selected['Problem Description'] == selected_problem)]
@@ -173,17 +200,26 @@ def update_map_data(selected_start, selected_end, selected_problem, selected_uni
     df_selected = df_selected.loc[(df_selected['Call Date'] >= selected_start) & (df_selected['Call Date'] <= selected_end)]
     return df_selected
 
-layout = html.Div(children=[
+def update_layout():
+    df_ind = get_df_ind()
+    last_ddl_time = get_last_ddl_time()
+    df_sla_records = get_df_sla_records(df_ind)
+    unique_problems = get_unique_problems(df_ind)
+    unique_units = get_unique_units(df_ind)
+    unique_districts = get_unique_districts(df_ind)
+    unique_within_sla = get_unique_within_sla(df_ind)
+
+    return html.Div(children=[
                 html.H1('Uninspected Service Requests', style={'text-align': 'center'}),
-                html.P(f"Data last updated {last_ddl_time['LAST_DDL_TIME'].iloc[0]}", style = {'text-align': 'center'}),
+                html.P(f"Data last updated {last_ddl_time}", style = {'text-align': 'center'}),
                 html.Div([
                     html.Div([
                         html.P('Call Date'),
                         dcc.DatePickerRange(
                             display_format='MMM Y',
                             id='uninspected-sr-call-date-picker-range',
-                            start_date=datetime.datetime(2016, 1, 1),
-                            end_date=datetime.datetime.now()
+                            start_date=datetime(2016, 1, 1),
+                            end_date=datetime.now()
                         ),
                     ], className='six columns'),
                     html.Div([
@@ -269,23 +305,23 @@ layout = html.Div(children=[
                               figure=go.Figure(
                                   data=[
                                       go.Scattermapbox(
-                                          lon=df['LON'],
-                                          lat=df['LAT'],
+                                          lon=df_ind['LON'],
+                                          lat=df_ind['LAT'],
                                           mode='markers',
                                           marker=dict(
                                               size=14
                                           ),
-                                          text='Address: ' + df['ADDRESS'].map(str) +
+                                          text='Address: ' + df_ind['ADDRESS'].map(str) +
                                                '<br>' +
-                                               'Problem: ' + df['Problem Description'].map(str) +
+                                               'Problem: ' + df_ind['Problem Description'].map(str) +
                                                '<br>' +
-                                               'Unit: ' + df['Unit'].map(str) +
+                                               'Unit: ' + df_ind['Unit'].map(str) +
                                                '<br>' +
-                                               'District: ' + df['District'].map(str) +
+                                               'District: ' + df_ind['District'].map(str) +
                                                '<br>' +
-                                               'Call Date: ' + df['Call Date (no time)'].map(str) +
+                                               'Call Date: ' + df_ind['Call Date (no time)'].map(str) +
                                                '<br>' +
-                                               'Within SLA: ' + df['Within SLA'].map(str),
+                                               'Within SLA: ' + df_ind['Within SLA'].map(str),
                                           hoverinfo='text'
                                       )
                                   ],
@@ -374,6 +410,8 @@ layout = html.Div(children=[
                     ])
                 ])
             ])
+
+layout = update_layout
 
 @app.callback(
     Output('uninspected-sr-indicator', 'children'),

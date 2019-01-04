@@ -37,7 +37,6 @@ def serve_layout():
                         html.Div([
                             html.A('Volumes', href='/trade-license-volumes'),
                             html.A('Revenue', href='/trade-license-revenue'),
-                            html.A('Trends', href='/trade-license-trends'),
                             html.A('Submittal Type', href='/trade-license-submittal-types')
                         ], className='dropdown-content')
                     ], className='dropdown'),
@@ -76,17 +75,17 @@ def display_page(pathname):
     if pathname == '/business-license-volumes':
         return BL_Volumes.layout()
     elif pathname == '/trade-license-volumes':
-        return TL_Volumes.layout
+        return TL_Volumes.layout()
     elif pathname == '/business-license-revenue':
         return BL_Revenue.layout()
     elif pathname == '/trade-license-revenue':
-        return TL_Revenue.layout
+        return TL_Revenue.layout()
     elif pathname == '/business-license-trends':
         return BL_Trends.layout()
     elif pathname == '/business-license-submittal-types':
         return BL_Submittal_Type.layout()
     elif pathname == '/trade-license-submittal-types':
-        return TL_Submittal_Type.layout
+        return TL_Submittal_Type.layout()
     elif pathname == '/permit-volumes-and-revenues':
         return Permits_Volumes_Revenues.layout()
     elif pathname == '/permit-trends':
@@ -96,13 +95,13 @@ def display_page(pathname):
     elif pathname == '/permits-accelerated-review':
         return Permits_Accel_Review.layout()
     elif pathname == '/public-demos':
-        return Public_Demos.layout
+        return Public_Demos.layout()
     elif pathname == '/imminently-dangerous':
         return Imm_Dang.layout()
     elif pathname == '/unsafes':
-        return Unsafes.layout
+        return Unsafes.layout()
     elif pathname == '/uninspected-service-requests':
-        return Uninspected_Service_Requests.layout
+        return Uninspected_Service_Requests.layout()
     else:
         return BL_Volumes.layout()
 

@@ -1,51 +1,85 @@
+import os
+from datetime import datetime
+import urllib.parse
+
+import pandas as pd
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_table_experiments as dt
 import plotly.graph_objs as go
-import pandas as pd
 import numpy as np
-import urllib.parse
-import os
-
-from datetime import datetime
 from dash.dependencies import Input, Output
 
-from app import app, con
+from app import app, cache, cache_timeout
 from config import MAPBOX_ACCESS_TOKEN
 
 
+print(os.path.basename(__file__))
+
+@cache_timeout
+@cache.memoize()
+def query_data(dataset):
+    from app import con
+    with con() as con:
+        if dataset == 'df_ind':
+            sql = 'SELECT * FROM li_stat_unsafes_ind'
+            df = pd.read_sql_query(sql=sql, con=con, parse_dates=['VIOLATIONDATE'])
+        elif dataset == 'df_counts':
+            sql = 'SELECT * FROM li_stat_unsafes_counts'
+            df = pd.read_sql_query(sql=sql, con=con, parse_dates=['VIOLATIONDATE'])
+            df.rename(columns=
+                {'VIOLATIONDATE': 'Violation Month', 
+                 'NUMBEROFVIOLATIONS': 'Number of Violations'}, 
+            inplace=True)
+            df = df.assign(DateText=lambda x: x['Violation Month'].dt.strftime('%b %Y'))
+        elif dataset == 'ind_last_ddl_time':
+            sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_UNSAFES_IND'"
+            df = pd.read_sql_query(sql=sql, con=con)
+        elif dataset == 'counts_last_ddl_time':
+            sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_UNSAFES_COUNTS'"
+            df = pd.read_sql_query(sql=sql, con=con)
+    return df.to_json(date_format='iso', orient='split')
+
+def dataframe(dataset):
+    return pd.read_json(query_data(dataset), orient='split')
+
+def get_df_ind():
+    df_ind = dataframe('df_ind')
+    df_ind['VIOLATIONDATE'] = pd.to_datetime(df_ind['VIOLATIONDATE'])
+    return df_ind
+
+def get_ind_last_ddl_time():
+    ind_last_ddl_time = dataframe('ind_last_ddl_time')
+    return ind_last_ddl_time['LAST_DDL_TIME'].iloc[0]
+
+def get_df_counts():
+    df_counts = dataframe('df_counts')
+    df_counts['Violation Month'] = pd.to_datetime(df_counts['Violation Month'])
+    return df_counts
+
+def get_counts_last_ddl_time():
+    counts_last_ddl_time = dataframe('counts_last_ddl_time')
+    return counts_last_ddl_time['LAST_DDL_TIME'].iloc[0]
+
 def update_counts_data(start_date, end_date):
+    df_counts = get_df_counts()
     df_results = df_counts.loc[(df_counts['Violation Month'] >= start_date) & (df_counts['Violation Month'] <= end_date)]\
                           .sort_values(by=['Violation Month'])
     return df_results
 
 def update_ind_data(start_date, end_date):
+    df_ind = get_df_ind()
     df_results = df_ind.loc[(df_ind['VIOLATIONDATE'] >= start_date) & (df_ind['VIOLATIONDATE'] <= end_date)]\
                        .sort_values(by=['VIOLATIONDATE'])
     return df_results
 
-print(os.path.basename(__file__))
+def update_layout():
+    ind_last_ddl_time = get_ind_last_ddl_time()
+    counts_last_ddl_time = get_counts_last_ddl_time()
+    df_ind = get_df_ind()
+    df_counts = get_df_counts()
 
-with con() as con:
-    sql_ind = 'SELECT * FROM li_stat_unsafes_ind'
-    df_ind = pd.read_sql_query(sql=sql_ind, con=con, parse_dates=['VIOLATIONDATE'])
-    sql_counts = 'SELECT * FROM li_stat_unsafes_counts'
-    df_counts = pd.read_sql_query(sql=sql_counts, con=con, parse_dates=['VIOLATIONDATE'])
-    sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_UNSAFES_IND'"
-    ind_last_ddl_time = pd.read_sql_query(sql=sql, con=con)
-    sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_UNSAFES_COUNTS'"
-    counts_last_ddl_time = pd.read_sql_query(sql=sql, con=con)
-
-# Rename the columns to be more readable
-df_counts.rename(columns=
-            {'VIOLATIONDATE': 'Violation Month', 
-             'NUMBEROFVIOLATIONS': 'Number of Violations'}, 
-          inplace=True)
-
-# Make a DateText Column to display on the graph
-df_counts = df_counts.assign(DateText=lambda x: x['Violation Month'].dt.strftime('%b %Y'))
-
-layout = html.Div(children=[
+    return html.Div(children=[
                 html.H1('Unsafe Violations', style={'text-align': 'center'}),
                 html.Div([
                     html.Div([
@@ -90,7 +124,7 @@ layout = html.Div(children=[
                         )
                     ], className='twelve columns'),
                 ], className='dashrow'),
-                html.P(f"Data last updated {counts_last_ddl_time['LAST_DDL_TIME'].iloc[0]}", className = 'timestamp', style = {'text-align': 'center'}),
+                html.P(f"Data last updated {counts_last_ddl_time}", className = 'timestamp', style = {'text-align': 'center'}),
                 html.Div([
                     html.Div([
                         dcc.Graph(id='unsafes-map',
@@ -131,7 +165,7 @@ layout = html.Div(children=[
                           , style={'height': '700px'})
                     ], className='twelve columns')
                 ], className='dashrow'),
-                html.P(f"Data last updated {ind_last_ddl_time['LAST_DDL_TIME'].iloc[0]}", className = 'timestamp', style = {'text-align': 'center'}),
+                html.P(f"Data last updated {ind_last_ddl_time}", className = 'timestamp', style = {'text-align': 'center'}),
                 html.Div([
                     html.Div([
                         html.H3('Number of Unsafe Violations by Month', style={'text-align': 'center'}),
@@ -157,7 +191,7 @@ layout = html.Div(children=[
                         ], style={'text-align': 'right'})
                     ], style={'width': '50%', 'margin-left': 'auto', 'margin-right': 'auto','margin-top': '50px', 'margin-bottom': '50px'})
                 ], className='dashrow'),
-                html.P(f"Data last updated {counts_last_ddl_time['LAST_DDL_TIME'].iloc[0]}", className = 'timestamp', style = {'text-align': 'center'}),
+                html.P(f"Data last updated {counts_last_ddl_time}", className = 'timestamp', style = {'text-align': 'center'}),
                 html.Details([
                     html.Summary('Query Description'),
                     html.Div([
@@ -166,6 +200,8 @@ layout = html.Div(children=[
                     ])
                 ])
             ])
+
+layout = update_layout
 
 @app.callback(
     Output('unsafes-graph', 'figure'),

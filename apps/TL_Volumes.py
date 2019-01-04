@@ -1,41 +1,63 @@
+import os
+from datetime import datetime, date
+import urllib.parse
+
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_table_experiments as table
 import plotly.graph_objs as go
 import pandas as pd
 from dash.dependencies import Input, Output
-from datetime import datetime, date
 import numpy as np
-import urllib.parse
-import os
 
-from app import app, con
+from app import app, cache, cache_timeout
+
 
 print(os.path.basename(__file__))
 
-with con() as con:
-    sql = 'SELECT * FROM li_stat_licensevolumes_tl'
-    df = pd.read_sql_query(sql=sql, con=con, parse_dates=['ISSUEDATE'])
-    sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_LICENSEVOLUMES_TL'"
-    last_ddl_time = pd.read_sql_query(sql=sql, con=con)
+@cache_timeout
+@cache.memoize()
+def query_data(dataset):
+    from app import con
+    with con() as con:
+        if dataset == 'df_ind':
+            sql = 'SELECT * FROM li_stat_licensevolumes_tl'
+            df = pd.read_sql_query(sql=sql, con=con, parse_dates=['ISSUEDATE'])
+            df = (df.rename(columns={'ISSUEDATE': 'Issue Date', 'LICENSETYPE': 'License Type', 'COUNTJOBS': 'Number of Licenses Issued'})
+                    .assign(DateText=lambda x: x['Issue Date'].dt.strftime('%b %Y')))
+        elif dataset == 'last_ddl_time':
+            sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_LICENSEVOLUMES_TL'"
+            df = pd.read_sql_query(sql=sql, con=con)
+    return df.to_json(date_format='iso', orient='split')
 
-# Rename the columns to be more readable
-# Make a DateText Column to display on the graph            
-df = (df.rename(columns={'ISSUEDATE': 'Issue Date', 'LICENSETYPE': 'License Type', 'COUNTJOBS': 'Number of Licenses Issued'})
-        .assign(DateText=lambda x: x['Issue Date'].dt.strftime('%b %Y')))
+def dataframe(dataset):
+    return pd.read_json(query_data(dataset), orient='split')
 
-df['Issue Date'] = df['Issue Date'].map(lambda dt: dt.date())
-issue_dates = df['Issue Date'].unique()
-issue_dates.sort()
+def get_df_ind():
+    df_ind = dataframe('df_ind')
+    df_ind['Issue Date'] = pd.to_datetime(df_ind['Issue Date']).map(lambda dt: dt.date())
+    df_ind.sort_values(by='Issue Date', inplace=True)
+    return df_ind   
 
-unique_licensetypes = df['License Type'].unique()
-unique_licensetypes.sort()
-unique_licensetypes = np.append(['All'], unique_licensetypes)
+def get_last_ddl_time():
+    last_ddl_time = dataframe('last_ddl_time')
+    return last_ddl_time['LAST_DDL_TIME'].iloc[0]
 
-total_license_volume = '{:,.0f}'.format(df['Number of Licenses Issued'].sum())
+def get_issue_dates(df_ind):
+    issue_dates = df_ind['Issue Date'].unique()
+    return issue_dates
+
+def get_unique_licensetypes(df_ind):
+    unique_licensetypes = df_ind['License Type'].unique()
+    unique_licensetypes.sort()
+    unique_licensetypes = np.append(['All'], unique_licensetypes)
+    return unique_licensetypes
+
+def get_total_license_volume(df_ind):
+    return '{:,.0f}'.format(df_ind['Number of Licenses Issued'].sum())
 
 def update_total_license_volume(selected_start, selected_end, selected_jobtype, selected_licensetype):
-    df_selected = df.copy(deep=True)
+    df_selected = get_df_ind()
 
     start_date = datetime.strptime(selected_start, "%Y-%m-%d").date()
     end_date = datetime.strptime(selected_end, "%Y-%m-%d").date()
@@ -50,7 +72,8 @@ def update_total_license_volume(selected_start, selected_end, selected_jobtype, 
     return '{:,.0f}'.format(total_license_volume)
 
 def update_counts_graph_data(selected_start, selected_end, selected_jobtype, selected_licensetype):
-    df_selected = df.copy(deep=True)
+    df_selected = get_df_ind()
+    issue_dates = get_issue_dates(df_selected)
 
     start_date = datetime.strptime(selected_start, "%Y-%m-%d").date()
     end_date = datetime.strptime(selected_end, "%Y-%m-%d").date()
@@ -74,7 +97,8 @@ def update_counts_graph_data(selected_start, selected_end, selected_jobtype, sel
     return df_selected.sort_values(by='Issue Date')
 
 def update_counts_table_data(selected_start, selected_end, selected_jobtype, selected_licensetype):
-    df_selected = df.copy(deep=True)
+    df_selected = get_df_ind()
+    issue_dates = get_issue_dates(df_selected)
 
     start_date = datetime.strptime(selected_start, "%Y-%m-%d").date()
     end_date = datetime.strptime(selected_end, "%Y-%m-%d").date()
@@ -92,9 +116,16 @@ def update_counts_table_data(selected_start, selected_end, selected_jobtype, sel
     df_selected['Issue Date'] = df_selected['Issue Date'].apply(lambda x: datetime.strftime(x, '%b %Y'))
     return df_selected
 
-layout = html.Div(children=[
+def update_layout():
+    df_ind = get_df_ind()
+    last_ddl_time = get_last_ddl_time()
+    issue_dates = get_issue_dates(df_ind)
+    unique_licensetypes = get_unique_licensetypes(df_ind)
+    total_license_volume = get_total_license_volume(df_ind)
+
+    return html.Div(children=[
                 html.H1('Trade License Volumes', style={'text-align': 'center'}),
-                html.P(f"Data last updated {last_ddl_time['LAST_DDL_TIME'].iloc[0]}", style = {'text-align': 'center'}),
+                html.P(f"Data last updated {last_ddl_time}", style = {'text-align': 'center'}),
                 html.Div([
                     html.Div([
                         html.P('Filter by Issue Date'),
@@ -136,10 +167,10 @@ layout = html.Div(children=[
                             figure=go.Figure(
                                 data=[
                                     go.Scatter(
-                                        x=df['Issue Date'],
-                                        y=df['Number of Licenses Issued'],
+                                        x=df_ind['Issue Date'],
+                                        y=df_ind['Number of Licenses Issued'],
                                         mode='lines',
-                                        text=df['DateText'],
+                                        text=df_ind['DateText'],
                                         hoverinfo='text+y',
                                         line=dict(
                                             shape='spline',
@@ -187,6 +218,8 @@ layout = html.Div(children=[
                     ])
                 ])
             ])
+
+layout = update_layout
 
 @app.callback(
     Output('slide1-TL-my-graph', 'figure'),

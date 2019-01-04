@@ -1,38 +1,57 @@
+import os
+from datetime import datetime, date
+import urllib.parse
+
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_table_experiments as table
 import plotly.graph_objs as go
 import pandas as pd
 from dash.dependencies import Input, Output
-from datetime import datetime, date
 import numpy as np
-import urllib.parse
-import os
 
-from app import app, con
+from app import app, cache, cache_timeout
+
 
 print(os.path.basename(__file__))
 
-with con() as con:
-    sql = 'SELECT * FROM li_stat_publicdemos'
-    df = pd.read_sql_query(sql=sql, con=con, parse_dates=['DEMODATE'])
-    sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_PUBLICDEMOS'"
-    last_ddl_time = pd.read_sql_query(sql=sql, con=con)
+@cache_timeout
+@cache.memoize()
+def query_data(dataset):
+    from app import con
+    with con() as con:
+        if dataset == 'df_ind':
+            sql = 'SELECT * FROM li_stat_publicdemos'
+            df = pd.read_sql_query(sql=sql, con=con, parse_dates=['DEMODATE'])
+        elif dataset == 'last_ddl_time':
+            sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_PUBLICDEMOS'"
+            df = pd.read_sql_query(sql=sql, con=con)
+    return df.to_json(date_format='iso', orient='split')
 
-# Rename the columns to be more readable
-# Make a DateText Column to display on the graph
-df = (df.rename(columns={'DEMODATE': 'Demo Date', 'COUNTDEMOS': 'Count of Demos'})
+def dataframe(dataset):
+    return pd.read_json(query_data(dataset), orient='split')
+
+def get_last_ddl_time():
+    last_ddl_time = dataframe('last_ddl_time')
+    return last_ddl_time['LAST_DDL_TIME'].iloc[0]
+
+def get_df_ind():
+    df_ind = dataframe('df_ind')
+    df_ind['DEMODATE'] = pd.to_datetime(df_ind['DEMODATE'])
+    df_ind = (df_ind.rename(columns={'DEMODATE': 'Demo Date', 'COUNTDEMOS': 'Count of Demos'})
         .assign(DateText=lambda x: x['Demo Date'].dt.strftime('%b %Y')))
+    df_ind['Demo Date'] = df_ind['Demo Date'].map(lambda dt: dt.date())
+    return df_ind
 
-df['Demo Date'] = df['Demo Date'].map(lambda dt: dt.date())
-issue_dates = df['Demo Date'].unique()
-issue_dates.sort()
+def get_issue_dates(df_ind):
+    issue_dates = df_ind['Demo Date'].unique()
+    return issue_dates
 
-total_demos = '{:,.0f}'.format(df['Count of Demos'].sum())
-
+def get_total_demos(df_ind):
+    return '{:,.0f}'.format(df_ind['Count of Demos'].sum())
 
 def update_total_public_demos(selected_start, selected_end):
-    df_selected = df.copy(deep=True)
+    df_selected = get_df_ind()
 
     start_date = datetime.strptime(selected_start, "%Y-%m-%d").date()
     end_date = datetime.strptime(selected_end, "%Y-%m-%d").date()
@@ -41,9 +60,9 @@ def update_total_public_demos(selected_start, selected_end):
     total_demos = df_selected['Count of Demos'].sum()
     return '{:,.0f}'.format(total_demos)
 
-
 def update_counts_graph_data(selected_start, selected_end):
-    df_selected = df.copy(deep=True)
+    df_selected = get_df_ind()
+    issue_dates = get_issue_dates(df_selected)
 
     start_date = datetime.strptime(selected_start, "%Y-%m-%d").date()
     end_date = datetime.strptime(selected_end, "%Y-%m-%d").date()
@@ -62,10 +81,12 @@ def update_counts_graph_data(selected_start, selected_end):
     return df_selected.sort_values(by='Demo Date')
 
 def update_counts_graph_data_compare(selected_start, selected_end, compare_date_start, compare_date_end):
+    df_selected1 = get_df_ind()
+    issue_dates = get_issue_dates(df_selected1)
     start_date = datetime.strptime(selected_start, "%Y-%m-%d").date()
     end_date = datetime.strptime(selected_end, "%Y-%m-%d").date()
     selected_issue_dates = issue_dates[(issue_dates >= start_date) & (issue_dates <= end_date)]
-    df_selected1 = df.copy(deep=True)
+    
     df_selected1 = (df_selected1.loc[(df_selected1['Demo Date'] >= start_date) & (df_selected1['Demo Date'] <= end_date)]
                               .groupby(by=['Demo Date', 'DateText'])['Count of Demos']
                               .sum()
@@ -80,7 +101,7 @@ def update_counts_graph_data_compare(selected_start, selected_end, compare_date_
     compare_start_date = datetime.strptime(compare_date_start, "%Y-%m-%d").date()
     compare_end_date = datetime.strptime(compare_date_end, "%Y-%m-%d").date()
     compare_selected_issue_dates = issue_dates[(issue_dates >= compare_start_date) & (issue_dates <= compare_end_date)]
-    df_selected2 = df.copy(deep=True)
+    df_selected2 = get_df_ind()
     df_selected2 = (df_selected2.loc[(df_selected2['Demo Date'] >= compare_start_date) & (df_selected2['Demo Date'] <= compare_end_date)]
                               .groupby(by=['Demo Date', 'DateText'])['Count of Demos']
                               .sum()
@@ -95,9 +116,15 @@ def update_counts_graph_data_compare(selected_start, selected_end, compare_date_
 
     return (df_selected1, df_selected2)
 
-layout = html.Div(children=[
+def update_layout():
+    last_ddl_time = get_last_ddl_time()
+    df_ind = get_df_ind()
+    issue_dates = get_issue_dates(df_ind)
+    total_demos = get_total_demos(df_ind)
+
+    return html.Div(children=[
                 html.H1('Public Demolitions', style={'text-align': 'center', 'margin-bottom': '20px'}),
-                html.P(f"Data last updated {last_ddl_time['LAST_DDL_TIME'].iloc[0]}", style = {'text-align': 'center'}),
+                html.P(f"Data last updated {last_ddl_time}", style = {'text-align': 'center'}),
                 html.Div([
                     html.Div([
                         html.P('Filter by Demolition Date'),
@@ -144,10 +171,10 @@ layout = html.Div(children=[
                             figure=go.Figure(
                                 data=[
                                     go.Scatter(
-                                        x=df['Demo Date'],
-                                        y=df['Count of Demos'],
+                                        x=df_ind['Demo Date'],
+                                        y=df_ind['Count of Demos'],
                                         mode='lines',
-                                        text=df['DateText'],
+                                        text=df_ind['DateText'],
                                         hoverinfo='text+y',
                                         line=dict(
                                             shape='spline',
@@ -177,6 +204,7 @@ layout = html.Div(children=[
                 ])
 ])
 
+layout = update_layout
 
 @app.callback(
     Output('public-demos-indicator1', 'children'),
@@ -204,7 +232,6 @@ def show_indicator2(n_clicks):
         return {'display': 'none'}
     else:
         return {'width': '15%', 'display': 'block'}
-
 
 @app.callback(
     Output('comparison-date-range-div', 'style'),

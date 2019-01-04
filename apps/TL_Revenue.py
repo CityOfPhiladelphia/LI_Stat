@@ -1,57 +1,88 @@
+import os
+from datetime import datetime
+import urllib.parse
+
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_table_experiments as table
 import plotly.graph_objs as go
 import pandas as pd
 from dash.dependencies import Input, Output
-from datetime import datetime
 import numpy as np
-import urllib.parse
-import os
 
-from app import app, con
+from app import app, cache, cache_timeout
+
 
 print(os.path.basename(__file__))
 
-with con() as con:
-    sql = 'SELECT * FROM li_stat_licenserevenue_tl'
-    df = pd.read_sql_query(sql=sql, con=con, parse_dates=['PAYMENTDATE'])
-    sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_LICENSEREVENUE_TL'"
-    last_ddl_time = pd.read_sql_query(sql=sql, con=con)
+@cache_timeout
+@cache.memoize()
+def query_data(dataset):
+    from app import con
+    with con() as con:
+        if dataset == 'df_ind':
+            sql = 'SELECT * FROM li_stat_licenserevenue_tl'
+            df = pd.read_sql_query(sql=sql, con=con, parse_dates=['PAYMENTDATE'])
+        elif dataset == 'last_ddl_time':
+            sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_LICENSEREVENUE_TL'"
+            df = pd.read_sql_query(sql=sql, con=con)
+    return df.to_json(date_format='iso', orient='split')
 
-df.rename(columns={'JOBTYPE': 'Job Type', 'PAYMENTDATE': 'Date', 'TOTALAMOUNT': 'Revenue Collected'}, inplace=True)
+def dataframe(dataset):
+    return pd.read_json(query_data(dataset), orient='split')
 
-total_revenue = '${:,.0f}'.format(df['Revenue Collected'].sum())
+def get_last_ddl_time():
+    last_ddl_time = dataframe('last_ddl_time')
+    return last_ddl_time['LAST_DDL_TIME'].iloc[0]
 
-df_counts = df.copy(deep=True) # Make a copy to keep the original for filtering
+def get_df_ind():
+    df_ind = dataframe('df_ind')
+    df_ind['PAYMENTDATE'] = pd.to_datetime(df_ind['PAYMENTDATE'])
+    df_ind.rename(columns={
+                    'JOBTYPE': 'Job Type', 
+                    'PAYMENTDATE': 'Date', 
+                    'TOTALAMOUNT': 'Revenue Collected'}, inplace=True)
+    return df_ind
 
-df_line_chart = (df_counts.groupby(['Date'])['Revenue Collected']
+def get_total_revenue(df_ind):
+    return'${:,.0f}'.format(df_ind['Revenue Collected'].sum())
+
+def get_df_line_chart(df_ind):
+    df_line_chart = (df_ind.groupby(['Date'])['Revenue Collected']
                           .sum()
                           .reset_index()
                           .assign(DateText=lambda x: x['Date'].dt.strftime('%b %Y')))
+    return df_line_chart
 
-df_pie_chart = (df.copy(deep=True)
-                  .groupby(['Job Type'])['Revenue Collected']
-                  .sum()
-                  .reset_index())
+def get_df_pie_chart(df_ind):
+    df_pie_chart = (df_ind.groupby(['Job Type'])['Revenue Collected']
+                           .sum()
+                           .reset_index())
+    return df_pie_chart
 
-unique_job_types = df['Job Type'].unique()
+def get_unique_job_types(df_ind):
+    unique_job_types = df_ind['Job Type'].unique()
+    return unique_job_types
 
-job_type_options = [{'label': unique_job_type,
-                     'value': unique_job_type}
-                     for unique_job_type in unique_job_types]
+def get_job_type_options(unique_job_types):
+    job_type_options = [{'label': unique_job_type,
+                        'value': unique_job_type}
+                        for unique_job_type in unique_job_types]
+    return job_type_options
 
 def update_count_data(selected_start, selected_end, selected_jobtype):
-    df_counts = df[(df['Date'] >= selected_start)
-                  & (df['Date']<=selected_end)
-                  & df['Job Type'].isin(selected_jobtype)]
+    df_ind = get_df_ind()
+    df_counts = df_ind[(df_ind['Date'] >= selected_start)
+                  & (df_ind['Date']<=selected_end)
+                  & df_ind['Job Type'].isin(selected_jobtype)]
     df_counts['Date'] = df_counts['Date'].dt.strftime('%b %Y') 
     return df_counts
 
 def update_line_chart_data(selected_start, selected_end, selected_jobtype):
-    df_line_chart = df[(df['Date'] >= selected_start)
-                  & (df['Date']<=selected_end)
-                  & df['Job Type'].isin(selected_jobtype)]
+    df_ind = get_df_ind()
+    df_line_chart = df_ind[(df_ind['Date'] >= selected_start)
+                  & (df_ind['Date']<=selected_end)
+                  & df_ind['Job Type'].isin(selected_jobtype)]
     df_line_chart = (df_line_chart.groupby(['Date'])['Revenue Collected']
                                   .sum()
                                   .reset_index()
@@ -59,29 +90,40 @@ def update_line_chart_data(selected_start, selected_end, selected_jobtype):
     return df_line_chart
 
 def update_pie_data(selected_start, selected_end, selected_jobtype):
-    df_pie_chart = df[(df['Date'] >= selected_start)
-                    & (df['Date'] <= selected_end)
-                    & df['Job Type'].isin(selected_jobtype)]
+    df_ind = get_df_ind()
+    df_pie_chart = df_ind[(df_ind['Date'] >= selected_start)
+                    & (df_ind['Date'] <= selected_end)
+                    & df_ind['Job Type'].isin(selected_jobtype)]
     df_pie_chart = df_pie_chart.groupby(['Job Type'])['Revenue Collected'].sum()
     return df_pie_chart
 
 def update_total_revenue(selected_start, selected_end, selected_jobtype):
-    df_selected = df[(df['Date'] >= selected_start)
-                  & (df['Date']<=selected_end)
-                  & df['Job Type'].isin(selected_jobtype)]
+    df_ind = get_df_ind()
+    df_selected = df_ind[(df_ind['Date'] >= selected_start)
+                  & (df_ind['Date']<=selected_end)
+                  & df_ind['Job Type'].isin(selected_jobtype)]
     total_license_volume = df_selected['Revenue Collected'].sum()
     return '${:,.0f}'.format(total_license_volume)
 
-layout = html.Div(children=[
+def update_layout():
+    last_ddl_time = get_last_ddl_time()
+    df_ind = get_df_ind()
+    total_revenue = get_total_revenue(df_ind)
+    df_line_chart = get_df_line_chart(df_ind)
+    df_pie_chart = get_df_pie_chart(df_ind)
+    unique_job_types = get_unique_job_types(df_ind)
+    job_type_options = get_job_type_options(unique_job_types)
+
+    return html.Div(children=[
                 html.H1('Trade License Revenue', style={'text-align': 'center'}),
-                html.P(f"Data last updated {last_ddl_time['LAST_DDL_TIME'].iloc[0]}", style = {'text-align': 'center'}),
+                html.P(f"Data last updated {last_ddl_time}", style = {'text-align': 'center'}),
                 html.Div([
                     html.Div([
                         html.P('Filter by Payment Date'),
                         dcc.DatePickerRange(
                             display_format='MMM Y',
                             id='slide2TL-my-date-picker-range',
-                            start_date=df['Date'].min(),
+                            start_date=df_ind['Date'].min(),
                             end_date=datetime.now()
                         )
                     ], className='four columns'),
@@ -184,6 +226,8 @@ layout = html.Div(children=[
                     ])
                 ])
             ])
+
+layout = update_layout
 
 @app.callback(
     Output('slide2TL-piechart', 'figure'),

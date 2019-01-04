@@ -24,6 +24,15 @@ def query_data(dataset):
             sql = 'SELECT * FROM li_stat_permits_accelreview'
             df = pd.read_sql_query(sql=sql, con=con, parse_dates=['PERMITAPPLICATIONDATE', 'PERMITISSUEDATE',
                                                                         'REVIEWISSUEDATE', 'PAIDDTTM'])
+            df = (df.rename(columns={'APNO': 'Permit Number', 'PERMITAPPLICATIONDATE': 'Permit Application Date',
+                                     'PERMITISSUEDATE': 'Permit Issue Date', 'SLACOMPLIANCE': 'SLA Compliance',
+                                     'PERMITDESCRIPTION': 'Permit Type', 'WORKTYPE': 'Work Type'}))
+
+            df['Permit Type'] = df['Permit Type'].astype(str)
+            df['Permit Type'] = df['Permit Type'].map(lambda x: x.replace(" PERMIT", ""))
+            df['Permit Type'] = df['Permit Type'].str.lower()
+            df['Permit Type'] = df['Permit Type'].str.title()
+            df['Work Type'] = df['Work Type'].fillna('None').astype(str)
         elif dataset == 'last_ddl_time':
             sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_PERMITS_ACCELREVIEW'"
             df = pd.read_sql_query(sql=sql, con=con)
@@ -34,16 +43,6 @@ def dataframe(dataset):
 
 def get_df_ind():
     df = dataframe('df_ind')
-    # Rename the columns to be more readable
-    df = (df.rename(columns={'APNO': 'Permit Number', 'PERMITAPPLICATIONDATE': 'Permit Application Date',
-                            'PERMITISSUEDATE': 'Permit Issue Date', 'SLACOMPLIANCE': 'SLA Compliance',
-                            'PERMITDESCRIPTION': 'Permit Type', 'WORKTYPE': 'Work Type'}))
-
-    df['Permit Type'] = df['Permit Type'].astype(str)
-    df['Permit Type'] = df['Permit Type'].map(lambda x: x.replace(" PERMIT", ""))
-    df['Permit Type'] = df['Permit Type'].str.lower()
-    df['Permit Type'] = df['Permit Type'].str.title()
-    df['Work Type'] = df['Work Type'].fillna('None').astype(str)
     return df
 
 def get_last_ddl_time():

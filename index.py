@@ -8,7 +8,7 @@ from app import app, server
 from apps import (BL_Volumes, TL_Volumes, BL_Revenue, TL_Revenue, BL_Trends, BL_Submittal_Type, TL_Submittal_Type,
                   Permits_Volumes_Revenues, Permits_Trends, Permits_OTC_Review, Permits_Accel_Review,
                   Imm_Dang, Unsafes, Public_Demos, Uninspected_Service_Requests)
-from send_email import send_email
+
 
 def serve_layout():
     return html.Div([

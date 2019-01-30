@@ -28,7 +28,7 @@ FROM
 				WHEN tap.createdby LIKE '%5%' THEN 'Online'
 				WHEN tap.createdby LIKE '%6%' THEN 'Online'
 				WHEN tap.createdby LIKE '%7%' THEN 'Online'
-				WHEN tap.createdby LIKE '%7%' THEN 'Online'
+				WHEN tap.createdby LIKE '%8%' THEN 'Online'
 				WHEN tap.createdby LIKE '%9%' THEN 'Online'
 				WHEN tap.createdby = 'PPG User' THEN 'Online'
 				WHEN tap.createdby = 'POSSE system power user' THEN 'Revenue'
@@ -44,7 +44,7 @@ FROM
 			tlic.objectid = tap.tradelicenseobjectid (+)
 			AND tap.jobid = apl.tlapplicationobjectid (+)
 			AND tlic.initialissuedate >= '01-JAN-16'
-			AND tlic.initialissuedate <= SYSDATE
+			AND tlic.initialissuedate < SYSDATE
 			AND tap.statusdescription LIKE 'Approved'
 	UNION
 		SELECT
@@ -58,7 +58,7 @@ FROM
 				WHEN tar.createdby LIKE '%5%' THEN 'Online'
 				WHEN tar.createdby LIKE '%6%' THEN 'Online'
 				WHEN tar.createdby LIKE '%7%' THEN 'Online'
-				WHEN tar.createdby LIKE '%7%' THEN 'Online'
+				WHEN tar.createdby LIKE '%8%' THEN 'Online'
 				WHEN tar.createdby LIKE '%9%' THEN 'Online'
 				WHEN tar.createdby = 'PPG User' THEN 'Online'
 				WHEN tar.createdby = 'POSSE system power user' THEN 'Revenue'
@@ -74,7 +74,7 @@ FROM
 			tlic.objectid = lra.licenseid (+)
 			AND lra.amendrenewid = tar.objectid (+)
 			AND tar.completeddate >= '01-JAN-16'
-			AND tar.completeddate <= SYSDATE
+			AND tar.completeddate < SYSDATE
 			AND tar.statusdescription LIKE 'Approved'
 			AND tar.applicationtype LIKE 'Renewal' ) )
 GROUP BY

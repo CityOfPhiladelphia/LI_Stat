@@ -48,6 +48,12 @@ def get_issue_dates(df_ind):
     issue_dates.sort()
     return issue_dates
 
+def get_unique_jobtypes(df_ind):
+    unique_jobtypes = df_ind['JOBTYPE'].unique()
+    unique_jobtypes.sort()
+    unique_jobtypes = np.append(['All'], unique_jobtypes)
+    return unique_jobtypes
+
 def get_unique_licensetypes(df_ind):
     unique_licensetypes = df_ind['License Type'].unique()
     unique_licensetypes.sort()
@@ -125,6 +131,7 @@ def update_layout():
     df_ind = get_df_ind()
     last_ddl_time = get_last_ddl_time()
     issue_dates = get_issue_dates(df_ind)
+    unique_jobtypes = get_unique_jobtypes(df_ind)
     unique_licensetypes = get_unique_licensetypes(df_ind)
     total_license_volume = get_total_license_volume(df_ind)
 
@@ -145,11 +152,7 @@ def update_layout():
                             html.P('Filter by Job Type'),
                             dcc.Dropdown(
                                 id='slide1-BL-jobtype-dropdown',
-                                options=[
-                                    {'label': 'All', 'value': 'All'},
-                                    {'label': 'Application', 'value': 'BL_Application'},
-                                    {'label': 'Renewal', 'value': 'BL_Renewal'}
-                                ],
+                                options=[{'label': k, 'value': k} for k in unique_jobtypes],
                                 value='All'
                             ),
                         ], className='four columns'),
@@ -197,7 +200,6 @@ def update_layout():
                             html.Div([
                                 table.DataTable(
                                     rows=[{}],
-                                    #columns=['Issue Date', 'LICENSETYPE', 'COUNTJOBS'],
                                     columns=['Issue Date', 'License Type', 'Number of Licenses Issued'],
                                     editable=False,
                                     sortable=True,

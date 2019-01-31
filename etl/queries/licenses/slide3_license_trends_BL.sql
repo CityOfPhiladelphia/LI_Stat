@@ -43,7 +43,7 @@ FROM
                     AND rla.applicationobjectid = ap.jobid
                     AND ap.statusdescription LIKE 'Approved'
                     AND ap.issuedate > '01-JAN-16'
-                    AND ap.issuedate <= SYSDATE
+                    AND ap.issuedate < SYSDATE
                     AND fee.latestpayment >= '01-JAN-16'
                     AND fee.referencedobjectid = job.jobid
                     AND job.jobtypeid = jt.jobtypeid
@@ -76,7 +76,7 @@ FROM
                     AND ar.statusdescription LIKE 'Approved'
                     AND ar.applicationtype LIKE 'Renewal'
                     AND ar.issuedate > '01-JAN-16'
-                    AND ar.issuedate <= SYSDATE
+                    AND ar.issuedate < SYSDATE
                     AND fee.latestpayment >= '01-JAN-16'
                     AND fee.referencedobjectid = job.jobid
                     AND job.jobtypeid = jt.jobtypeid

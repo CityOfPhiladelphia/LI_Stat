@@ -23,7 +23,7 @@ WHERE
   AND apl.applicationobjectid = ap.jobid
   AND ap.statusdescription LIKE 'Approved'
   AND ap.issuedate > '01-JAN-16'
-  AND ap.issuedate <= SYSDATE
+  AND ap.issuedate < SYSDATE
   AND ap.issuedate > '01-OCT-18'
   AND fee.referencedobjectid = job.jobid
   AND job.jobtypeid = jt.jobtypeid

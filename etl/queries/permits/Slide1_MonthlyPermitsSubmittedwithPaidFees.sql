@@ -20,7 +20,7 @@ FROM
     FROM imsv7.li_allpermits p,
       imsv7.apfee fee1
     WHERE p.apkey         = fee1.apkey (+)
-    AND p.PermitIssueDate > '01-JAN-16'
+    AND p.PermitIssueDate >= '01-JAN-16'
     AND fee1.paiddttm    IS NOT NULL
     )
   )

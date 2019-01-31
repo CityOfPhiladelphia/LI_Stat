@@ -24,7 +24,7 @@ WHERE
   AND ar.statusdescription LIKE 'Approved'
   AND ar.applicationtype LIKE 'Renewal'
   AND ar.issuedate > '01-JAN-16'
-  AND ar.issuedate <= SYSDATE
+  AND ar.issuedate < SYSDATE
   AND fee.latestpayment >= '01-JAN-16'
   AND fee.referencedobjectid = job.jobid
   AND job.jobtypeid = jt.jobtypeid

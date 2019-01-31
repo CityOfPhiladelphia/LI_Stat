@@ -34,7 +34,7 @@ WHERE tlic.objectid = tap.tradelicenseobjectid (+)
      AND tap.jobid = job.jobid (+) 
      AND job.jobid = fee.referencedobjectid (+)
      AND tlic.initialissuedate >= '01-oct-18'
-     AND tlic.initialissuedate <= SYSDATE
+     AND tlic.initialissuedate < SYSDATE
 UNION 
 SELECT DISTINCT tar.applicationtype                     JobType, 
                 tlic.licensetype                        LicenseType, 
@@ -70,7 +70,7 @@ FROM   query.o_tl_license tlic,
 WHERE  tlic.objectid = lra.licenseid 
        AND lra.amendrenewid = tar.objectid 
        AND tar.completeddate >= '01-oct-18' 
-       AND tar.completeddate <= SYSDATE 
+       AND tar.completeddate < SYSDATE 
        AND tar.statusdescription LIKE 'Approved' 
        AND tar.applicationtype LIKE 'Renewal'
 --runtime 69 sec   

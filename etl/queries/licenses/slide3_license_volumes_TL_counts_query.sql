@@ -31,7 +31,7 @@ FROM
 			AND tap.jobid = job.jobid (+)
 			AND job.jobid = fee.referencedobjectid (+)
 			AND tlic.initialissuedate >= '01-JAN-16'
-			AND tlic.initialissuedate <= SYSDATE
+			AND tlic.initialissuedate < SYSDATE
 	UNION
 		SELECT
 			DISTINCT tlic.licensetype licensetype,
@@ -50,7 +50,7 @@ FROM
 			AND fee.referencedobjectid = job.jobid
 			AND tar.jobid = job.jobid
 			AND tar.completeddate >= '01-JAN-16'
-			AND tar.completeddate <= SYSDATE
+			AND tar.completeddate < SYSDATE
 			AND tar.statusdescription LIKE 'Approved'
 			AND tar.applicationtype LIKE 'Renewal' ) )
 GROUP BY

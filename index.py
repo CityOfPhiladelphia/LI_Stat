@@ -8,6 +8,7 @@ from app import app, server
 from apps import (BL_Volumes, TL_Volumes, BL_Revenue, TL_Revenue, BL_Trends, BL_Submittal_Type, TL_Submittal_Type,
                   Permits_Volumes_Revenues, Permits_Trends, Permits_OTC_Review, Permits_Accel_Review,
                   Imm_Dang, Unsafes, Public_Demos, Uninspected_Service_Requests)
+from config import LI_DASHBOARDS_URL
 
 
 def serve_layout():
@@ -58,11 +59,11 @@ def serve_layout():
                 html.Nav([
                     html.Div([
                         html.A('Contact LI GIS Team',
-                               href='mailto:ligisteam@phila.gov',
-                               style={'color': '#f2f2f2', 'float': 'left', 'margin-right': '10px'}),
+                               href='mailto:ligisteam@phila.gov'),
                         html.A('GitHub',
-                               href='https://github.com/CityOfPhiladelphia/LI_Stat',
-                               style={'color': '#f2f2f2', 'float': 'left', 'margin-left': '10px'})
+                               href='https://github.com/CityOfPhiladelphia/LI_Stat'),
+                        html.A('LI Dashboards',
+                               href=LI_DASHBOARDS_URL),
                     ], style={'width': '500px', 'margin-left': 'auto', 'margin-right': 'auto'})
                 ], className='footer-navbar')
             ])

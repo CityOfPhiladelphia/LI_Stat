@@ -252,13 +252,15 @@
 }
 
 /* Style the links inside the footer navigation bar */
-.footer-navbar a:link {
+.footer-navbar a {
   display: block;
   color: white;
   text-align: center;
   padding: 14px 16px;
+  margin-left: 10px;
   text-decoration: none;
   font-size: 17px;
+  float: left;
 }
 
 .timestamp {

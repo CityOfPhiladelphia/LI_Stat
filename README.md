@@ -25,14 +25,12 @@ The dashboards are as follows (Needs to be Updated):
 - [Redis](https://github.com/rgl/redis/downloads)
     
 ## Usage
-- `pip install -r requirements.txt`
-- Get the config.py file from one of us containing usernames and password logins and put it in your LI_dashboards folder.
-- [Install Redis](https://github.com/rgl/redis/downloads)
-- Launch Redis
-`C:\Program Files\Redis\redis-server`
-- `python index.py` to launch the application
-- `python etl/etl.py` to run the etl process for all queries
-- `python etl/etl_cli.py -n dashboard_table_name` to run the etl process for one dashboard
-    - Ex: `python etl/etl_cli.py -n li_dash_indworkloads_bl`
-- `python etl/etl_cli.py -n dashboard_table_name1 -n dashboard_table_name2` to run the etl process for multiple specified dashboards
-    - Ex: `python etl/etl_cli.py -n li_dash_indworkloads_bl -n li_dash_activejobs_bl_counts`
+1. Install dependencies `pip install -r requirements.txt`
+2. Get the config.py file from one of us containing usernames and password logins and put it in your LI_dashboards base directory.
+3. [Install Redis](https://github.com/rgl/redis/downloads)
+4. Launch Redis `C:\Program Files\Redis\redis-server`
+5. Launch the web server `python index.py`
+6. Run the etl process for all queries `python etl/etl.py`
+7. Run the etl process for one dashboard `python etl/etl_cli.py -n dashboard_table_name` 
+8. Run the etl process for multiple specified dashboards `python etl/etl_cli.py -n dashboard_table_name1 -n dashboard_table_name2` 
+

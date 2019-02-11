@@ -4,35 +4,6 @@ class SqlQuery():
         self.source_db = source_db
         self.target_table = target_table
 
-    @property
-    def columns(self):
-        '''Returns the column names from the target_table in GISLICLD.'''
-        from li_dbs import GISLICLD
-
-        with GISLICLD.GISLICLD() as con:
-            with con.cursor() as cursor:
-                sql = f"""SELECT 
-                              column_name
-                          FROM 
-                              all_tab_cols
-                          WHERE 
-                              table_name = '{self.target_table.upper()}'
-                          ORDER BY
-                              column_id
-                        """
-                cursor.execute(sql)
-                cols = cursor.fetchall()
-                cols = [col[0] for col in cols]
-        return cols
-
-    @property
-    def insert_query(self):
-        '''Generates the insert query based on the target_table and columns.'''
-        insert_q = f'''INSERT INTO {self.target_table} (
-                            {", ".join(column for column in self.columns)})
-                       VALUES ({", ".join(":" + str(num + 1) for num in range(len(self.columns)))})'''
-        return insert_q
-
 LicenseVolumesBL = SqlQuery(
     extract_query_file = 'licenses/slide1_license_volumes_BL.sql',
     source_db = 'ECLIPSE_PROD',

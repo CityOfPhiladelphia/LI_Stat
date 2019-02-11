@@ -1,63 +1,49 @@
-from li_dbs import ECLIPSE_PROD, LIDB, GISLNI, DataBridge, GISLICLD
 import sys
 import datetime
-from timeout import timeout
+
+import petl as etl
+
+from li_dbs import ECLIPSE_PROD, LIDB, GISLNI, DataBridge, GISLICLD
+from utils import timeout, get_logger, get_cursor, send_email
 
 
-@timeout(1800) # Stop if query takes longer than 30 minutes
-def etl(query):
-    # extract data from source db
+def get_source_db(query):
     if query.source_db == 'ECLIPSE_PROD':
-        with ECLIPSE_PROD.ECLIPSE_PROD() as source:
-            with source.cursor() as source_cursor:
-                with open(query.extract_query_file) as sql:
-                    extract_query = sql.read()
-                source_cursor.execute(extract_query)
-                data = source_cursor.fetchall()
+        return ECLIPSE_PROD.ECLIPSE_PROD
     elif query.source_db == 'LIDB':
-        with LIDB.LIDB() as source:
-            with source.cursor() as source_cursor:
-                with open(query.extract_query_file) as sql:
-                    extract_query = sql.read()
-                source_cursor.execute(extract_query)
-                data = source_cursor.fetchall()
+        return LIDB.LIDB
     elif query.source_db == 'GISLNI':
-        with GISLNI.GISLNI() as source:
-            with source.cursor() as source_cursor:
-                with open(query.extract_query_file) as sql:
-                    extract_query = sql.read()
-                source_cursor.execute(extract_query)
-                data = source_cursor.fetchall()
+        return GISLNI.GISLNI
     elif query.source_db == 'DataBridge':
-        with DataBridge.DataBridge() as source:
-            with source.cursor() as source_cursor:
-                with open(query.extract_query_file) as sql:
-                    extract_query = sql.read()
-                source_cursor.execute(extract_query)
-                data = source_cursor.fetchall()
+        return DataBridge.DataBridge
 
-    with GISLICLD.GISLICLD() as target:
-        with target.cursor() as target_cursor:
-            # truncate the target db
-            target_cursor.execute(f'TRUNCATE TABLE {query.target_table}')
-            # load data into target db
-            target_cursor.executemany(query.insert_query, data)
-        target.commit()
-        print(f'{len(data)} rows loaded into GISLICLD.{query.target_table}.')
+def get_extract_query(query):
+    with open(query.extract_query_file) as sql:
+        return sql.read()
+
+@timeout(1800)
+def etl_(query, target):
+    source_db = get_source_db(query)
+    extract_query = get_extract_query(query)
+    target_table = query.target_table
+
+    with source_db() as source:
+        etl.fromdb(source, extract_query) \
+           .todb(get_cursor(target), target_table.upper())
 
 def etl_process(queries):
-    print('---------------------------------')
-    print('ETL process initialized: ' + str(datetime.datetime.now()))
-    # loop through sql queries
-    for query in queries:
-        try:
-            etl(query)
-        except Exception as e:
-            # send_email()
-            print(f'ERROR: ETL Process into GISLICLD.{query.target_table} failed.')
-            exc_type, exc_obj, tb = sys.exc_info()
-            lineno = tb.tb_lineno
-            print('Exception on line {}'.format(lineno))
-            print(f'Error Message: {e}')
-    print('ETL process ended: ' + str(datetime.datetime.now()))
+    logger = get_logger()
+    logger.info('---------------------------------')
+    logger.info('ETL process initialized: ' + str(datetime.datetime.now()))
 
+    with GISLICLD.GISLICLD() as target:
+
+        for query in queries:
+            try:
+                etl_(query, target)
+                logger.info(f'{query.target_table} successfully updated.')
+            except:
+                send_email()
+                logger.error(f'ETL Process into GISLICLD.{query.target_table} failed.', exc_info=True)
+
+    logger.info('ETL process ended: ' + str(datetime.datetime.now()))

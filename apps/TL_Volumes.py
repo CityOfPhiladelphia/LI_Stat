@@ -26,7 +26,7 @@ def query_data(dataset):
             df = (df.rename(columns={'ISSUEDATE': 'Issue Date', 'LICENSETYPE': 'License Type', 'COUNTJOBS': 'Number of Licenses Issued'})
                     .assign(DateText=lambda x: x['Issue Date'].dt.strftime('%b %Y')))
         elif dataset == 'last_ddl_time':
-            sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_LICENSEVOLUMES_TL'"
+            sql = 'SELECT SCN_TO_TIMESTAMP(MAX(ora_rowscn)) last_ddl_time FROM LI_STAT_LICENSEVOLUMES_TL'
             df = pd.read_sql_query(sql=sql, con=con)
     return df.to_json(date_format='iso', orient='split')
 

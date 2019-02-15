@@ -34,7 +34,7 @@ def query_data(dataset):
             df['Permit Type'] = df['Permit Type'].str.title()
             df['Work Type'] = df['Work Type'].fillna('None').astype(str)
         elif dataset == 'last_ddl_time':
-            sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_PERMITS_ACCELREVIEW'"
+            sql = 'SELECT SCN_TO_TIMESTAMP(MAX(ora_rowscn)) last_ddl_time FROM LI_STAT_PERMITS_ACCELREVIEW'
             df = pd.read_sql_query(sql=sql, con=con)
     return df.to_json(date_format='iso', orient='split')
 

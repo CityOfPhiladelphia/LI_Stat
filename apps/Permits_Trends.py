@@ -27,7 +27,7 @@ def query_data(dataset):
             df['PERMITDESCRIPTION'] = df['PERMITDESCRIPTION'].str.lower()
             df['PERMITDESCRIPTION'] = df['PERMITDESCRIPTION'].str.title()
         elif dataset == 'last_ddl_time':
-            sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_PERMITSFEES'"
+            sql = 'SELECT SCN_TO_TIMESTAMP(MAX(ora_rowscn)) last_ddl_time FROM LI_STAT_PERMITSFEES'
             df = pd.read_sql_query(sql=sql, con=con)
     return df.to_json(date_format='iso', orient='split')
 

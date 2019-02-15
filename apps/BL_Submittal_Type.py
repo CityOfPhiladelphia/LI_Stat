@@ -9,8 +9,7 @@ import dash_table_experiments as dt
 import plotly.graph_objs as go
 from dash.dependencies import Input, Output
 
-from app import cache, cache_timeout
-
+from app import app, cache, cache_timeout
 
 print(os.path.basename(__file__))
 
@@ -24,7 +23,7 @@ def query_data(dataset):
             df = pd.read_sql_query(sql=sql, con=con, parse_dates=['ISSUEDATE'])
             df.sort_values(by='ISSUEDATE', inplace=True)
         elif dataset == 'last_ddl_time':
-            sql = "SELECT from_tz(cast(last_ddl_time as timestamp), 'GMT') at TIME zone 'US/Eastern' as LAST_DDL_TIME FROM user_objects WHERE object_name = 'LI_STAT_SUBMITTALVOLUMES_BL'"
+            sql = 'SELECT SCN_TO_TIMESTAMP(MAX(ora_rowscn)) last_ddl_time FROM LI_STAT_SUBMITTALVOLUMES_BL'
             df = pd.read_sql_query(sql=sql, con=con)
     return df.to_json(date_format='iso', orient='split')
 

@@ -16,6 +16,8 @@ def get_source_db(query):
         return GISLNI.GISLNI
     elif query.source_db == 'DataBridge':
         return DataBridge.DataBridge
+    elif query.source_db == 'GISLICLD':
+        return GISLICLD.GISLICLD
 
 def get_extract_query(query):
     with open(query.extract_query_file) as sql:
@@ -36,7 +38,6 @@ def etl_process(queries):
     logger.info('ETL process initialized: ' + str(datetime.datetime.now()))
 
     with GISLICLD.GISLICLD() as target:
-
         for query in queries:
             try:
                 etl_(query, target)

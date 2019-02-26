@@ -100,6 +100,12 @@ UninspectedServiceRequests = SqlQuery(
     target_table = 'li_stat_uninspectedservreq'
 )
 
+UninspectedServiceRequestsBusDays = SqlQuery(
+    extract_query_file = 'UninspectedServiceRequestsBusDays.sql',
+    source_db = 'GISLICLD',
+    target_table = 'uninspectedservreq_busdays'
+)
+
 queries = [
     PermitsFees,
     PermitsOTCvsReview,
@@ -110,6 +116,7 @@ queries = [
     UnsafesInd,
     PublicDemos,
     UninspectedServiceRequests,
+    UninspectedServiceRequestsBusDays,
     LicenseVolumesBL,
     LicenseVolumesTL,
     LicenseRevenueBL,

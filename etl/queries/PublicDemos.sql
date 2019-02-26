@@ -14,6 +14,7 @@ FROM
     FROM GIS_LNI.LI_DEMOLITIONS
     WHERE CITY_DEMO = 'YES'
     AND completed_date IS NOT NULL
+    AND completed_date <= SYSDATE
     )
   )
 GROUP BY demodate

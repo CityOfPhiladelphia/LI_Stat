@@ -100,7 +100,7 @@ UninspectedServiceRequests = SqlQuery(
     target_table = 'li_stat_uninspectedservreq'
 )
 
-queries = [
+queries1 = [
     LicenseVolumesBL,
     LicenseVolumesTL,
     LicenseRevenueBL,
@@ -118,3 +118,15 @@ queries = [
     PublicDemos,
     UninspectedServiceRequests
 ]
+
+UninspectedServiceRequestsBusDays = SqlQuery(
+    extract_query_file = 'UninspectedServiceRequestsBusDays.sql',
+    source_db = 'GISLICLD',
+    target_table = 'uninspectedservreq_busdays'
+)
+
+queries2 = [
+    UninspectedServiceRequestsBusDays
+]
+
+queries_lists = (queries1, queries2)

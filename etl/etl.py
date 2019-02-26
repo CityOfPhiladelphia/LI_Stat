@@ -16,6 +16,8 @@ def get_source_db(query):
         return GISLNI.GISLNI
     elif query.source_db == 'DataBridge':
         return DataBridge.DataBridge
+    elif query.source_db == 'GISLICLD':
+        return GISLICLD.GISLICLD
 
 def get_extract_query(query):
     with open(query.extract_query_file) as sql:
@@ -31,18 +33,18 @@ def etl_(query, target):
         etl.fromdb(source, extract_query) \
            .todb(get_cursor(target), target_table.upper())
 
-def etl_process(queries):
+def etl_process(queries_lists):
     logger = get_logger()
     logger.info('---------------------------------')
     logger.info('ETL process initialized: ' + str(datetime.datetime.now()))
 
     with GISLICLD.GISLICLD() as target:
-
-        for query in queries:
-            try:
-                etl_(query, target)
-                logger.info(f'{query.target_table} successfully updated.')
-            except:
-                logger.error(f'ETL Process into GISLICLD.{query.target_table} failed.', exc_info=True)
+        for queries_list in queries_lists:
+            for query in queries_list:
+                try:
+                    etl_(query, target)
+                    logger.info(f'{query.target_table} successfully updated.')
+                except:
+                    logger.error(f'ETL Process into GISLICLD.{query.target_table} failed.', exc_info=True)
 
     logger.info('ETL process ended: ' + str(datetime.datetime.now()))

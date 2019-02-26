@@ -4,7 +4,7 @@ import datetime
 import petl as etl
 
 from li_dbs import ECLIPSE_PROD, LIDB, GISLNI, DataBridge, GISLICLD
-from utils import timeout, get_logger, get_cursor, send_email
+from utils import get_logger, get_cursor, send_email
 
 
 def get_source_db(query):
@@ -21,7 +21,6 @@ def get_extract_query(query):
     with open(query.extract_query_file) as sql:
         return sql.read()
 
-@timeout(1800)
 def etl_(query, target):
     source_db = get_source_db(query)
     extract_query = get_extract_query(query)

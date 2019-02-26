@@ -101,13 +101,6 @@ UninspectedServiceRequests = SqlQuery(
 )
 
 queries = [
-    LicenseVolumesBL,
-    LicenseVolumesTL,
-    LicenseRevenueBL,
-    LicenseRevenueTL,
-    LicenseTrendsBL,
-    SubmittalVolumesBL,
-    SubmittalVolumesTL,
     PermitsFees,
     PermitsOTCvsReview,
     PermitsAccelReview,
@@ -116,5 +109,12 @@ queries = [
     UnsafesCounts,
     UnsafesInd,
     PublicDemos,
-    UninspectedServiceRequests
+    UninspectedServiceRequests,
+    LicenseVolumesBL,
+    LicenseVolumesTL,
+    LicenseRevenueBL,
+    LicenseRevenueTL,
+    LicenseTrendsBL,
+    SubmittalVolumesBL,
+    SubmittalVolumesTL,
 ]

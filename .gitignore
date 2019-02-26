@@ -1,17 +1,23 @@
+# IDE files
 *.csv
 .idea/
+.vscode
+
+# Temp project files
 Thumbs.db
-__pycache__
-*.pyc
-.pytest_cache/
 LI Stat_Summary.docx
 Stat_Summary.docx
-config.py
-makecsv.py
 *.bat
 *.db
 *.~sql
 *.txt
-!requirements.txt
 *.log
+
+# Python files
 cache-directory
+config.py
+makecsv.py
+__pycache__
+*.pyc
+.pytest_cache/
+!requirements.txt
